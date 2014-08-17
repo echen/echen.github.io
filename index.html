@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>Edwin Chen's Blog</title>
+        <meta charset="utf-8" />
+	      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/theme/css/main.css" type="text/css" />
+
+        <!--[if IE]>
+                <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+        <!--[if lte IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie.css"/>
+                <script src="/js/IE8.js" type="text/javascript"></script><![endif]-->
+
+        <!--[if lt IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie6.css"/><![endif]-->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js" type="text/javascript"></script>
+
+
+</head>
+
+<body id="index" class="home">
+	
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="/2014/08/15/propensity-modeling-causal-inference-and-sparkers-of-growth/">Propensity Modeling, Causal Inference, and Sparkers of Growth</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2014-08-15T00:00:00">
+          on&nbsp;Fri 15 August 2014
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info --><h1>Introduction</h1>
+<p>In the absence of a randomized experiment, causality is difficult to determine. Do patients who self-select into taking a new drug get better <em>because</em> the drug works, or would they have gotten better anyways? To answer such questions, causal inference techniques try to establish whether a treatment X <em>causes</em> some effect Y.</p>
+<p>For example, suppose we want to measure how well certain features increase user engagement on Quora. To be concrete, let's say we want to understand the effect of <a href="http://blog.quora.com/Introducing-Verified-Profiles">"Verified" badges</a> on user activity. Do users place more trust in verified accounts, thereby following and upvoting them more often?</p>
+<p>The naive approach to measuring this effect would be to form two groups, those users with a verified badge and those without, and compare their activity. ("<em>Verified users tend to have 10.2X as many followers as non-verified users.</em>") However, this comparison is obviously flawed – verified users are clearly different from non-verified users even before they receive a badge (e.g., verified users are more well-known, so would have more followers anyways), but what we really want to understand is how many followers, posts, and upvotes someone like Brad Pitt would have if he were verified, compared to how many he'd have if he weren't.</p>
+<p>It's unclear what heuristic we could use to remove this bias. An initial attempt at correction could be to filter for users well-known to the general populace, and within this filtered set compare verified against non-verified users, but such a comparison would undoubtedly remain biased. And now that the feature's launched, a randomized experiment -- that holy grail of causality -- is likely impossible to run. So what can we do?</p>
+<p>This is where propensity modeling, or other techniques of causal inference, comes into play.</p>
+<h1>Propensity Modeling</h1>
+<p>To explain the idea behind propensity modeling, let's start with a thought experiment. Imagine Brad Pitt had a twin brother, indistinguishable in every way: Brad 1 and Brad 2 have the same number of followers, they follow the exact same topics, and so on. One day, Brad 1 suddenly receives a verified badge, while Brad 2 does not, but otherwise they continue to behave identically. In this scenario, their subsequent difference in engagement is precisely the effect of receiving a verified badge.</p>
+<p>Moving this scenario into the real world, one way to estimate the effect of a verified badge would be as follows:</p>
+<ul>
+<li>For every verified user, find a non-verified user that's as close a match as possible. For example, we might match a verified Jay-Z with an unverified Kanye, a verified Natalie Portman with an unverified Keira Knightley, and a verified JK Rowling with an unverified Stephenie Meyer.</li>
+<li>The difference between each twin pair gives us the causal effect of a badge.</li>
+</ul>
+<p>However, finding closely matching twins is extremely difficult in practice. Is Jay-Z really a close match with Kanye, if they have fairly different numbers of followers? What about the Jonas Brothers and One Direction?</p>
+<p>Propensity modeling (at last!) is a simplification of this twin matching procedure. Instead of matching pairs of verified and unverified users based on all the variables we have, we simply match all users based on a single number, the likelihood ("propensity score") that they'll become verified.</p>
+<p>In more detail:</p>
+<ul>
+<li>First, we select which variables we'll use to model our users. (e.g., which topics a user follows, when they joined, whether they've connected a Facebook account, etc.)</li>
+<li>Next, we build a probabilistic model (say, a logistic regression) to predict whether a user will become verified or not. For example, our training set might consist of all users who were unverified as of February 28 2014, some of whom became verified in the first week of March 2014, and we would train the classifier to model which users receive a verification badge.</li>
+<li>The model's probabilistic estimate that a user will become verified is called a propensity score.</li>
+<li>We form some number of buckets, say 10 buckets in total (one bucket covers users with a 0.0 - 0.1 propensity to become verified, a second bucket covers users with a 0.1 - 0.2 propensity, and so on), and place users into these buckets.</li>
+<li>Finally, we compare the verified and non-verified users within each bucket (say, by measuring their number of followers in May and June) to estimate the causal effect of a verified badge.</li>
+</ul>
+<p>For example, here's a hypothetical distribution of verified and non-verified user ages. We see that verified users tend to be quite a bit older, which gives some extra support to why we can't simply run a correlational analysis.</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/age-distribution.png"><img alt="Age Distribution" src="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/age-distribution.png" /></a></p>
+<p>And after training a model to estimate verification propensity, and stratifying users into propensity buckets, here might be a graph of the effect that verification has on a user's followers.</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/verification-effect.png"><img alt="Verification Effect" src="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/verification-effect.png" /></a></p>
+<p>In the above (hypothetical) graph, each row represents a propensity bucket of users, and the exposure week denotes the first week of March, when the treatment group received their verified badges. We see that prior to that week, the untreated group (the users who remain unverified) and the treated group (the users who eventually become verified) track quite well. After the treatment group receives verification, however, they start to gain many more followers than the control group, which forms our estimate of the causal effect.</p>
+<h1>Other Methods of Causal Inference</h1>
+<p>Of course, there are many other methods of causal inference on observational data. I'm getting a bit off-topic now, but I'll run through two of my favorites anyways.</p>
+<h2>Regression Discontinuity</h2>
+<p>Suppose we've performed our analysis of verification, and now we want to understand the effect of the <a href="http://blog.quora.com/Announcing-Top-Writers-2013">"Top Writer 2013" badge</a>. Specifically, does the badge itself cause users to gain more followers?</p>
+<p>For simplicity, let's assume that the Top Writer badge was given to all users who received at least 5000 upvotes in 2013. The idea behind a regression discontinuity design is that the difference between those users who just barely receive a Top Writer badge (i.e., receive 5000 upvotes) and those who just barely don't (i.e., receive 4999 upvotes) is more or less random chance, so we can use this threshold to estimate a causal effect.</p>
+<p>For example, in the imaginary graph below, the discontinuity at 5000 upvotes suggests that a Top Writer Badge leads to around 100 more followers on average.</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/regression-discontinuity.png"><img alt="Regression Discontinuity" src="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/regression-discontinuity.png" /></a></p>
+<h2>Natural Experiments</h2>
+<p>Understanding the effect of a Top Writer badge is a fairly uninteresting question, though. (As is the question of verification! They just make easy examples.) A deeper, more fundamental question could be to ask: what happens when a user discovers a new top writer that they love? Does the top writer inspire them to write some of their own content, to explore more of the same topics, and perhaps even engage with the writer himself? How important, in other words, is the connection to a great <em>user</em> as opposed to the reading of random great <em>posts</em>?</p>
+<p>I actually studied an analogous question when I was at Google, so instead of making up an imaginary Quora case study, I'll describe some of that work here.</p>
+<p>So let's suppose we want to understand what would happen if we were able to match users to the perfect YouTube channel. That is, how much is the ultimate recommendation worth?</p>
+<ul>
+<li>Does falling in love with a new channel lead to engagement above and beyond activity on the channel itself, perhaps because users return to YouTube specifically for the new channel and then stay to watch more? (a multiplicative effect) In the TV world, for example, perhaps many people stay at home on Sunday nights <em>specifically</em> to catch the newest episode of Real Housewives (instead of going out), and channel surf for even more entertainment once it's over.</li>
+<li>Does falling in love with a new channel simply increase activity on the channel alone? (an additive effect)</li>
+<li>Does a new channel replace existing engagement on YouTube? After all, maybe users only have a limited amount of time they can spend on the site. (a neutral effect)</li>
+<li>Does the perfect channel actually cause users to spend less time overall on the site, since maybe they spend less time idly browsing and channel surfing once they have concrete channels they know how to turn to? (a negative effect)</li>
+</ul>
+<p>As always, an A/B test would be ideal, but it's impossible in this case to run: we can't force users to fall in love with a channel (we can recommend them channels, of course, but there's no guarantee they'll actually like them), and we can't forcibly block them from certain channels either.</p>
+<p>One approach, then, is to use a <strong>natural experiment</strong> (a scenario in which the universe itself somehow generates a random-like assignment) to study this effect. Here's the idea.</p>
+<p>Consider a user who uploads a new video every Wednesday. One month, he lets his subscribers know that he won’t be uploading any new videos for a few weeks, while he goes on vacation.</p>
+<p>How do his subscribers respond? Do they stop watching YouTube on Wednesdays, since his channel was the sole reason for their visits? Or is their activity relatively unaffected, since they only watch his content when it appears on the front page?</p>
+<p>Imagine, instead, that the channel starts uploading a new video every Friday. Do his subscribers start to visit then as well? And now that they're on YouTube, do they merely stay for the new video, or does their visit lead to a sinkhole of searches and related content too?</p>
+<p>As it turns out, these scenarios do happen. For example, here's a calendar of when one popular channel uploads videos. You can see that in 2011, it tended to upload videos on Tuesdays and Fridays, but it shifted to uploads on Wednesday and Saturday at the end of the year.</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/uploads-calendar.png"><img alt="Uploads Calendar" src="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/uploads-calendar.png" /></a></p>
+<p>By using this shift as natural experiment that "quasi-randomly" removes a well-loved channel on certain days and introduces it on others, we can try to understand the effect of successfully making the perfect recommendation.</p>
+<p>(This is probably a somewhat convoluted example of a natural experiment. For an example that perhaps illustrates the idea more clearly, suppose we want to understand the effect of income on mental health. Of course, we can't force some people to become poor or rich, and a correlational study is clearly flawed. This article describes a natural experiment when a group of Cherokee Indians opened up a casino and distributed profits to its members, thereby "randomly" lifting them out of poverty: http://opinionator.blogs.nytimes.com/2014/01/18/what-happens-when-the-poor-receive-a-stipend/)</p>
+<h1>Discovering Drivers of Growth</h1>
+<p>Let's go back to propensity modeling.</p>
+<p>So suppose that we're on Quora's Growth team, and we're tasked with figuring out how to turn casual users of the site into users that return every day. What do we do?</p>
+<p>The propensity modeling approach might be the following. We could take a list of features (installing the mobile app, logging in, badges, following certain topics, etc.), and build a propensity model for each one. We could then rank each feature by its estimated causal effect on engagement, and use the ordered list of features to prioritize the next sprint. (Or we could use these numbers in order to convince the exec team that we need more resources.) This is a slightly more sophisticated version of the idea of building an engagement regression model (or a churn regression model), and examining the weights on each feature.</p>
+<p>Despite writing this post, though, I admit I'm generally not a fan of propensity modeling for many applications in the tech world. (I haven't worked in the medical field, so I don't have a strong opinion on its usefulness there, though I think it's a little more necessary.) I'll save more of my reasons for another time, but after all, causal inference is incredibly difficult, and we're never going to be able to control for all the hidden influencers that can bias a treatment. Also, the mere fact that we have to choose which features to include in our model (and remember: building features is very time-consuming and difficult) means that we already have a strong prior belief on the usefulness of each feature, whereas what we'd really like to do is to discover hidden motivations of engagement that we've never thought of.</p>
+<p>So what can we do instead?</p>
+<p><strong>If we're trying to understand what drives people to become heavy users of the site, why don't we simply <em>ask</em> them?</strong></p>
+<p>In more detail, let's do the following:</p>
+<ul>
+<li>First, we'll run a survey on a couple hundred of users. (We can quickly find hundreds of users through a platform like, say, Mechanical Turk.)</li>
+<li>In the survey, we'll ask them whether their engagement on the site has increased, decreased, or remained about the same over the past year. We'll also ask them to explain possible reasons for their change in activity, and to describe how they use the site currently. We can also ask for supplemental details, like their demographic information.</li>
+<li>Finally, we can filter all the responses for those users who heavily increased their engagement over the past year (or who heavily decreased it, if we're trying to understand churn), and analyse their responses for the reasons.</li>
+</ul>
+<p>For example, here's one interesting response I got when I ran this study at YouTube.</p>
+<p>"I have always been a big music fan, but recently I took up playing the guitar. Because of my new found passion (playing the guitar) my desire to watch concerts has increased. I started watching a whole lot of music festivals and concerts that are posted on Youtube and other music videos. I have spent a lot of time also watching guitar lessons on Youtube (from www.justinguitar.com)."</p>
+<p>This response was actually representative of a general theme the survey uncovered: one big driver of engagement seemed to come from people discovering a new offline hobby, and using YouTube to increase their appreciation of it. People who wanted to start cooking at home would turn to YouTube for recipe videos, people who started playing tennis or some other sport would go to YouTube for lessons or other great shots, college students would look for channels like Khan Academy to supplement their lectures, and so on. In other words, offline activities were driving online growth, and instead of trying to figure out what kinds of <em>online</em> content people were interested in (which articles did they like on Facebook, who did they follow on Twitter, what did they read on Reddit), perhaps we should have been focusing on bringing their physical hobbies into the digital world.</p>
+<p>This "offline hobby" idea certainly wouldn't have been a feature I would have thrown into any engagement model, even if only because it's a very difficult feature to create (how would we know which videos are related to real-world behavior?). But now that we know it's a potentially big driver of growth ("potentially" because, of course, surveys aren't necessarily representative), it's something we can spend a lot more time studying in the logs.</p>
+<h1>End</h1>
+<p>To summarize: propensity modeling is a powerful technique for measuring causal effects in the absence of a randomized experiment. </p>
+<p>Purely correlational analyses on top of observational studies can be very dangerous, after all. To take my favorite example: if we find that cities with more policemen tend to have more crime, does this mean that we should try to reduce the size of our police forces in order to reduce the nation's amount of crime?</p>
+<p>For another example, here's a post by Gelman on contradictory conclusions about hormone replacement therapy: http://andrewgelman.com/2005/01/07/could_propensit/.</p>
+<p>That said, remember that (as always) a model is only as good as the data that you feed it. It's super difficult to account for all the hidden variables that might matter, and what you think might be a well-designed causal model might in fact be missing some hidden factor. (I actually remember hearing from someone that a propensity model on the nurses study generated a flawed conclusion, though I can't find any references to this right now.) So consider whether there are other approaches you can take, whether it's an easier-to-understand causal technique or even just asking your users, and even if a randomized experiment seems too difficult to run, the effort may be well worth the trouble in the end.</p>
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2013-01-08T04:15:00">
+          on&nbsp;Tue 08 January 2013
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p><em>(This is a post from the <a href="http://engineering.twitter.com/2013/01/improving-twitter-search-with-real-time.html">Twitter Engineering Blog</a> that I wrote with <a href="https://twitter.com/alpa">Alpa Jain</a>.)</em></p>
+
+  <p>One of the magical things about Twitter is that it opens a window to the world in <strong>real-time</strong>. An event happens, and just seconds later, it&#8217;s shared for people across the planet to see.</p>
+
+  <p>Consider, for example, what happened when Flight 1549 crashed in the Hudson.</p>
+
+  <blockquote class="twitter-tweet"><p><a href="http://twitpic.com/135xa">http://twitpic.com/135xa</a> - There&#8217;s a plane in the Hudson. I&#8217;m on the ferry going to pick up the people. Crazy.</p>&mdash; Janis Krums (@jkrums) <a href="https://twitter.com/jkrums/status/1121915133" data-datetime="2009-01-15T20:36:04+00:00">January 15, 2009</a></blockquote>
+
+
+  <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+
+
+  <br />
+
+
+  <p>When Osama bin Laden was killed.</p>
+
+  <blockquote class="twitter-tweet"><p>Helicopter hovering above Abbottabad at 1AM (is a rare event).</p>&mdash; Sohaib Athar (@ReallyVirtual) <a href="https://twitter.com/ReallyVirtual/status/64780730286358528" data-datetime="2011-05-01T19:58:24+00:00">May 1, 2011</a></blockquote>
+
+
+
+
+  <br />
+
+
+  <p>Or when Mitt Romney mentioned binders during the presidential debates.</p>
+
+  <blockquote class="twitter-tweet"><p>Boy, I&#8217;m full of women! <a href="https://twitter.com/search/%23debates">#debates</a></p>&mdash; Romney&#8217;s Binder (@RomneysBinder) <a href="https://twitter.com/RomneysBinder/status/258383626918588417" data-datetime="2012-10-17T01:47:11+00:00">October 17, 2012</a></blockquote>
+
+
+
+
+  <br />
+
+
+  <p>When each of these events happened, people instantly came to Twitter &#8211; and, in particular, Twitter search &#8211; to discover what was happening.</p>
+
+  <p>From a search and advertising perspective, however, these sudden events pose several challenges:</p>
+
+  <ol>
+  <li>The queries people perform have never before been seen, so it&#8217;s impossible to know beforehand what they mean. How would you know that #bindersfullofwomen refers to politics, and not office accessories, or that people searching for &#8220;Horses and Bayonets&#8221; are interested in the debates?</li>
+  <li>Since these spikes in search queries are so <a href="http://arxiv.org/abs/1205.6855">short-lived</a>, there’s only a short window of opportunity to learn what they mean.</li>
+  </ol>
+
+
+  <p>So an event happens, people instantly come to Twitter to search for the event, and we need to teach our systems what these queries mean as quickly as we can, because in just a few hours those searches will be gone.</p>
+
+  <p>How do we do this? We&#8217;ll describe a novel real-time human computation engine we built that allows us to find search queries as soon as they&#8217;re trending, send these queries to real humans to be judged, and finally incorporate these human annotations into our backend models.</p>
+
+  <h2>Overview</h2>
+
+  <p>Before we delve into the details, here&#8217;s an overview of how the system works.</p>
+
+  <p>(1) First, we monitor for which search queries are currently popular.</p>
+
+
+  <p>Behind the scenes: we run a Storm topology that tracks statistics on search queries.</p>
+
+
+  <p>For example: the query &#8220;Big Bird&#8221; may be averaging zero searches a day, but at 6pm on October 3, we suddenly see a spike in searches from the US.</p>
+
+
+
+
+  <p>(2) Next, as soon as we discover a new popular search query, we send it to our human evaluation systems, where judges are asked a variety of questions about the query.</p>
+
+
+  <p>Behind the scenes: when the Storm topology detects that a query has reached sufficient popularity, it connects to a Thrift API that dispatches the query to Amazon&#8217;s Mechanical Turk service, and then polls Mechanical Turk for a response.</p>
+
+
+  <p>For example: as soon as we notice &#8220;Big Bird&#8221; spiking, we may ask judges on Mechanical Turk to categorize the query, or provide other information (e.g., whether there are likely to be interesting pictures of the query, or whether the query is about a person or an event) that helps us serve relevant tweets and ads.</p>
+
+
+  <p>Finally, after a response from a judge is received, we push the information to our backend systems, so that the next time a user searches for a query, our machine learning models will make use of the additional information. For example, suppose our human judges tell us that &#8220;Big Bird&#8221; is related to politics; the next time someone performs this search, we know to surface ads by @barackobama or @mittromney, not ads about Dora the Explorer.</p>
+
+  <p>Let’s now explore the first two sections above in more detail.</p>
+
+  <h2>Monitoring for popular queries</h2>
+
+  <p><a href="https://github.com/nathanmarz/storm">Storm</a> is a distributed system for real-time computation. In contrast to <em>batch</em> systems like Hadoop, which often introduce delays of hours or more, Storm allows us to run online data processing algorithms to discover search spikes as soon as they happen.</p>
+
+  <p>In brief, running a job on Storm involves creating a Storm topology that describes the processing steps that must occur, and deploying this topology to a Storm cluster. A topology itself consists of three things:</p>
+
+  <ul>
+  <li><strong>Tuple streams</strong> of data. In our case, these may be tuples of (search query, timestamp).</li>
+  <li><strong>Spouts</strong> that produce these tuple streams. In our case, we attach spouts to our search logs, which get written to every time a search occurs.</li>
+  <li><strong>Bolts</strong> that process tuple streams. In our case, we use bolts for operations like updating total query counts, filtering out non-English queries, and checking whether an ad is currently being served up for the query.</li>
+  </ul>
+
+
+  <p>Here’s a step-by-step walkthrough of how our popular query topology works:</p>
+
+  <ol>
+  <li>Whenever you perform a search on Twitter, the search request gets logged to a <a href="http://kafka.apache.org/">Kafka queue</a>.</li>
+  <li>The Storm topology attaches a spout to this Kafka queue, and the spout emits a tuple containing the query and other metadata (e.g., the time the query was issued and its location) to a bolt for processing.</li>
+  <li>This bolt updates the count of the number of times we&#8217;ve seen this query, checks whether the query is &#8220;currently popular&#8221; (using various statistics like time-decayed counts, the geographic distribution of the query, and the last time this query was sent for annotations), and dispatches it to our human computation pipeline if so.</li>
+  </ol>
+
+
+  <p>One interesting feature of our popularity algorithm is that we often rejudge queries that have been annotated before, since the intent of a search can change. For example, perhaps people normally search for &#8220;Clint Eastwood&#8221; because they&#8217;re interested in his movies, but during the Republican National Convention users may have wanted to see tweets that were more political in nature.</p>
+
+  <h2>Human evaluation of popular search queries</h2>
+
+  <p>At Twitter, we use <a href="http://blog.echen.me/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">human computation</a> for a variety of tasks. (See also <a href="https://github.com/twitter/clockworkraven">Clockwork Raven</a>, an open-source project we built that makes launching tasks easier.) For example, we often run experiments to measure ad relevance and search quality, we use it to gather data to train and evaluate our machine learning models, and in this section we&#8217;ll describe how we use it to boost our understanding of popular search queries.</p>
+
+  <p>So suppose that our Storm topology has detected that the query &#8220;Big Bird&#8221; is suddenly spiking. Since the query may remain popular for only a few hours, we send it off to live humans, who can help us quickly understand what it means; this dispatch is performed via a Thrift service that allows us to design our tasks in a <a href="http://engineering.twitter.com/2012/08/crowdsourced-data-analysis-with.html">web frontend</a>, and later programmatically submit them to Mechanical Turk using any of the different languages we use across Twitter.</p>
+
+  <p>On Mechanical Turk, judges are asked several questions about the query that help us serve better ads. Without going into the exact questions, here are flavors of a few possibilities:</p>
+
+  <ul>
+  <li>What category does the query belong to? For example, &#8220;Stanford&#8221; may typically be an education-related query, but perhaps there&#8217;s a football game between Stanford and Berkeley at the moment, in which case the current search intent would be sports.</li>
+  <li>Does the query refer to a person? If so, who, and what is their Twitter handle if they have one? For example, the query &#8220;Happy Birthday Harry&#8221; may be trending, but it&#8217;s hard to know beforehand which of the numerous celebrities named Harry it&#8217;s referring to. Is it <a href="https://twitter.com/onedirection">One Direction</a>&#8217;s <a href="https://twitter.com/Harry_Styles">Harry Styles</a>, in which case the searcher is likely to be interested in teen pop? Harry Potter, in which case the searcher is likely to be interested in fantasy novels? Or someone else entirely?</li>
+  </ul>
+
+
+  <h3>Turkers in the machine</h3>
+
+  <p>Since humans are core to this system, let&#8217;s describe how our workforce was designed to give us fast, reliable results.</p>
+
+  <p>For completing all our tasks, we use a small <em>custom</em> pool of Mechanical Turk judges to ensure high quality. Other typical possibilities in the crowdsourcing world are to use a static set of in-house judges, to use the standard worker filters that Amazon provides, or to go through an outside company like <a href="http://crowdflower.com/">Crowdflower</a>. We&#8217;ve experimented with these other solutions, and while they have their own benefits, we found that a custom pool fit our needs best for a few reasons:</p>
+
+  <ul>
+  <li>In-house judges can provide high-quality work as well, but they usually work standard hours (for example, 9 to 5 if they work onsite, or a relatively fixed and limited set of hours if they work from home), it can be difficult to communicate with them and schedule them for work, and it&#8217;s hard to scale the hiring of more judges.</li>
+  <li>Using Crowdflower or Amazon&#8217;s standard filters makes it easy to scale the workforce, but their trust algorithms aren&#8217;t perfect, so an endless problem is that spammy workers get through and many of the judgments will be very poor quality. Two methods of combatting low quality are to seed gold standard examples for which you know the true response throughout your task, or to use statistical analysis to determine which workers are the good ones, but these can be time-consuming and expensive to create, and we often run tasks of a free-response researchy nature for which these solutions don&#8217;t work. Another problem is that using these filters gives you a <em>fluid</em>, constantly changing set of workers, which makes them hard to train.</li>
+  </ul>
+
+
+  <p>In contrast:</p>
+
+  <ul>
+  <li>Our custom pool of judges work virtually all day. For many of them, this is a full-time job, and they&#8217;re geographically distributed, so our tasks complete quickly at all hours; we can easily ask for thousands of judgments before lunch, and have them finished by the time we get back, which makes iterating on our experiments much easier.</li>
+  <li>We have several forums, mailing lists, and even live chatrooms set up, all of which makes it easy for judges to ask us questions and to respond to feedback. Our judges will even give <em>us</em> suggestions on how to improve our tasks; for example, when we run categorization tasks, they&#8217;ll often report helpful categories that we should add.</li>
+  <li>Since we only launch tasks on demand, and Amazon provides a ready source of workers if we ever need more, our judges are never idly twiddling their thumbs waiting for tasks or completing busywork, and our jobs are rarely backlogged.</li>
+  <li>Because our judges are culled from the best of Mechanical Turk, they&#8217;re experts at the kinds of tasks we send, and can often provide higher quality at a faster rate than what even in-house judges provide. For example, they&#8217;ll often use the forums and chatrooms to collaborate amongst themselves to give us the best judgments, and they&#8217;re already familiar with the Firefox and Chrome scripts that help them be the most efficient at their work.</li>
+  </ul>
+
+
+  <p>All the benefits described above are especially valuable in this real-time search annotation case:</p>
+
+  <ul>
+  <li>Having highly trusted workers means we don&#8217;t need to wait for multiple annotations on a single search query to confirm  validity, so we can send responses to our backend as soon as a single judge responds. This entire pipeline is design for <em>real-time</em>, after all, so the lower the latency on the human evaluation part, the better.</li>
+  <li>The static nature of our custom pool means that the judges are already familiar with our questions, and don&#8217;t need to be trained again.</li>
+  <li>Because our workers aren&#8217;t limited to a fixed schedule or location, they can work anywhere, anytime &#8211; which is a requirement for this system, since global event spikes on Twitter are not beholden to a 9-to-5.</li>
+  <li>And with the multiple easy avenues of communication we have set up, it&#8217;s easy for us to answer questions that might arise when we add new questions or modify existing ones.</li>
+  </ul>
+
+  <h2>Thanks</h2>
+
+  <p>Thanks to everyone on the Revenue and Storm teams, as well as our Turkers, for helping us launch this project.</p>
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2012-07-31T04:15:00">
+          on&nbsp;Tue 31 July 2012
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>A couple weeks ago, Facebook launched a <a href="http://www.kaggle.com/c/FacebookRecruiting/">link prediction contest</a> on Kaggle, with the goal of recommending missing edges in a social graph. <a href="http://blog.echen.me/2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">I love investigating social networks</a>, so I dug around a little, and since I did well enough to score one of the coveted prizes, I&#8217;ll share my approach here.</p>
+
+  <p>(For some background, the contest provided a training dataset of edges, a test set of nodes, and contestants were asked to predict missing outbound edges on the test set, using mean average precision as the evaluation metric.)</p>
+
+  <h1>Exploration</h1>
+
+  <p>What does the network look like? I wanted to play around with the data a bit first just to get a rough feel, so I made an <a href="http://link-prediction.herokuapp.com/network">app</a> to interact with the network around each node.</p>
+
+  <p>Here&#8217;s a sample:</p>
+
+  <p><a href="http://link-prediction.herokuapp.com/network"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_untrimmed.png" alt="1 Untrimmed Network" /></a></p>
+
+  <p>(Go ahead, click on the picture to <a href="http://link-prediction.herokuapp.com/network">play with the app yourself</a>. It&#8217;s pretty fun.)</p>
+
+  <p>The node in black is a selected node from the training set, and we perform a breadth-first walk of the graph out to a maximum distance of 3 to uncover the local network. Nodes are sized according to their distance from the center, and colored according to a chosen metric (a personalized PageRank in this case; more on this later).</p>
+
+  <p>We can see that the central node is friends with three other users (in red), two of whom have fairly large, disjoint networks.</p>
+
+  <p>There are quite a few dangling nodes (nodes at distance 3 with only one connection to the rest of the local network), though, so let&#8217;s remove these to reveal the core structure:</p>
+
+  <p><a href="http://link-prediction.herokuapp.com/network"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_network.png" alt="1 Untrimmed Network" /></a></p>
+
+  <p>And here&#8217;s an embedded version you can manipulate inline:</p>
+
+  <iframe width="600px" height="500px" src="http://link-prediction.herokuapp.com/network?for_embed=true"></iframe>
+
+
+  <p>Since the default view doesn&#8217;t encode the distinction between following and follower relationships, we can mouse over each node to see who it follows and who it&#8217;s followed by. Here, for example, is the following/follower network of one of the central node&#8217;s friends:</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_friend1.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_friend1.png" alt="1 - Friend1" /></a></p>
+
+  <p>The moused over node is highlighted in black, its friends (users who both follow the node and are followed back in turn) are colored in purple, its followees are teal, and its followers in orange. We can also see that the node shares a friend with the central user (<a href="http://en.wikipedia.org/wiki/Triadic_closure">triadic closure</a>, <em>holla!</em>).</p>
+
+  <p>Here&#8217;s another network, this time of the friend at the bottom:</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_friend2.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_friend2.png" alt="1 - Friend2" /></a></p>
+
+  <p>Interestingly, while the first friend had several only-followers (in orange), the second friend has none. (which suggests, perhaps, a node-level feature that measures how follow-hungry a user is&#8230;)</p>
+
+  <p>And here&#8217;s one more node, a little further out (maybe a celebrity, given it has nothing but followers?):</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_celebrity.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_celebrity.png" alt="1 - Celebrity" /></a></p>
+
+  <h2>The Quiet One</h2>
+
+  <p>Let&#8217;s take a look at another graph, one whose local network is a little smaller:</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/4_network.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/4_network.png" alt="4 Network" /></a></p>
+
+  <h2>A Social Butterfly</h2>
+
+  <p>And one more, whose local network is a little larger:</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/2_network.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/2_network.png" alt="2 Network" /></a></p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/2_friend.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/2_friend.png" alt="2 Network - Friend" /></a></p>
+
+  <p>Again, I encourage everyone to play around with the app <a href="http://link-prediction.herokuapp.com/network">here</a>, and I&#8217;ll come back to the question of coloring each node later.</p>
+
+  <h1>Distributions</h1>
+
+  <p>Next, let&#8217;s take a more quantitative look at the graph.</p>
+
+  <p>Here&#8217;s the distribution of the number of followers of each node in the training set (cut off at 50 followers for a better fit &#8211; the maximum number of followers is 552), as well as the number of users each node is following (again, cut off at 50 &#8211; the maximum here is 1566)</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/training_full_followers.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/training_full_followers.png" alt="Training Followers" /></a></p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/training_full_followees.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/training_full_followees.png" alt="Training Followees" /></a></p>
+
+  <p>Nothing terribly surprising, but that alone is good to verify. (For people tempted to mutter about power laws, I&#8217;ll hold you off with the bitter coldness of <a href="http://cscs.umich.edu/~crshalizi/weblog/491.html">baby Gauss&#8217;s tears</a>.)</p>
+
+  <p>Similarly, here are the same two graphs, but limited to the nodes in the test set alone:</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/test_followers.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/test_followers.png" alt="Test Followers" /></a></p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/test_followees.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/test_followees.png" alt="Test Followees" /></a></p>
+
+  <p>Notice that there are relatively more test set users with 0 followees than in the full training set, and relatively fewer test set users with 0 followers. This information could be used to better simulate a validation set for model selection, though I didn&#8217;t end up doing this myself.</p>
+
+  <h1>Preliminary Probes</h1>
+
+  <p>Finally, let&#8217;s move on to the models themselves.</p>
+
+  <p>In order to quickly get up and running on a couple prediction algorithms, I started with some unsupervised approaches. For example, after building a new validation set* to test performance offline, I tried:</p>
+
+  <ul>
+  <li>Recommending users who follow you (but you don&#8217;t follow in return)</li>
+  <li>Recommending users similar to you (when representing users as sets of their followers, and using cosine similarity and Jaccard similarity as the similarity metric)</li>
+  <li>Recommending users based on a personalized PageRank score</li>
+  <li>Recommending users that the people you follow also follow</li>
+  </ul>
+
+
+  <p>And so on, combining the votes of these algorithms in a fairly ad-hoc way (e.g., by taking the majority vote or by ordering by the number of followers).</p>
+
+  <p>This worked quite well actually, but I&#8217;d been planning to move on to a more machine learned model-based approach from the beginning, so I did that next.</p>
+
+  <p>*My validation set was formed by deleting random edges from the full training set. A slightly better approach, as mentioned above, might have been to more accurately simulate the distribution of the official test set, but I didn&#8217;t end up trying this out myself.</p>
+
+  <h1>Candidate Selection</h1>
+
+  <p>In order to run a machine learning algorithm to recommend edges (which would take two nodes, a source and a candidate destination, and generate a score measuring the likelihood that the source would follow the destination), it&#8217;s necessary to prune the set of candidates to run the algorithm on.</p>
+
+  <p>I used two approaches for this filtering step, both based on random walks on the graph.</p>
+
+  <h2>Personalized PageRank</h2>
+
+  <p>The first approach was to calculate a personalized PageRank around each source node.</p>
+
+  <p>Briefly, a personalized PageRank is like standard PageRank, except that when randomly teleporting to a new node, the surfer always teleports back to the given source node being personalized (rather than to a node chosen uniformly at random, as in the classic PageRank algorithm).</p>
+
+  <p>That is, the random surfer in the personalized PageRank model works as follows:</p>
+
+  <ul>
+  <li>He starts at the source node $X$ that we want to calculate a personalized PageRank around.</li>
+  <li>At step $i$: with probability $p$, the surfer moves to a neighboring node chosen uniformly at random; with probability $1-p$, the surfer instead teleports back to the original source node $X$.</li>
+  <li>The limiting probability that the surfer is at node $N$ is then the personalized PageRank score of node $N$ around $X$.</li>
+  </ul>
+
+
+  <p>Here&#8217;s some Scala code that computes approximate personalized PageRank scores and takes the highest-scoring nodes as the candidates to feed into the machine learning model:</p>
+
+  <figcaption><span>Personalized PageRank</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  <span class="line-number">27</span>
+  <span class="line-number">28</span>
+  <span class="line-number">29</span>
+  <span class="line-number">30</span>
+  <span class="line-number">31</span>
+  <span class="line-number">32</span>
+  <span class="line-number">33</span>
+  <span class="line-number">34</span>
+  <span class="line-number">35</span>
+  <span class="line-number">36</span>
+  <span class="line-number">37</span>
+  <span class="line-number">38</span>
+  <span class="line-number">39</span>
+  <span class="line-number">40</span>
+  <span class="line-number">41</span>
+  <span class="line-number">42</span>
+  <span class="line-number">43</span>
+  <span class="line-number">44</span>
+  <span class="line-number">45</span>
+  <span class="line-number">46</span>
+  <span class="line-number">47</span>
+  <span class="line-number">48</span>
+  <span class="line-number">49</span>
+  <span class="line-number">50</span>
+  <span class="line-number">51</span>
+  <span class="line-number">52</span>
+  <span class="line-number">53</span>
+  <span class="line-number">54</span>
+  <span class="line-number">55</span>
+  <span class="line-number">56</span>
+  <span class="line-number">57</span>
+  <span class="line-number">58</span>
+  <span class="line-number">59</span>
+  <span class="line-number">60</span>
+  <span class="line-number">61</span>
+  <span class="line-number">62</span>
+  <span class="line-number">63</span>
+  <span class="line-number">64</span>
+  <span class="line-number">65</span>
+  <span class="line-number">66</span>
+  <span class="line-number">67</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Calculate a personalized PageRank around the given user, and return </span>
+  </span><span class="line"><span class="cm"> * a list of the nodes with the highest personalized PageRank scores.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * @return A list of (node, probability of landing at this node after</span>
+  </span><span class="line"><span class="cm"> *         running a personalized PageRank for K iterations) pairs.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">pageRank</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">List</span><span class="o">[(</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">)]</span> <span class="k">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="c1">// This map holds the probability of landing at each node, up to the </span>
+  </span><span class="line">  <span class="c1">// current iteration.</span>
+  </span><span class="line">  <span class="k">val</span> <span class="n">probs</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">]()</span>
+  </span><span class="line">  <span class="n">probs</span><span class="o">(</span><span class="n">user</span><span class="o">)</span> <span class="k">=</span> <span class="mi">1</span> <span class="c1">// We start at this user.</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="k">val</span> <span class="n">pageRankProbs</span> <span class="k">=</span> <span class="n">pageRankHelper</span><span class="o">(</span><span class="n">start</span><span class="o">,</span> <span class="n">probs</span><span class="o">,</span> <span class="nc">NumPagerankIterations</span><span class="o">)</span>
+  </span><span class="line">  <span class="n">pageRankProbs</span><span class="o">.</span><span class="n">toList</span>
+  </span><span class="line">               <span class="o">.</span><span class="n">sortBy</span> <span class="o">{</span> <span class="o">-</span><span class="k">_</span><span class="o">.</span><span class="n">_2</span> <span class="o">}</span>
+  </span><span class="line">               <span class="o">.</span><span class="n">filter</span> <span class="o">{</span> <span class="k">case</span> <span class="o">(</span><span class="n">node</span><span class="o">,</span> <span class="n">score</span><span class="o">)</span> <span class="k">=&gt;</span>
+  </span><span class="line">                  <span class="o">!</span><span class="n">getFollowings</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">contains</span><span class="o">(</span><span class="n">node</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="n">node</span> <span class="o">!=</span> <span class="n">user</span>
+  </span><span class="line">                <span class="o">}</span>
+  </span><span class="line">                <span class="o">.</span><span class="n">take</span><span class="o">(</span><span class="nc">MaxNodesToKeep</span><span class="o">)</span>
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Simulates running a personalized PageRank for one iteration.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * Parameters:</span>
+  </span><span class="line"><span class="cm"> * start - the start node to calculate the personalized PageRank around</span>
+  </span><span class="line"><span class="cm"> * probs - a map from nodes to the probability of being at that node at </span>
+  </span><span class="line"><span class="cm"> *         the start of the current iteration</span>
+  </span><span class="line"><span class="cm"> * numIterations - the number of iterations remaining</span>
+  </span><span class="line"><span class="cm"> * alpha - with probability alpha, we follow a neighbor; with probability</span>
+  </span><span class="line"><span class="cm"> *         1 - alpha, we teleport back to the start node</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * @return A map of node -&gt; probability of landing at that node after the</span>
+  </span><span class="line"><span class="cm"> *         specified number of iterations.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">pageRankHelper</span><span class="o">(</span><span class="n">start</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">probs</span><span class="k">:</span> <span class="kt">Map</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">],</span> <span class="n">numIterations</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span>
+  </span><span class="line">                   <span class="n">alpha</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">)</span><span class="k">:</span> <span class="kt">Map</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">numIterations</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">    <span class="n">probs</span>
+  </span><span class="line">  <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+  </span><span class="line">    <span class="c1">// Holds the updated set of probabilities, after this iteration.</span>
+  </span><span class="line">    <span class="k">val</span> <span class="n">probsPropagated</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">]()</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="c1">// With probability 1 - alpha, we teleport back to the start node.</span>
+  </span><span class="line">    <span class="n">probsPropagated</span><span class="o">(</span><span class="n">start</span><span class="o">)</span> <span class="k">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="c1">// Propagate the previous probabilities...</span>
+  </span><span class="line">    <span class="n">probs</span><span class="o">.</span><span class="n">foreach</span> <span class="o">{</span> <span class="k">case</span> <span class="o">(</span><span class="n">node</span><span class="o">,</span> <span class="n">prob</span><span class="o">)</span> <span class="k">=&gt;</span>
+  </span><span class="line">      <span class="k">val</span> <span class="n">forwards</span> <span class="k">=</span> <span class="n">getFollowings</span><span class="o">(</span><span class="n">node</span><span class="o">)</span>
+  </span><span class="line">      <span class="k">val</span> <span class="n">backwards</span> <span class="k">=</span> <span class="n">getFollowers</span><span class="o">(</span><span class="n">node</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line">      <span class="c1">// With probability alpha, we move to a follower...</span>
+  </span><span class="line">      <span class="c1">// And each node distributes its current probability equally to </span>
+  </span><span class="line">      <span class="c1">// its neighbors.</span>
+  </span><span class="line">      <span class="k">val</span> <span class="n">probToPropagate</span> <span class="k">=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">prob</span> <span class="o">/</span> <span class="o">(</span><span class="n">forwards</span><span class="o">.</span><span class="n">size</span> <span class="o">+</span> <span class="n">backwards</span><span class="o">.</span><span class="n">size</span><span class="o">)</span>
+  </span><span class="line">      <span class="o">(</span><span class="n">forwards</span><span class="o">.</span><span class="n">toList</span> <span class="o">++</span> <span class="n">backwards</span><span class="o">.</span><span class="n">toList</span><span class="o">).</span><span class="n">foreach</span> <span class="o">{</span> <span class="n">neighbor</span> <span class="k">=&gt;</span>
+  </span><span class="line">        <span class="k">if</span> <span class="o">(!</span><span class="n">probsPropagated</span><span class="o">.</span><span class="n">contains</span><span class="o">(</span><span class="n">neighbor</span><span class="o">))</span> <span class="o">{</span>
+  </span><span class="line">          <span class="n">probsPropagated</span><span class="o">(</span><span class="n">neighbor</span><span class="o">)</span> <span class="k">=</span> <span class="mi">0</span>
+  </span><span class="line">        <span class="o">}</span>
+  </span><span class="line">        <span class="n">probsPropagated</span><span class="o">(</span><span class="n">neighbor</span><span class="o">)</span> <span class="o">+=</span> <span class="n">probToPropagate</span>
+  </span><span class="line">      <span class="o">}</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="n">pageRankHelper</span><span class="o">(</span><span class="n">start</span><span class="o">,</span> <span class="n">probsPropagated</span><span class="o">,</span> <span class="n">numIterations</span> <span class="o">-</span> <span class="mi">1</span><span class="o">,</span> <span class="n">alpha</span><span class="o">)</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>Propagation Score</h2>
+
+  <p>Another approach I used, based on <a href="http://www.kaggle.com/c/FacebookRecruiting/forums/t/2082/0-711-is-the-new-0">a proposal by another contestant on the Kaggle forums</a>, works as follows:</p>
+
+  <ul>
+  <li>Start at a specified user node and give it some score.</li>
+  <li>In the first iteration, this user propagates its score equally to its neighbors.</li>
+  <li>In the second iteration, each user duplicates and keeps half of its score S. It then propagates S equally to its neighbors.</li>
+  <li>In subsequent iterations, the process is repeated, except that neighbors reached via a backwards link don&#8217;t duplicate and keep half of their score. (The idea is that we want the score to reach followees and not followers.)</li>
+  </ul>
+
+
+  <p>Here&#8217;s some Scala code to calculate these propagation scores:</p>
+
+  <figcaption><span>Propagation Score</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  <span class="line-number">27</span>
+  <span class="line-number">28</span>
+  <span class="line-number">29</span>
+  <span class="line-number">30</span>
+  <span class="line-number">31</span>
+  <span class="line-number">32</span>
+  <span class="line-number">33</span>
+  <span class="line-number">34</span>
+  <span class="line-number">35</span>
+  <span class="line-number">36</span>
+  <span class="line-number">37</span>
+  <span class="line-number">38</span>
+  <span class="line-number">39</span>
+  <span class="line-number">40</span>
+  <span class="line-number">41</span>
+  <span class="line-number">42</span>
+  <span class="line-number">43</span>
+  <span class="line-number">44</span>
+  <span class="line-number">45</span>
+  <span class="line-number">46</span>
+  <span class="line-number">47</span>
+  <span class="line-number">48</span>
+  <span class="line-number">49</span>
+  <span class="line-number">50</span>
+  <span class="line-number">51</span>
+  <span class="line-number">52</span>
+  <span class="line-number">53</span>
+  <span class="line-number">54</span>
+  <span class="line-number">55</span>
+  <span class="line-number">56</span>
+  <span class="line-number">57</span>
+  <span class="line-number">58</span>
+  <span class="line-number">59</span>
+  <span class="line-number">60</span>
+  <span class="line-number">61</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Calculate propagation scores around the current user.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * In the first propagation round, we</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * - Give the starting node N an initial score S.</span>
+  </span><span class="line"><span class="cm"> * - Propagate the score equally to each of N&#39;s neighbors (followers </span>
+  </span><span class="line"><span class="cm"> *   and followings).</span>
+  </span><span class="line"><span class="cm"> * - Each first-level neighbor then duplicates and keeps half of its score</span>
+  </span><span class="line"><span class="cm"> *   and then propagates the original again to its neighbors.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * In further rounds, neighbors then repeat the process, except that neighbors </span>
+  </span><span class="line"><span class="cm"> * traveled to via a backwards/follower link don&#39;t keep half of their score.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * @return a sorted list of (node, propagation score) pairs.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">propagate</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">List</span><span class="o">[(</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">)]</span> <span class="k">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="k">val</span> <span class="n">scores</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">]()</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="c1">// We propagate the score equally to all neighbors.</span>
+  </span><span class="line">  <span class="k">val</span> <span class="n">scoreToPropagate</span> <span class="k">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="o">(</span><span class="n">getFollowings</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">size</span> <span class="o">+</span> <span class="n">getFollowers</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">size</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="o">(</span><span class="n">getFollowings</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">toList</span> <span class="o">++</span> <span class="n">getFollowers</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">toList</span><span class="o">).</span><span class="n">foreach</span> <span class="o">{</span> <span class="n">x</span> <span class="k">=&gt;</span>
+  </span><span class="line">    <span class="c1">// Propagate the score...</span>
+  </span><span class="line">    <span class="n">continuePropagation</span><span class="o">(</span><span class="n">scores</span><span class="o">,</span> <span class="n">x</span><span class="o">,</span> <span class="n">scoreToPropagate</span><span class="o">,</span> <span class="mi">1</span><span class="o">)</span>
+  </span><span class="line">    <span class="c1">// ...and make sure it keeps half of it for itself.</span>
+  </span><span class="line">    <span class="n">scores</span><span class="o">(</span><span class="n">x</span><span class="o">)</span> <span class="k">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">getOrElse</span><span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="mi">0</span><span class="k">:</span> <span class="kt">Double</span><span class="o">)</span> <span class="o">+</span> <span class="n">scoreToPropagate</span> <span class="o">/</span> <span class="mi">2</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="n">scores</span><span class="o">.</span><span class="n">toList</span><span class="o">.</span><span class="n">sortBy</span> <span class="o">{</span> <span class="o">-</span><span class="k">_</span><span class="o">.</span><span class="n">_2</span> <span class="o">}</span>
+  </span><span class="line">               <span class="o">.</span><span class="n">filter</span> <span class="o">{</span> <span class="n">nodeAndScore</span> <span class="k">=&gt;</span>
+  </span><span class="line">                 <span class="k">val</span> <span class="n">node</span> <span class="k">=</span> <span class="n">nodeAndScore</span><span class="o">.</span><span class="n">_1</span>
+  </span><span class="line">                 <span class="o">!</span><span class="n">getFollowings</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">contains</span><span class="o">(</span><span class="n">node</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="n">node</span> <span class="o">!=</span> <span class="n">user</span>
+  </span><span class="line">                <span class="o">}</span>
+  </span><span class="line">                <span class="o">.</span><span class="n">take</span><span class="o">(</span><span class="nc">MaxNodesToKeep</span><span class="o">)</span>
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * In further rounds, neighbors repeat the process above, except that neighbors</span>
+  </span><span class="line"><span class="cm"> * traveled to via a backwards/follower link don&#39;t keep half of their score.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">continuePropagation</span><span class="o">(</span><span class="n">scores</span><span class="k">:</span> <span class="kt">Map</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">],</span> <span class="n">user</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">score</span><span class="k">:</span> <span class="kt">Double</span><span class="o">,</span>
+  </span><span class="line">                        <span class="n">currIteration</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">currIteration</span> <span class="o">&lt;</span> <span class="nc">NumIterations</span> <span class="o">&amp;&amp;</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">    <span class="k">val</span> <span class="n">scoreToPropagate</span> <span class="k">=</span> <span class="n">score</span> <span class="o">/</span> <span class="o">(</span><span class="n">getFollowings</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">size</span> <span class="o">+</span> <span class="n">getFollowers</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">size</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="n">getFollowings</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">foreach</span> <span class="o">{</span> <span class="n">x</span> <span class="k">=&gt;</span>
+  </span><span class="line">      <span class="c1">// Propagate the score...        </span>
+  </span><span class="line">      <span class="n">continuePropagation</span><span class="o">(</span><span class="n">scores</span><span class="o">,</span> <span class="n">x</span><span class="o">,</span> <span class="n">scoreToPropagate</span><span class="o">,</span> <span class="n">currIteration</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span>
+  </span><span class="line">      <span class="c1">// ...and make sure it keeps half of it for itself.        </span>
+  </span><span class="line">      <span class="n">scores</span><span class="o">(</span><span class="n">x</span><span class="o">)</span> <span class="k">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">getOrElse</span><span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="mi">0</span><span class="k">:</span> <span class="kt">Double</span><span class="o">)</span> <span class="o">+</span> <span class="n">scoreToPropagate</span> <span class="o">/</span> <span class="mi">2</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="n">getFollowers</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">foreach</span> <span class="o">{</span> <span class="n">x</span> <span class="k">=&gt;</span>
+  </span><span class="line">      <span class="c1">// Propagate the score...</span>
+  </span><span class="line">      <span class="n">continuePropagation</span><span class="o">(</span><span class="n">scores</span><span class="o">,</span> <span class="n">x</span><span class="o">,</span> <span class="n">scoreToPropagate</span><span class="o">,</span> <span class="n">currIteration</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span>
+  </span><span class="line">      <span class="c1">// ...but backward links (except for the starting node&#39;s immediate</span>
+  </span><span class="line">      <span class="c1">// neighbors) don&#39;t keep any score for themselves.</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>I played around with tweaking some parameters in both approaches (e.g., weighting followers and followees differently), but the natural defaults (as used in the code above) ended up performing the best.</p>
+
+  <h1>Features</h1>
+
+  <p>After pruning the set of candidate destination nodes to a more feasible level, I fed pairs of (source, destination) nodes into a machine learning model. From each pair, I extracted around 30 features in total.</p>
+
+  <p>As mentioned above, one feature that worked quite well on its own was whether the destination node already follows the source.</p>
+
+  <p>I also used a wide set of similarity-based features, for example, the Jaccard similarity between the source and destination when both are represented as sets of their followers, when both are represented as sets of their followees, or when one is represented as a set of followers while the other is represented as a set of followees.</p>
+
+  <figcaption><span>Similarity Metrics</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  <span class="line-number">27</span>
+  <span class="line-number">28</span>
+  <span class="line-number">29</span>
+  <span class="line-number">30</span>
+  <span class="line-number">31</span>
+  <span class="line-number">32</span>
+  <span class="line-number">33</span>
+  <span class="line-number">34</span>
+  <span class="line-number">35</span>
+  <span class="line-number">36</span>
+  <span class="line-number">37</span>
+  <span class="line-number">38</span>
+  <span class="line-number">39</span>
+  <span class="line-number">40</span>
+  <span class="line-number">41</span>
+  <span class="line-number">42</span>
+  <span class="line-number">43</span>
+  <span class="line-number">44</span>
+  <span class="line-number">45</span>
+  <span class="line-number">46</span>
+  <span class="line-number">47</span>
+  <span class="line-number">48</span>
+  <span class="line-number">49</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="k">abstract</span> <span class="k">class</span> <span class="nc">SimilarityMetric</span><span class="o">[</span><span class="kt">T</span><span class="o">]</span> <span class="o">{</span>
+  </span><span class="line">  <span class="k">def</span> <span class="n">apply</span><span class="o">(</span><span class="n">set1</span><span class="k">:</span> <span class="kt">Set</span><span class="o">[</span><span class="kt">T</span><span class="o">],</span> <span class="n">set2</span><span class="k">:</span> <span class="kt">Set</span><span class="o">[</span><span class="kt">T</span><span class="o">])</span><span class="k">:</span> <span class="kt">Double</span><span class="o">;</span>
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="k">object</span> <span class="nc">JaccardSimilarity</span> <span class="k">extends</span> <span class="nc">SimilarityMetric</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="o">{</span>
+  </span><span class="line">  <span class="cm">/**</span>
+  </span><span class="line"><span class="cm">   * Returns the Jaccard similarity between two sets, 0 if both are empty.</span>
+  </span><span class="line"><span class="cm">   */</span>
+  </span><span class="line">  <span class="k">def</span> <span class="n">apply</span><span class="o">(</span><span class="n">set1</span><span class="k">:</span> <span class="kt">Set</span><span class="o">[</span><span class="kt">Int</span><span class="o">],</span> <span class="n">set2</span><span class="k">:</span> <span class="kt">Set</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">    <span class="k">val</span> <span class="n">union</span> <span class="k">=</span> <span class="o">(</span><span class="n">set1</span><span class="o">.</span><span class="n">union</span><span class="o">(</span><span class="n">set2</span><span class="o">)).</span><span class="n">size</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">union</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">      <span class="mi">0</span>
+  </span><span class="line">    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+  </span><span class="line">      <span class="o">(</span><span class="n">set1</span> <span class="o">&amp;</span> <span class="n">set2</span><span class="o">).</span><span class="n">size</span><span class="o">.</span><span class="n">toFloat</span> <span class="o">/</span> <span class="n">union</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="k">object</span> <span class="nc">CosineSimilarity</span> <span class="k">extends</span> <span class="nc">SimilarityMetric</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="o">{</span>
+  </span><span class="line">  <span class="cm">/**</span>
+  </span><span class="line"><span class="cm">   * Returns the cosine similarity between two sets, 0 if both are empty.</span>
+  </span><span class="line"><span class="cm">   */</span>
+  </span><span class="line">  <span class="k">def</span> <span class="n">apply</span><span class="o">(</span><span class="n">set1</span><span class="k">:</span> <span class="kt">Set</span><span class="o">[</span><span class="kt">Int</span><span class="o">],</span> <span class="n">set2</span><span class="k">:</span> <span class="kt">Set</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">set1</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">set2</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">      <span class="mi">0</span>
+  </span><span class="line">    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+  </span><span class="line">      <span class="o">(</span><span class="n">set1</span> <span class="o">&amp;</span> <span class="n">set2</span><span class="o">).</span><span class="n">size</span><span class="o">.</span><span class="n">toFloat</span> <span class="o">/</span> <span class="o">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="o">(</span><span class="n">set1</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">set2</span><span class="o">.</span><span class="n">size</span><span class="o">))</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// ************</span>
+  </span><span class="line"><span class="c1">// * FEATURES *</span>
+  </span><span class="line"><span class="c1">// ************</span>
+  </span><span class="line">
+  </span><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Returns the similarity between user1 and user2 when both are represented as</span>
+  </span><span class="line"><span class="cm"> * sets of followers.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">similarityByFollowers</span><span class="o">(</span><span class="n">user1</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">user2</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+  </span><span class="line">                         <span class="o">(</span><span class="k">implicit</span> <span class="n">similarity</span><span class="k">:</span> <span class="kt">SimilarityMetric</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="n">similarity</span><span class="o">.</span><span class="n">apply</span><span class="o">(</span><span class="n">getFollowersWithout</span><span class="o">(</span><span class="n">user1</span><span class="o">,</span> <span class="n">user2</span><span class="o">),</span>
+  </span><span class="line">                   <span class="n">getFollowersWithout</span><span class="o">(</span><span class="n">user2</span><span class="o">,</span> <span class="n">user1</span><span class="o">))</span>
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// etc.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Along the same lines, I also computed a similarity score between the destination node and the source node&#8217;s followees, and several variations thereof.</p>
+
+  <figcaption><span>Extended Similarity Scores</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Iterate over each of user1&#39;s followings, compute their similarity with</span>
+  </span><span class="line"><span class="cm"> * user2 when both are represented as sets of followers, and return the </span>
+  </span><span class="line"><span class="cm"> * sum of these similarities.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">followerBasedSimilarityToFollowing</span><span class="o">(</span><span class="n">user1</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">user2</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+  </span><span class="line">  <span class="o">(</span><span class="k">implicit</span> <span class="n">similarity</span><span class="k">:</span> <span class="kt">SimilarityMetric</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">    <span class="n">getFollowingsWithout</span><span class="o">(</span><span class="n">user1</span><span class="o">,</span> <span class="n">user2</span><span class="o">)</span>
+  </span><span class="line">                        <span class="o">.</span><span class="n">map</span> <span class="o">{</span> <span class="n">similarityByFollowers</span><span class="o">(</span><span class="k">_</span><span class="o">,</span> <span class="n">user2</span><span class="o">)(</span><span class="n">similarity</span><span class="o">)</span> <span class="o">}</span>
+  </span><span class="line">                        <span class="o">.</span><span class="n">sum</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Other features included the number of followers and followees of each node, the ratio of these, the personalized PageRank and propagation scores themselves, the number of followers in common, and triangle/closure-type features (e.g., whether the source node is friends with a node X who in turn is a friend of the destination node).</p>
+
+  <p>If I had had more time, I would probably have tried weighted and more regularized versions of some of these features as well (e.g., downweighting nodes with large numbers of followers when computing cosine similarity scores based on followees, or shrinking the scores of nodes we have little information about).</p>
+
+  <h1>Feature Understanding</h1>
+
+  <p>But what are these features actually <em>doing</em>? Let&#8217;s use the same app I built before to take a look.</p>
+
+  <p>Here&#8217;s the local network of node 317 (different from the node above), where each node is colored by its personalized PageRank (higher scores are in darker red):</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_propagation.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_propagation.png" alt="317 - Personalized PageRank" /></a></p>
+
+  <p>If we look at the following vs. follower relationships of the central node (recall that purple is friends, teal is followings, orange is followers):</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_following_followers.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_following_followers.png" alt="317 - Personalized PageRank" /></a></p>
+
+  <p>&#8230;we can see that, as expected (because edges that represented both following and follower were double-weighted in my PageRank calculation), the darkest red nodes are those that are friends with the central node, while those in a following-only or follower-only relationship have a lower score.</p>
+
+  <p>How does the propagation score compare to personalized PageRank? Here, I colored each node according to the log ratio of its propagation score and personalized PageRank:</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_log_ratio.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_log_ratio.png" alt="317 - Log Ratio" /></a></p>
+
+  <p>Comparing this coloring with the local follow/follower network:</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_propagation_local.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_propagation_local.png" alt="317 - Local Network of Node" /></a></p>
+
+  <p>&#8230;we can see that followed nodes (in teal) receive a higher propagation weight than friend nodes (in purple), while follower nodes (in orange) receive almost no propagation score at all.</p>
+
+  <p>Going back to node 1, let&#8217;s look at a different metric. Here, each node is colored according to its Jaccard similarity with the source, when nodes are represented by the set of their followers:</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_sim_by_followers.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_sim_by_followers.png" alt="1 - Similarity by Followers" /></a></p>
+
+  <p>We can see that, while the PageRank and propagation metrics tended to favor nodes <em>close</em> to the central node, the Jaccard similarity feature helps us explore nodes that are further out.</p>
+
+  <p>However, if we look the high-scoring nodes more closely, we see that they often have only a single connection to the rest of the network:</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_single_connection.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_single_connection.png" alt="1 - Single Connection" /></a></p>
+
+  <p>In other words, their high Jaccard similarity is due to the fact that they don&#8217;t have many connections to begin with. This suggests that some regularization or shrinking is in order.</p>
+
+  <p>So here&#8217;s a regularized version of Jaccard similarity, where we downweight nodes with few connections:</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1-regularized.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1-regularized.png" alt="1 - Regularized" /></a></p>
+
+  <p>We can see that the outlier nodes are much more muted this time around.</p>
+
+  <p>For a starker difference, compare the following two graphs of the Jaccard similarity metric around node 317 (the first graph is an unregularized version, the second is regularized):</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_unregularized.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_unregularized.png" alt="317 - Unregularized" /></a></p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_regularized.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_regularized.png" alt="317 - Regularized" /></a></p>
+
+  <p>Notice, in particular, how the popular node in the top left and the popular nodes at the bottom have a much higher score when we regularize.</p>
+
+  <p>And again, there are other networks and features I haven&#8217;t mentioned here, so play around and discover them on the <a href="http://link-prediction.herokuapp.com/">app</a> itself.</p>
+
+  <h1>Models</h1>
+
+  <p>For the machine learning algorithms on top of my features, I experimented with two types of models: logistic regression (using both L1 and L2 regularization) and random forests. (If I had more time, I would probably have done some more parameter tuning and maybe tried gradient boosted trees as well.)</p>
+
+  <p>So what is a random forest? I wrote an <a href="http://www.quora.com/Random-Forests/How-do-random-forests-work-in-laymans-terms/answer/Edwin-Chen-1">old (layman&#8217;s) post</a> on it <a href="http://www.quora.com/Random-Forests/How-do-random-forests-work-in-laymans-terms/answer/Edwin-Chen-1">here</a>, but since nobody ever clicks on these links, let&#8217;s copy it over:</p>
+
+  <blockquote><p>Suppose you&#8217;re very indecisive, so whenever you want to watch a movie, you ask your friend Willow if she thinks you&#8217;ll like it. In order to answer, Willow first needs to figure out what movies you like, so you give her a bunch of movies and tell her whether you liked each one or not (i.e., you give her a labeled training set). Then, when you ask her if she thinks you&#8217;ll like movie X or not, she plays a 20 questions-like game with IMDB, asking questions like &#8220;Is X a romantic movie?&#8221;, &#8220;Does Johnny Depp star in X?&#8221;, and so on. She asks more informative questions first (i.e., she maximizes the information gain of each question), and gives you a yes/no answer at the end.</p><p>    Thus, Willow is a decision tree for your movie preferences.</p><p>    But Willow is only human, so she doesn&#8217;t always generalize your preferences very well (i.e., she overfits). In order to get more accurate recommendations, you&#8217;d like to ask a bunch of your friends, and watch movie X if most of them say they think you&#8217;ll like it. That is, instead of asking only Willow, you want to ask Woody, Apple, and Cartman as well, and they vote on whether you&#8217;ll like a movie (i.e., you build an ensemble classifier, aka a forest in this case).</p><p>    Now you don&#8217;t want each of your friends to do the same thing and give you the same answer, so you first give each of them slightly different data. After all, you&#8217;re not absolutely sure of your preferences yourself &#8211; you told Willow you loved Titanic, but maybe you were just happy that day because it was your birthday, so maybe some of your friends shouldn&#8217;t use the fact that you liked Titanic in making their recommendations. Or maybe you told her you loved Cinderella, but actually you *really really* loved it, so some of your friends should give Cinderella more weight. So instead of giving your friends the same data you gave Willow, you give them slightly perturbed versions. You don&#8217;t change your love/hate decisions, you just say you love/hate some movies a little more or less (you give each of your friends a bootstrapped version of your original training data). For example, whereas you told Willow that you liked Black Swan and Harry Potter and disliked Avatar, you tell Woody that you liked Black Swan so much you watched it twice, you disliked Avatar, and don&#8217;t mention Harry Potter at all.</p><p>    By using this ensemble, you hope that while each of your friends gives somewhat idiosyncratic recommendations (Willow thinks you like vampire movies more than you do, Woody thinks you like Pixar movies, and Cartman thinks you just hate everything), the errors get canceled out in the majority. Thus, your friends now form a bagged (bootstrap aggregated) forest of your movie preferences.</p><p>    There&#8217;s still one problem with your data, however. While you loved both Titanic and Inception, it wasn&#8217;t because you like movies that star Leonardio DiCaprio. Maybe you liked both movies for other reasons. Thus, you don&#8217;t want your friends to all base their recommendations on whether Leo is in a movie or not. So when each friend asks IMDB a question, only a random subset of the possible questions is allowed (i.e., when you&#8217;re building a decision tree, at each node you use some randomness in selecting the attribute to split on, say by randomly selecting an attribute or by selecting an attribute from a random subset). This means your friends aren&#8217;t allowed to ask whether Leonardo DiCaprio is in the movie whenever they want. So whereas previously you injected randomness at the data level, by perturbing your movie preferences slightly, now you&#8217;re injecting randomness at the model level, by making your friends ask different questions at different times.</p><p>    And so your friends now form a random forest.</p></blockquote>
+
+
+  <p>Moving on, I essentially trained <a href="http://scikit-learn.org/stable/">scikit-learn</a>&#8217;s classifiers on an equal split of true and false edges (sampled from the output of my pruning step, in order to match the distribution I&#8217;d get when applying my algorithm to the official test set), and compared performance on the validation set I made, with a small amount of parameter tuning:</p>
+
+  <figcaption><span>Random Forest</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  </pre></td><td class="code"><pre><code class="python"><span class="line"><span class="c">########################################</span>
+  </span><span class="line"><span class="c"># STEP 1: Read in the training examples.</span>
+  </span><span class="line"><span class="c">########################################</span>
+  </span><span class="line"><span class="n">truths</span> <span class="o">=</span> <span class="p">[]</span> <span class="c"># A truth is 1 (for a known true edge) or 0 (for a false edge).</span>
+  </span><span class="line"><span class="n">training_examples</span> <span class="o">=</span> <span class="p">[]</span> <span class="c"># Each training example is an array of features.</span>
+  </span><span class="line"><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">open</span><span class="p">(</span><span class="n">TRAINING_SET_WITH_FEATURES_FILENAME</span><span class="p">):</span>
+  </span><span class="line">  <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">)]</span>
+  </span><span class="line">  <span class="n">truth</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+  </span><span class="line">  <span class="n">training_example_features</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="n">truths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">truth</span><span class="p">)</span>
+  </span><span class="line">  <span class="n">training_examples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">training_example_features</span><span class="p">)</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c">#############################</span>
+  </span><span class="line"><span class="c"># STEP 2: Train a classifier.</span>
+  </span><span class="line"><span class="c">#############################</span>
+  </span><span class="line"><span class="n">rf</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">(</span><span class="n">n_estimators</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span> <span class="n">compute_importances</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">oob_score</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
+  </span><span class="line"><span class="n">rf</span> <span class="o">=</span> <span class="n">rf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training_examples</span><span class="p">,</span> <span class="n">truths</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>So let&#8217;s look at the variable importance scores as determined by one of my random forest models, which (unsurprisingly) consistently outperformed logistic regression.</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/rf-importance-scores.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/rf-importance-scores.png" alt="Random Forest Importance Scores" /></a></p>
+
+  <p>The random forest classifier here is one of my earlier models (using a slightly smaller subset of my full suite of features), where the targeting step consisted of taking the top 25 nodes with the highest propagation scores.</p>
+
+  <p>We can see that the most important variables are:</p>
+
+  <ul>
+  <li>Personalized PageRank scores. (I put in both normalized and unnormalized versions, where the normalized versions consisted of taking all the candidates for a particular source node, and scaling them so that the maximum personalized PageRank score was 1.)</li>
+  <li>Whether the destination node already follows the source.</li>
+  <li>How similar the source node is to the people the destination node is following, when each node is represented as a set of followers. (Note that this is more or less measuring how likely the destination is to follow the source, which we already saw is a good predictor of whether the source is likely to follow the destination.) Plus several variations on this theme (e.g., how similar the destination node is to the source node&#8217;s followers, when each node is represented as a set of followees).</li>
+  </ul>
+
+
+  <h1>Model Comparison</h1>
+
+  <p>How do all of these models compare to each other? Is the random forest model universally better than the logistic regression model, or are there some sets of users for which the logistic regression model actually performs better?</p>
+
+  <p>To enable these kinds of comparisons, I made <a href="http://link-prediction.herokuapp.com/comparison">a small module</a> that allows you to select two models and then visualize their sliced performance.</p>
+
+  <p><a href="http://link-prediction.herokuapp.com/comparison"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/pagerank_vs_is_followed_by_v2.png" alt="PageRank vs. Is Followed By" /></a></p>
+
+  <p>(Go ahead, <a href="http://link-prediction.herokuapp.com/comparison">play around</a>.)</p>
+
+  <p>Above, I bucketed all test nodes into buckets based on (the logarithm of) their number of followers, and compared the mean average precision of two algorithms: one that recommends nodes to follow using a personalized PageRank alone, and one that recommends nodes that are following the source user but are not followed back in return.</p>
+
+  <p>We see that except for the case of 0 followers (where the &#8220;is followed by&#8221; algorithm can do nothing), the personalized PageRank algorithm gets increasingly better in comparison: at first, the two algorithms have roughly equal performance, but as the source node gets more followers, the personalized PageRank algorithm dominates.</p>
+
+  <p>And here&#8217;s an embedded version you can interact with directly:</p>
+
+  <iframe width="600px" height="500px" src="http://link-prediction.herokuapp.com/comparison?for_embed=true"></iframe>
+
+
+  <p>Admittedly, building a slicer like this is probably overkill for a Kaggle competition, where the set of variables is fairly limited. But imagine having something similar for a real world model, where new algorithms are tried out every week and we can slice the performance by almost any dimension we can imagine (by geography, to make sure we don&#8217;t improve Australia at the expense of the UK; by user interests, to see where we could improve the performance of topic inference; by number of user logins, to make sure we don&#8217;t sacrifice the performance on new users for the gain of the core).</p>
+
+  <h1>Mathematicians do it with Matrices</h1>
+
+  <p>Let&#8217;s switch directions slightly and think about how we could rewrite our computations in a different, matrix-oriented style. (I didn&#8217;t do this in the competition &#8211; this is more a preview of another post I&#8217;m writing.)</p>
+
+  <h2>Personalized PageRank in Scalding</h2>
+
+  <p>Personalized PageRank, for example, is an obvious fit for a matrix rewrite. Here&#8217;s how it would look in <a href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Scalding</a>&#8217;s new Matrix library:</p>
+
+  <p>(For those who don&#8217;t know, Scalding is a Hadoop framework that Twitter released at the beginning of the year; see <a href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">my post on building a big data recommendation engine in Scalding</a> for an introduction.)</p>
+
+<div class="clearboth"></div>
+  <figcaption><span>Personalized PageRank, Matrix Style</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  <span class="line-number">27</span>
+  <span class="line-number">28</span>
+  <span class="line-number">29</span>
+  <span class="line-number">30</span>
+  <span class="line-number">31</span>
+  <span class="line-number">32</span>
+  <span class="line-number">33</span>
+  <span class="line-number">34</span>
+  <span class="line-number">35</span>
+  <span class="line-number">36</span>
+  <span class="line-number">37</span>
+  <span class="line-number">38</span>
+  <span class="line-number">39</span>
+  <span class="line-number">40</span>
+  <span class="line-number">41</span>
+  <span class="line-number">42</span>
+  <span class="line-number">43</span>
+  <span class="line-number">44</span>
+  <span class="line-number">45</span>
+  <span class="line-number">46</span>
+  <span class="line-number">47</span>
+  <span class="line-number">48</span>
+  <span class="line-number">49</span>
+  <span class="line-number">50</span>
+  <span class="line-number">51</span>
+  <span class="line-number">52</span>
+  <span class="line-number">53</span>
+  <span class="line-number">54</span>
+  <span class="line-number">55</span>
+  <span class="line-number">56</span>
+  <span class="line-number">57</span>
+  <span class="line-number">58</span>
+  <span class="line-number">59</span>
+  <span class="line-number">60</span>
+  <span class="line-number">61</span>
+  <span class="line-number">62</span>
+  <span class="line-number">63</span>
+  <span class="line-number">64</span>
+  <span class="line-number">65</span>
+  <span class="line-number">66</span>
+  <span class="line-number">67</span>
+  <span class="line-number">68</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="c1">// ***********************************************</span>
+  </span><span class="line"><span class="c1">// STEP 1. Load the adjacency graph into a matrix.</span>
+  </span><span class="line"><span class="c1">// ***********************************************</span>
+  </span><span class="line">
+  </span><span class="line"><span class="k">val</span> <span class="n">following</span> <span class="k">=</span> <span class="nc">Tsv</span><span class="o">(</span><span class="nc">GraphFilename</span><span class="o">,</span> <span class="o">(</span><span class="-Symbol">&#39;user1</span><span class="o">,</span> <span class="-Symbol">&#39;user2</span><span class="o">,</span> <span class="-Symbol">&#39;weight</span><span class="o">))</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// Binary matrix where cell (u1, u2) means that u1 follows u2.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">followingMatrix</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">following</span><span class="o">.</span><span class="n">toMatrix</span><span class="o">[</span><span class="kt">Int</span>,<span class="kt">Int</span>,<span class="kt">Double</span><span class="o">](</span><span class="-Symbol">&#39;user1</span><span class="o">,</span> <span class="-Symbol">&#39;user2</span><span class="o">,</span> <span class="-Symbol">&#39;weight</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// Binary matrix where cell (u1, u2) means that u1 is followed by u2.  </span>
+  </span><span class="line"><span class="k">val</span> <span class="n">followerMatrix</span> <span class="k">=</span> <span class="n">followingMatrix</span><span class="o">.</span><span class="n">transpose</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// Note: we could also form this adjacency matrix differently, by placing</span>
+  </span><span class="line"><span class="c1">// different weights on the following vs. follower edges.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">undirectedAdjacencyMatrix</span> <span class="k">=</span>
+  </span><span class="line">  <span class="o">(</span><span class="n">followingMatrix</span> <span class="o">+</span> <span class="n">followerMatrix</span><span class="o">).</span><span class="n">rowL1Normalize</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// Create a diagonal users matrix (to be used in the &quot;teleportation back</span>
+  </span><span class="line"><span class="c1">// home&quot; step).</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">usersMatrix</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">following</span><span class="o">.</span><span class="n">unique</span><span class="o">(</span><span class="-Symbol">&#39;user1</span><span class="o">)</span>
+  </span><span class="line">           <span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="-Symbol">&#39;user1</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="-Symbol">&#39;user2</span><span class="o">,</span> <span class="-Symbol">&#39;weight</span><span class="o">))</span> <span class="o">{</span> <span class="n">user1</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=&gt;</span> <span class="o">(</span><span class="n">user1</span><span class="o">,</span> <span class="mi">1</span><span class="o">)</span> <span class="o">}</span>
+  </span><span class="line">           <span class="o">.</span><span class="n">toMatrix</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Int</span>, <span class="kt">Double</span><span class="o">](</span><span class="-Symbol">&#39;user1</span><span class="o">,</span> <span class="-Symbol">&#39;user2</span><span class="o">,</span> <span class="-Symbol">&#39;weight</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// ***************************************************</span>
+  </span><span class="line"><span class="c1">// STEP 2. Compute the personalized PageRank scores.</span>
+  </span><span class="line"><span class="c1">// See http://nlp.stanford.edu/projects/pagerank.shtml</span>
+  </span><span class="line"><span class="c1">// for more information on personalized PageRank.</span>
+  </span><span class="line"><span class="c1">// ***************************************************</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// Compute personalized PageRank by running for three iterations,</span>
+  </span><span class="line"><span class="c1">// and output the top candidates.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">pprScores</span> <span class="k">=</span> <span class="n">personalizedPageRank</span><span class="o">(</span><span class="n">usersMatrix</span><span class="o">,</span> <span class="n">undirectedAdjacencyMatrix</span><span class="o">,</span> <span class="n">usersMatrix</span><span class="o">,</span> <span class="mf">0.5</span><span class="o">,</span> <span class="mi">3</span><span class="o">)</span>
+  </span><span class="line"><span class="n">pprScores</span><span class="o">.</span><span class="n">topRowElems</span><span class="o">(</span><span class="n">numCandidates</span><span class="o">).</span><span class="n">write</span><span class="o">(</span><span class="nc">Tsv</span><span class="o">(</span><span class="nc">OutputFilename</span><span class="o">))</span>
+  </span><span class="line">
+  </span><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Performs a personalized PageRank iteration. The ith row contains the</span>
+  </span><span class="line"><span class="cm"> * personalized PageRank probabilities around node i.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * Note the interpretation: </span>
+  </span><span class="line"><span class="cm"> *   - with probability 1 - alpha, we go back to where we started.</span>
+  </span><span class="line"><span class="cm"> *   - with probability alpha, we go to a neighbor.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * Parameters:</span>
+  </span><span class="line"><span class="cm"> *   </span>
+  </span><span class="line"><span class="cm"> *   startMatrix - a (usually diagonal) matrix, where the ith row specifies</span>
+  </span><span class="line"><span class="cm"> *                 where the ith node teleports back to.</span>
+  </span><span class="line"><span class="cm"> *   adjacencyMatrix</span>
+  </span><span class="line"><span class="cm"> *   prevMatrix - a matrix whose ith row contains the personalized PageRank</span>
+  </span><span class="line"><span class="cm"> *                probabilities around the ith node.</span>
+  </span><span class="line"><span class="cm"> *   alpha - the probability of moving to a neighbor (as opposed to</span>
+  </span><span class="line"><span class="cm"> *           teleporting back to the start).</span>
+  </span><span class="line"><span class="cm"> *   numIterations - the number of personalized PageRank iterations to run. </span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">personalizedPageRank</span><span class="o">(</span><span class="n">startMatrix</span><span class="k">:</span> <span class="kt">Matrix</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Int</span>, <span class="kt">Double</span><span class="o">],</span>
+  </span><span class="line">                         <span class="n">adjacencyMatrix</span><span class="k">:</span> <span class="kt">Matrix</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Int</span>, <span class="kt">Double</span><span class="o">],</span>
+  </span><span class="line">                         <span class="n">prevMatrix</span><span class="k">:</span> <span class="kt">Matrix</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Int</span>, <span class="kt">Double</span><span class="o">],</span>
+  </span><span class="line">                         <span class="n">alpha</span><span class="k">:</span> <span class="kt">Double</span><span class="o">,</span>
+  </span><span class="line">                         <span class="n">numIterations</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">Matrix</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Int</span>, <span class="kt">Double</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+  </span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">numIterations</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">      <span class="n">prevMatrix</span>
+  </span><span class="line">    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+  </span><span class="line">      <span class="k">val</span> <span class="n">updatedMatrix</span> <span class="k">=</span> <span class="n">startMatrix</span> <span class="o">*</span> <span class="o">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="o">)</span> <span class="o">+</span>
+  </span><span class="line">                          <span class="o">(</span><span class="n">prevMatrix</span> <span class="o">*</span> <span class="n">adjacencyMatrix</span><span class="o">)</span> <span class="o">*</span> <span class="n">alpha</span>
+  </span><span class="line">      <span class="n">personalizedPageRank</span><span class="o">(</span><span class="n">startMatrix</span><span class="o">,</span> <span class="n">adjacencyMatrix</span><span class="o">,</span> <span class="n">updatedMatrix</span><span class="o">,</span> <span class="n">alpha</span><span class="o">,</span> <span class="n">numIterations</span> <span class="o">-</span> <span class="mi">1</span><span class="o">)</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+<div class="clearboth"></div>
+
+  <p>Not only is this matrix formulation a more natural way of expressing the algorithm, but since Scalding (by way of Cascading) supports both local and distributed modes, this code runs just as easily on a Hadoop cluster of thousands of machines (assuming our social network is orders of magnitude larger than the one in the contest) as on a sample of data in a laptop. Big data, big matrix style, BOOM.</p>
+
+  <h2>Cosine Similarity as L2-Normalized Multiplication</h2>
+
+  <p>Here&#8217;s another example. Calculating cosine similarity between all users is a natural fit for a matrix formulation since, after all, the cosine similarity between two vectors is just their L2-normalized dot product:</p>
+
+  <figcaption><span>Cosine Similarity, Matrix Style</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="c1">// A matrix where the cell (i, j) is 1 iff user i is followed by user j.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">followerMatrix</span> <span class="k">=</span> <span class="o">...</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// A matrix where cell (i, j) holds the cosine similarity between</span>
+  </span><span class="line"><span class="c1">// user i and user j, when both are represented as sets of their followers.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">followerBasedSimilarityMatrix</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">followerMatrix</span><span class="o">.</span><span class="n">rowL2Normalize</span> <span class="o">*</span> <span class="n">followerMatrix</span><span class="o">.</span><span class="n">rowL2Normalize</span><span class="o">.</span><span class="n">transpose</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>A Similarity Extension</h2>
+
+  <p>But let&#8217;s go one step further.</p>
+
+  <p>To change examples for ease of exposition: suppose you&#8217;ve bought a bunch of books on Amazon, and Amazon wants to recommend a new book you&#8217;ll like. Since Amazon knows similarities between all pairs of books, one natural way to generate this recommendation is to:</p>
+
+  <ol>
+  <li>Take every book B.</li>
+  <li>Calculate the similarity between B and each book you bought.</li>
+  <li>Sum up all these similarities to get your recommendation score for B.</li>
+  </ol>
+
+
+  <p>In other words, the recommendation score for book B on user U is:</p>
+
+  <p>DidUserBuy(U, Book 1) * SimilarityBetween(Book B, Book 1) + DidUserBuy(U, Book 2) * SimilarityBetween(Book B, Book2) + &#8230; + DidUserBuy(U, Book n) * SimilarityBetween(Book B, Book n)</p>
+
+  <p>This, too, is a dot product! So it can also be rewritten as a matrix multiplication:</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="c1">// A matrix where cell (i, j) holds the similarity between books i and j.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">bookSimilarityMatrix</span> <span class="k">=</span> <span class="o">...</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// A matrix where cell (i, j) is 1 if user i has bought book j, </span>
+  </span><span class="line"><span class="c1">// and 0 otherwise.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">userPurchaseMatrix</span> <span class="k">=</span> <span class="o">...</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// A matrix where cell (i, j) holds the recommendation score of</span>
+  </span><span class="line"><span class="c1">// book j to user i.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">recommendationMatrix</span> <span class="k">=</span> <span class="n">userPurchaseMatrix</span> <span class="o">*</span> <span class="n">bookSimilarityMatrix</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Of course, there&#8217;s a natural analogy between this score and the feature I described a while back above, where I compute a similarity score between a destination node and a source node&#8217;s followees (when all nodes are represented as sets of followers):</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Iterate over each of user1&#39;s followings, compute their similarity</span>
+  </span><span class="line"><span class="cm"> * with user2 when both are represented as sets of followers, and return</span>
+  </span><span class="line"><span class="cm"> * the sum of these similarities.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">followerBasedSimilarityToFollowings</span><span class="o">(</span><span class="n">user1</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">user2</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+  </span><span class="line">    <span class="o">(</span><span class="k">implicit</span> <span class="n">similarity</span><span class="k">:</span> <span class="kt">SimilarityMetric</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="n">getFollowingsWithout</span><span class="o">(</span><span class="n">user1</span><span class="o">,</span> <span class="n">user2</span><span class="o">)</span>
+  </span><span class="line">                      <span class="o">.</span><span class="n">map</span> <span class="o">{</span> <span class="n">similarityByFollowers</span><span class="o">(</span><span class="k">_</span><span class="o">,</span> <span class="n">user2</span><span class="o">)(</span><span class="n">similarity</span><span class="o">)</span> <span class="o">}</span>
+  </span><span class="line">                      <span class="o">.</span><span class="n">sum</span>
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * The matrix version of the above function.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * Why are these the same? Note that the above function simply computes:</span>
+  </span><span class="line"><span class="cm"> *   DoesUserFollow(User A, User 1) * Similarity(User 1, User B) + </span>
+  </span><span class="line"><span class="cm"> *     DoesUserFollow(User A, User 2) * Similarity(User 2, User B) + ... + </span>
+  </span><span class="line"><span class="cm"> *     DoesUserFollow(User A, User n) * Similarity(User n, User B)</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">followingMatrix</span> <span class="k">=</span> <span class="o">...</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">followerBasedSimilarityMatrix</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">followerMatrix</span><span class="o">.</span><span class="n">rowL2Normalize</span> <span class="o">*</span> <span class="n">followerMatrix</span><span class="o">.</span><span class="n">rowL2Normalize</span><span class="o">.</span><span class="n">transpose</span>
+  </span><span class="line">
+  </span><span class="line"><span class="k">val</span> <span class="n">followerBasedSimilarityToFollowingsMatrix</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">followingMatrix</span> <span class="o">*</span> <span class="n">followerBasedSimilarityMatrix</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>For people comfortable expressing their computations in a vector manner, writing your computations as matrix manipulations often makes experimenting with different algorithms much more fluid. Imagine, for example, that you want to switch from L1 normalization to L2 normalization, or that you want to express your objects as binary sets rather than weighted vectors. Both of these become simple one-line changes when you have vectors and matrices as first-class objects, but are much more tedious (<em>especially in a MapReduce land where this matrix library was designed to be applied!</em>) when you don&#8217;t.</p>
+
+  <h1>Finish Line</h1>
+
+  <p>By now, I think I&#8217;ve spent more time writing this post than on the contest itself, so let&#8217;s wrap up.</p>
+
+  <p>I often get asked what kinds of tools I like to use, so for this competition my kit consisted of:</p>
+
+  <ul>
+  <li>Scala, for code that needed to be fast (e.g., extracting features) or that I was going to run repeatedly (e.g., scoring my validation set).</li>
+  <li>Python, for my machine learning models, because <a href="http://scikit-learn.org/stable/">scikit-learn</a> is awesome.</li>
+  <li>Ruby, for quick one-off scripts.</li>
+  <li>R, for some data analysis and simple plotting.</li>
+  <li>Coffeescript and d3, for the interactive visualizations.</li>
+  </ul>
+
+
+  <p>Finally, I put up a <a href="https://github.com/echen/link-prediction">Github repository</a> containing some code, and here are a couple other posts I&#8217;ve written that people who like this entry might also enjoy:</p>
+
+  <ul>
+  <li><a href="http://blog.echen.me/2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information transmission in a social network</a>, a case study in how information propagates through a social graph.</li>
+  <li><a href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie recommendations in Scalding</a>, Twitter&#8217;s Scala-based Hadoop framework built on top of Cascading.</li>
+  <li><a href="http://blog.echen.me/2011/10/24/winning-the-netflix-prize-a-summary/">A summary of the algorithms behind the Netflix Prize</a>, another crowdsourced recommendation contest for predicting movie ratings.</li>
+  </ul>
+
+  </div>  
+<script type= "text/javascript">
+    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+        var mathjaxscript = document.createElement('script');
+        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+        mathjaxscript.type = 'text/javascript';
+        mathjaxscript.src = 'https:' == document.location.protocol
+                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+            "MathJax.Hub.Config({" +
+            "    config: ['MMLorHTML.js']," +
+            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+            "    displayAlign: 'center'," +
+            "    displayIndent: '0em'," +
+            "    showMathMenu: true," +
+            "    tex2jax: { " +
+            "        inlineMath: [ ['$','$'] ], " +
+            "        displayMath: [ ['$$','$$'] ]," +
+            "        processEscapes: true," +
+            "        preview: 'TeX'," +
+            "    }, " +
+            "    'HTML-CSS': { " +
+            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
+            "    } " +
+            "}); ";
+        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+    }
+</script>
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2012-07-06T04:15:00">
+          on&nbsp;Fri 06 July 2012
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>One of the great things about Twitter is that it&#8217;s a global conversation anyone can join anytime. Eavesdropping on the world, what what!</p>
+
+  <p>Of course, it gets even better when you can <em>mine</em> all this chatter to study the way humans live and interact.</p>
+
+  <p>For example, <a href="http://blog.echen.me/2011/04/18/twifferences-between-californians-and-new-yorkers/">how do people in New York City differ from those in Silicon Valley?</a> We tend to think they&#8217;re more financially driven and restless with the world &#8211; is this true, and if so, <a href="http://blog.echen.me/2011/04/18/twifferences-between-californians-and-new-yorkers/">how much more</a>?</p>
+
+  <p>Or how does language change as you travel to different regions? Recall the classic soda vs. pop. vs. coke question: some people use the word &#8220;soda&#8221; to describe their soft drinks, others use &#8220;pop&#8221;, and still others use &#8220;coke&#8221;. Who says what where?</p>
+
+  <p>Let&#8217;s take a look.</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/sodapop/united-states.png"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/united-states.png" alt="United States" /></a></p>
+
+  <p>To make this map, I sampled geo-tagged tweets containing the words &#8220;soda&#8221;, &#8220;pop&#8221;, or &#8220;coke&#8221;, performed some state-of-the-art NLP technology to ensure the tweets were soft drink related (e.g., the tweets had to contain &#8220;drink soda&#8221; or &#8220;drink a pop&#8221;), and tried to filter out coke tweets that were specifically about the Coke brand (e.g., Coke Zero).</p>
+
+  <p>It&#8217;s a little cluttered, though, so let&#8217;s clean it up by aggregating nearby tweets.</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/sodapop/united_states_binned.png"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/united_states_binned.png" alt="United States Binned" /></a></p>
+
+  <p>Here, I bucketed all tweets within a 0.333 latitude/longitude radius, calculated the term distribution within each bucket, and colored each bucket with the word furthest from its overall mean. I also sized each point according to the (log-transformed) number of tweets in the bucket.</p>
+
+  <p>We can see that:</p>
+
+  <ul>
+  <li>The South is pretty Coke-heavy.</li>
+  <li>Soda belongs to the Northeast and far West.</li>
+  <li>Pop gets the mid-West, except for some interesting spots of blue around Wisconsin and the Illinois-Missouri border.</li>
+  </ul>
+
+
+  <p>For comparison, here&#8217;s another map based on a survey at <a href="http://www.popvssoda.com/">popvssoda.com</a>.</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/sodapop/popvssoda.png"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/popvssoda.png" alt="Pop vs. Soda Map" /></a></p>
+
+  <p>We can see similar patterns, though interestingly, our map has less Coke in the Southeast and less pop in the Northwest.</p>
+
+  <p>Finally, here&#8217;s a world map of the terms, bucketed again. Notice that &#8220;pop&#8221; seems to be prevalent only in parts of the United States and Canada.</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/sodapop/world-map.png"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/world-map.png" alt="World" /></a></p>
+
+  <p>As some astute readers noted, though, the seeming dominance of coke is probably due to the difficulty in distinguishing the generic use of coke for soft drinks in general from the particular use of coke for referring to the Coca-Cola brand.</p>
+
+  <p>So let&#8217;s instead look at a world map of a couple other soft drink terms (&#8220;fizzy drink&#8221;, &#8220;mineral&#8221;, and &#8220;tonic&#8221;):</p>
+
+  <p><a href="https://dl.dropbox.com/u/10506/blog/sodapop/fizzy-mineral-tonic.png"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/fizzy-mineral-tonic.png" alt="Fizzy Drink vs. Mineral vs. Tonic" /></a></p>
+
+  <p>Notice that:</p>
+
+  <ul>
+  <li>&#8220;Fizzy drink&#8221; shows up for the UK, New Zealand, and Maine.</li>
+  <li>&#8220;Tonic&#8221; appears in Massachusetts.</li>
+  <li>While South Africa gets &#8220;fizzy drink&#8221;, Nigeria gets &#8220;mineral&#8221;.</li>
+  </ul>
+
+
+  <p>I&#8217;ve been getting a lot of questions lately about interesting things you can do with the Twitter API, so this was just one small project I&#8217;ve worked on to illustrate. <a href="http://www.cc.gatech.edu/~jeisenst/papers/emnlp2010.pdf">This paper</a> contains another awesome application of Twitter data to geographic language variation, and just for fun, here are a few other cute mini-projects:</p>
+
+  <p>What do people eat during the Super Bowl? (wings and beer, apparently)</p>
+
+  <p><a href="https://twitter.com/echen/status/166343879547822080"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/superbowl-snacks.png" alt="Superbowl Snacks" /></a></p>
+
+  <p>What do people want for Christmas, compared to what they actually get?</p>
+
+  <p><a href="https://twitter.com/echen/status/153683967315419136"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/xmas.png" alt="Christmas" /></a></p>
+
+  <p>What do guys and girls <em>really</em> say?</p>
+
+  <p><a href="https://twitter.com/echen/status/261667822793551873/photo/1"><img src="https://dl.dropbox.com/u/10506/twitter/shitguysandgirlssay.png" alt="Shit Guys and Girls Say" /></a></p>
+
+  <p>When were people losing and gaining power during Hurricane Sandy? (<a href="http://blog.echen.me/hurricane-sandy-outages/">click</a> the image to interact)</p>
+
+  <p><a href="http://blog.echen.me/hurricane-sandy-outages/"><img src="https://dl.dropbox.com/u/10506/twitter/sandy-outages.png" alt="Sandy Power Outages" /></a></p>
+
+  <p>How does information of a <em>geographic</em>-specific nature spread? (<a href="http://hurricanesandy.herokuapp.com/">click</a> the image to see a dynamic visualization of when and where tweets related to surviving Hurricane Sandy were shared)</p>
+
+  <p><a href="http://hurricanesandy.herokuapp.com/"><img src="https://dl.dropbox.com/u/10506/twitter/sandy-spread.png" alt="Hurricane Sandy Retweets" /></a></p>
+
+  <p>Can we use Twitter to measure presidential votes? (yes!)</p>
+
+  <p><a href="https://twitter.com/echen/status/265894918382305284/photo/1"><img src="https://dl.dropbox.com/u/10506/twitter/electoral-map.png" alt="Electoral Map" /></a></p>
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Making the Most of Mechanical Turk: Tips and Best Practices</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2012-04-25T04:15:00">
+          on&nbsp;Wed 25 April 2012
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>(Update: we recently open-sourced <a href="https://github.com/twitter/clockworkraven">Clockwork Raven</a>, one of the human evaluation tools on top of Mechanical Turk that we built at Twitter.)</p>
+
+  <p>Big data&#8217;s all the rage, but sometimes a couple thousand <em>human</em>-generated labels can be pretty effective as well. And since I&#8217;ve been using Amazon&#8217;s Mechanical Turk system a lot recently, I figured I&#8217;d share some of the things I&#8217;ve learned.</p>
+
+  <h1>What is MTurk?</h1>
+
+  <p><a href="https://www.mturk.com/mturk/welcome">Mechanical Turk</a> is a crowdsourcing system developed by Amazon that connects you to a relatively cheap source of human labor on the fly.</p>
+
+  <p>For example, suppose you have 10,000 websites that you want to classify as spam or not. To get these classifications, you (the <em>Requester</em>):</p>
+
+  <ol>
+  <li>Create a CSV file containing the links and any other information.</li>
+  <li>Log onto MTurk and create a <em>HIT</em> (Human Intelligence Task) describing the job (possibly by using Amazon&#8217;s WYSIWYG editor or writing your own HTML, which can refer to columns in your CSV). [There&#8217;s also an MTurk API, if you don&#8217;t want to use the terrible UI.]</li>
+  <li>Within hours of starting the task, your judgments will be completed by <em>Turkers</em> around the world for pennies each.</li>
+  </ol>
+
+
+  <h1>More Example Tasks</h1>
+
+  <p>So what can you use MTurk for? Here are three of my favorite uses:</p>
+
+  <ul>
+  <li><a href="http://boingboing.net/2011/02/18/straight-line-traced.html">A Sequence of Lines Consecutively Traced by Five Hundred Individuals</a></li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/lines.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/lines.png" alt="Lines Mutation" /></a></p>
+
+  <ul>
+  <li><a href="http://www.thesheepmarket.com/">The Sheep Market</a>: asking Turkers to draw sheep</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/sheep.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/sheep.png" alt="Sheep" /></a></p>
+
+  <ul>
+  <li><a href="http://groups.csail.mit.edu/uid/deneme/?p=329">Blurry Text Transcription</a> (Seriously! How is this possible?!)</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/blurry.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/blurry.png" alt="Blurry Text" /></a></p>
+
+  <p>And here are some more practical tasks, from HITs running right now:</p>
+
+  <ul>
+  <li>Categorize the sentiment of a tweet towards Panera Bread</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/panera.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/panera.png" alt="Panera" /></a></p>
+
+  <ul>
+  <li>Copy text from a business card</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/business-card.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/business-card.png" alt="Business Card" /></a></p>
+
+  <ul>
+  <li>Judge entity relatedness</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/entity.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/entity.png" alt="Angelina Jolie" /></a></p>
+
+  <h1>Increasing the quality of your judgments</h1>
+
+  <p>So what will the quality of your judgments look like?</p>
+
+  <p>If you don&#8217;t do anything special, then your output will contain a lot of garbage. I&#8217;ve thrown out entire tasks because of scammers who spend less than 5 seconds on each judgment (Amazon records the time each worker spends) and submit random clicks as output (e.g., labeling Nike as a food category).</p>
+
+  <p>Luckily, Amazon provides a few worker filters:</p>
+
+  <ul>
+  <li>You can require that only Turkers who have received at least (say) <strong>99% approval rate on at least 10,000 judgments in the past</strong> are allowed to work on your judgment. (If you see bad judgments from a worker, you can reject them and get your money back.)</li>
+  <li>About a year ago, Amazon launched a <strong>&#8220;categorization masters&#8221; and &#8220;photo masters&#8221;</strong> program, which allows only masters to work on your HITs. According to a chat with a member of the MTurk team, Amazon assigns these master badges by creating special tasks (anonymously, and for which Amazon already knows the answer) and measuring the quality of each worker&#8217;s response to these tasks.</li>
+  <li>You can also create a custom filter and <strong>handpick who gets allowed to work for you</strong>, or set up a <strong>qualification test</strong> that workers are required to take before working on your tasks.</li>
+  </ul>
+
+
+  <p>I&#8217;ve used different combinations of the first two filters, and gotten excellent results &#8211; compared to in-house judges I&#8217;ve worked with in person and paid \$20-30 an hour, the judgments on Mechanical Turk have been just as good and sometimes even better. (I often ask my judges to explain their judgments, which makes it easy to detect high quality workers.) For example, here are some typical response I&#8217;ve received when asking judges to determine which of two products a given Twitter user might be more interested in:</p>
+
+  <blockquote><p>The user is a female obsessed with Twilight Movies and Rob Pattinson. She tweets and follows both subjects. Movie tickets would be interesting to her.</p></blockquote>
+
+
+
+
+  <blockquote><p>He doesn&#8217;t seem to play video games, and he doesn&#8217;t seem technical enough to care about running Windows on a Mac. Neither of these products are a good fit for him.</p></blockquote>
+
+
+  <p>In fact, I&#8217;ll frequently also get emails from Turkers giving me suggestions on how to improve my tasks or asking how they can do them better. (Amazon allows workers to email you. The only way for the requester to initiate a conversation, though, is by paying the worker a small bonus for excellent work, and including a message with the bonus.) Here are excerpts from some emails I&#8217;ve received:</p>
+
+  <blockquote><p>I just wanted to check in to be sure that once I figured things out that I was doing your hits the way you intended them to be done. I want to be sure that you are getting the data that you need from the work. Please do not hesitate to let me know if there is anything that I can do to improve the way I am working your HITs. This is my full time job while I stay at home with my kids, so I like to check with the requesters to be sure that I am putting out the work that they are looking for. Any suggestion is welcome.</p></blockquote>
+
+
+
+
+  <blockquote><p>Frankly, lingerie, makeup, and feminine hygiene are the only male-exclusionary topics I can think of, and it feels knee-jerk sexist to mark any sports-related site for men. That said, should I hew more closely to gender stereotypes or be politically correct? (from a HIT where I was gathering gender classification data)</p></blockquote>
+
+
+
+
+  <blockquote><p>I do think a few more categories are needed but keeping the number down overall is good - 50 or 60 to choose from can be overwhelming and not worth the time. I may have mentioned I never used the Photography one (and I did a lot of those) so that is a good candidate for elimination.</p></blockquote>
+
+
+  <p>That said, despite the approval rate filters and masters badges, I do occasionally get a couple scammers in the mix (or even just judges who don&#8217;t produce as excellent work). So one suggestion is to run an initial task with these filters applied, find the workers with the best quality, and from then on use a custom pool containing these Turkers alone.</p>
+
+  <h1>How much to pay</h1>
+
+  <p>So how much should you pay your workers?</p>
+
+  <p>New Turkers and Turkers who don&#8217;t meet the strict filters can be paid less, but most of my high-quality workers expect to make about \$8-14 an hour. (You can only specify how much you pay per judgment, but Amazon will tell you how long each item ends up taking on average.) For example, here&#8217;s what several Turkers said what I asked them directly how much they make:</p>
+
+  <blockquote><p>Most of the work I do is either writing or editing.  When editing work is available, I make \$15-20 per hour.  I&#8217;m a slower writer than an editor, so I average \$10-12 per hour with writing.  I also judge sentiments of messages and average about \$8 per hour with that type of work. I would like to average a minimum of no less than \$8 per hour.</p><p>A big factor in deciding to do a task or not comes from the time investment involved. The two big time sinks are either googling/searching/having to go to another site, or having to write something as part of your reply. If I remember correctly, a) your tasks did require looking at another page but either the link was right there OR, better yet, you had that page embedded in the HIT itself so clicking out of the window wasn&#8217;t necessary (turkers get very excited about this), and b) the quality of the pay rate was such that it easily outweighed the time it took to leave an explanatory comment. </p><p>For me at least, those things can&#8217;t be underestimated. Sure, your tasks may be a little time-consuming, but I figure a good task is one I can make 10 to 12 cents a minute on. Your task might take longer but I&#8217;m definitely still coming out ahead.</p><p>From my own experience, I work hardest and best for a requester that pays well and doesn&#8217;t reject (or at least seems to have a reason for a rejection when it happens). If a requester is going to accept the majority of my work, I as a worker feel that obligates me to provide them with the best quality possible. Similarly, although I&#8217;m conscientious with all tasks, I&#8217;m especially so with a high-paying one: it would be easy to take advantage of a high-pay, low-reject requester - which would ultimately lead them to either lower the pay or change the acceptance criteria. I don&#8217;t want that!! That&#8217;s the kind of requester I want around. I&#8217;m grateful for high pay and fair policies and that kind of requester gets an above-and-beyond effort from me.</p></blockquote>
+
+
+
+
+  <blockquote><p>For the pay, I have worked on master&#8217;s hits that have ranged from \$6-\$16 per hour. Averaging them out works out to around \$9, which isn&#8217;t a bad wage. I have two requesters that I work for that don&#8217;t use the master qualification but instead have closed qualifications that they&#8217;ve assigned to their best workers. Those tasks pay between \$12 and \$15 per hour, so no matter what I&#8217;m working on I will stop what I&#8217;m doing to work on them. The best paying hits are always done very quickly, so most of the time if you check out mturk and look at the tasks available you won&#8217;t get a very good idea of average pay because the terrible paying hits will sit on the board until they expire.</p></blockquote>
+
+
+  <p>Obviously, this is self-reported, so there&#8217;s a strong possibility that the Turkers are artificially inflating their numbers. But this does match what I&#8217;ve been told by a manager on the MTurk team, as well as what Turkers self-report on <a href="http://turkernation.com/">TurkerNation</a>.</p>
+
+  <p>A good suggestion regarding pay is to start at the lower end of the scale, around \$6-8 per hour, and increase that until you get both the quality and speed you want.</p>
+
+  <h1>Other design tips</h1>
+
+  <p>Interestingly, according to what Turkers (see the excerpts above) and my Amazon contact say, as well as other research I&#8217;ve seen (e.g., <a href="http://groups.csail.mit.edu/uid/deneme/?p=680">this paper</a>), pay is <em>not</em> at the absolute forefront of Turkers&#8217; minds when they decide what to work on. Instead, they focus more on requesters they&#8217;ve already established a good relationship with, HITs with many items (so they can quickly settle into a rhythm), HITs they know they&#8217;ll be paid for (so they&#8217;re not worried about rejections), and HITs that they generally enjoy doing more.</p>
+
+  <p>So here are a couple suggestions:</p>
+
+  <ul>
+  <li>If your task is hard and there&#8217;s no clearly correct answer, even good Turkers might be worried that you&#8217;ll reject their judgments (and so they might skip over your HIT). So make it clear in your instructions that you won&#8217;t reject any judgments, or that you won&#8217;t reject any judgments with an honest effort.</li>
+  <li>Make your instructions collapsible, or link to them in a separate site. Scrolling is kind of annoying on Mechanical Turk (I know &#8211; I&#8217;ve tried working on HITs myself), so you should minimize the amount workers have to scroll. Ideally, everything fits on a single screen. Plus, the less workers have to scroll, the faster your HITs will get done. For example, here are excerpts from emails I received from two different Turkers when I first started out:</li>
+  </ul>
+
+
+  <blockquote><p>I have a suggestion that would really make things go a little quicker. Is there anyway you could script the twitter link to automatically open in a new tab? It amazes me how much it can slow you down to have to right click and open it manually in another tab, and when you forget, you have to take a few more steps to get back to where you were.</p></blockquote>
+
+
+
+
+  <blockquote><p>It would be amazing if the Twitter account could be on the same page instead of having to click to get to another screen - the work would go *exponentially* faster! Overall, I&#8217;m enjoying them - and I&#8217;m not the only one. Despite your stringent requirements these are disappearing pretty quickly.</p></blockquote>
+
+
+  <ul>
+  <li>Introduce yourself on <a href="http://turkernation.com/">TurkerNation</a>, a forum where Turkers and Requesters go to talk about Mechanical Turk. This helps establish your reputation as a good requester who listens to feedback, which will make good Turkers want to work for you. (More on this below.)</li>
+  <li>Approve judgments quickly: Turkers want <a href="http://en.wikipedia.org/wiki/Hyperbolic_discounting">money now instead of money later</a>. For example, one worker told me:</li>
+  </ul>
+
+
+  <blockquote><p>Quick approval is important, too. Watching that money pile up is a serious motivator; I&#8217;ll sometimes choose a lower-paying task that approves in close to real time over a higher-paying one that won&#8217;t pay out for several days.</p></blockquote>
+
+
+  <p>When using my trusted set of workers, I let Amazon auto-approve all judgments within a couple hours.</p>
+
+  <h1>Reputation</h1>
+
+  <p>Reputation is pretty important. Turkers love requesters who take the time to respond to emails and incorporate suggestions. Excerpts from emails I&#8217;ve received:</p>
+
+  <blockquote><p>I LOVE it when requesters care enough to ask the opinion of us lowly turkers and am more than willing to take a few minutes to help them with anything. I look forward to seeing what you cook up!</p></blockquote>
+
+
+
+
+  <blockquote><p>Thanks for taking the time to try to make your hits better in both pay and design. It&#8217;s great to see a requester that actually cares, when most don&#8217;t. If you have any other questions for me, feel free to ask. I hope to work for you again soon.</p></blockquote>
+
+
+
+
+  <blockquote><p>From my own experience, I work hardest and best for a requester that pays well and doesn&#8217;t reject (or at least seems to have a reason for a rejection when it happens). If a requester is going to accept the majority of my work, I as a worker feel that obligates me to provide them with the best quality possible. Similarly, although I&#8217;m conscientious with all tasks, I&#8217;m especially so with a high-paying one: it would be easy to take advantage of a high-pay, low-reject requester - which would ultimately lead them to either lower the pay or change the acceptance criteria. I don&#8217;t want that!! That&#8217;s the kind of requester I want around. I&#8217;m grateful for high pay and fair policies and that kind of requester gets an above-and-beyond effort from me.</p></blockquote>
+
+
+  <p>I&#8217;ve gotten great suggestions from a lot of Turkers (sometimes, when launching a new type of experiment, I&#8217;ll do a quick trial run in order to get some fast feedback before spending more time on the HIT design), and I suspect it&#8217;s partly because I&#8217;ve taken the time to connect with my workers.</p>
+
+  <p>So, as suggested above, one way of quickly garnering some goodwill when you&#8217;re first getting started is to make a post introducing yourself on TurkerNation. (There&#8217;s a <a href="http://turkernation.com/forumdisplay.php?23-Requester-Introductions">sub-forum</a> devoted to this exact purpose, in fact.)</p>
+
+  <p>This is useful because workers will often start new threads recommending particular requesters and encouraging other Turkers to work for them. In the amusing thread praising me, for example, one worker mentioned that she&#8217;d been hesitant to work on my HITs until she saw the post confirming I was a good requester.</p>
+
+  <p>Also, many Turkers mention that they always refer to <a href="http://turkopticon.differenceengines.com/">Turkopticon</a>, a Firefox extension that displays ratings of requesters by other Turkers, before accepting work from a requester they haven&#8217;t worked for before.</p>
+
+  <p>This is what TurkOpticon looks like:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/jimyoung.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/jimyoung.png" alt="Jim Young" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/productrnr.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/productrnr.png" alt="ProductRNR" /></a></p>
+
+  <p>Here are some comments about TurkOpticon on TurkerNation:</p>
+
+  <blockquote><p>I think that it is well worth taking the time to check reputation of requesters via TurkOpticon and/or in this forum. Checking first substantially minimizes your risk of rejection, of being blocked, and of being paid sub-human wages.</p></blockquote>
+
+
+
+
+  <blockquote><p>Blindly doing hits for requesters that were never heard of before got me with a pretty bad approval rate when I first started turking. After that, I rigorously inspect every requester that doesn&#8217;t have any ratings on Turkopticon. Actually, because of that little add-on I&#8217;ve been able to maintain a steady 98-99% approval rate ever since I began using it.</p></blockquote>
+
+
+  <h1>Waiting Time</h1>
+
+  <p>So how long does it take to get judgments? I&#8217;ve restricted the available worker pool pretty strongly to ensure high quality, and it&#8217;s still only taken a few hours to get a thousand judgments.</p>
+
+  <p>That&#8217;s pretty awesome. I&#8217;ve worked a lot with human evaluation systems before, but always using a small in-house set of judges &#8211; and what with constraints on when those judges were available, how much they were able to work each week, and other tasks taking higher priority, it&#8217;d invariably take at least a few days before I&#8217;d receive any useful data back.</p>
+
+  <p>Getting thousands of judgments in a couple hours means I can launch an MTurk task when I leave for work in the morning and have it done before lunch, which makes experimenting with a lot of different ideas much faster and easier.</p>
+
+  <h1>Scale</h1>
+
+  <p>So how many judgments can you actually get before you run out of workers? I&#8217;m still a small fish in the MTurk system, but I&#8217;m told by my MTurk contact at Amazon that there are companies getting over a million judgments each month.</p>
+
+  <p>I also asked my pool of workers how much they&#8217;re available to work, in case I would need to scale up to more judgments later on, and here are some samples from what they said:</p>
+
+  <blockquote><p>Typically, I work a total of 20-25 hours per week for a small select group of requesters.  I could put in at least 20 hours per week for you alone if you were to make a custom qualification for me.  If I know that I can continue to do exemplary work beyond 20 hours, I would be willing to put forth more hours of work.  I want to make sure that you are getting the quality of work that you need.</p></blockquote>
+
+
+
+
+  <blockquote><p>On a day when I don&#8217;t have those other assignments, I&#8217;d guess I&#8217;m turking 5 to 7 hours a day  (including weekends). I like to look for a large batch of HITs (preferably in the thousands) so that I can settle into a groove of being able to do them fairly quickly and once I find something like that I can happily settle in for several hours at a time.</p></blockquote>
+
+
+
+
+  <blockquote><p>I spend more time than the average person on mturk. I log on at about 5:30 AM and am constantly checking for work throughout the day. If the work is available, I will spend until 9PM working. Granted, I do have to take some breaks throughout the day to take care of my 3 year old, but for the most part, I am doing my best to earn while the hits are posted. If I take any time off, it is on the weekend (if I reach my earning goals for the week).</p></blockquote>
+
+
+
+
+  <blockquote><p>Of course, how much I can work varies. My main source of income is transcription for a market research company and mturk fills in my downtime. If I have an audio file from them, that gets my attention. If not, I&#8217;m on mturk. As a single mother working from home, I love the flexibility.</p></blockquote>
+
+
+  <h1>End</h1>
+
+  <p>I&#8217;ll end with a couple other notes.</p>
+
+  <ul>
+  <li>How do other companies use human evaluation systems? Google and Bing use human judgments in their search metrics, though I think they use an in-house set of judges rather than Mechanical Turk. I&#8217;ve heard Aardvark and Quora used Mechanical Turk to seed answers when they first launched their sites. There&#8217;s also a nice set of case studies <a href="http://aws.amazon.com/solutions/case-studies/">here</a> (search for the &#8220;On-Demand Workforce&#8221; section); in particular, Knewton&#8217;s use of <a href="http://aws.amazon.com/solutions/case-studies/knewton/">MTurk for performance and QA testing</a> is pretty interesting.</li>
+  <li>I&#8217;ve described one way of finding good workers, namely, using the filters Amazon provides. Another way could be to build a reputation system yourself, perhaps using an EM-style algorithm to determine judge quality.</li>
+  <li><a href="http://crowdflower.com/">Crowdflower</a> is another crowdsourcing system. There are a couple differences with MTurk:
+
+  <ul>
+  <li>Crowdflower&#8217;s worker pool consists of about 20 different sources, including Mechanical Turk, as well as sources like TrialPay (people can opt to complete a MTurk task to receive some kind of TrialPay deal).</li>
+  <li>Crowdflower offers both a self-serve platform (like MTurk), as well as a more enterprise-centric solution (where you work directly with a Crowdflower employee). The enterprise offering is pretty nice, since that means Crowdflower will take care of the lower-level details for you (like actually designing and creating the job), and they can offer suggestions for designing the HIT based on their experience.</li>
+  <li>Crowdflower provides the option of adding gold standard judgments to your task (items where you provide a golden answer, which are then randomly shown to workers; these are then used to monitor judges) and they try to automatically determine judge quality and item accuracy for you (e.g., by having each item judged by three different workers).</li>
+  </ul>
+  </li>
+  <li>An excellent crowdsourcing resource is <a href="http://crowdscope.org/index.php?title=Main_Page">CrowdScope</a>. I also like the <a href="http://groups.csail.mit.edu/uid/deneme/">Deneme</a> blog (though it hasn&#8217;t been updated in a while) for a lot of fun experiments. Panos Ipeirotis&#8217; <a href="http://www.behind-the-enemy-lines.com/">blog</a> has good information as well.</li>
+  </ul>
+
+  </div>  
+<script type= "text/javascript">
+    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+        var mathjaxscript = document.createElement('script');
+        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+        mathjaxscript.type = 'text/javascript';
+        mathjaxscript.src = 'https:' == document.location.protocol
+                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+            "MathJax.Hub.Config({" +
+            "    config: ['MMLorHTML.js']," +
+            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+            "    displayAlign: 'center'," +
+            "    displayIndent: '0em'," +
+            "    showMathMenu: true," +
+            "    tex2jax: { " +
+            "        inlineMath: [ ['$','$'] ], " +
+            "        displayMath: [ ['$$','$$'] ]," +
+            "        processEscapes: true," +
+            "        preview: 'TeX'," +
+            "    }, " +
+            "    'HTML-CSS': { " +
+            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
+            "    } " +
+            "}); ";
+        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+    }
+</script>
+
+                    </article>
+ 
+<div class="paginator">
+    <div class="navButton">Page 1 / 7</div>
+        <div class="navButton"><a href="/index2.html" >Next</a></div>
+</div>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+  
+	      <div class="LaunchyardDetail">
+	        <p>
+	          <a class="title" href="/">Edwin Chen</a>
+	          <br/>
+	          Hanging. MIT, Microsoft Research, Clarium, Twitter, Google, Dropbox.
+	          <br /><br />
+            <a href="mailto:hello[at]echen.me">Email</a><br />
+            <a href="https://twitter.com/#!/echen">Twitter</a><br/>
+            <a href="https://github.com/echen">Github</a><br/>
+            <a href="https://plus.google.com/113804726252165471503/">Google+</a><br/>
+            <a href="http://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
+            <a href="http://quora.com/edwin-chen-1">Quora</a>
+          </p>
+          <br />
+          <div id="recent_posts">
+              <h3>Recent Posts</h3>
+                <a href="/2014/08/15/propensity-modeling-causal-inference-and-sparkers-of-growth/">Propensity Modeling, Causal Inference, and Sparkers of Growth  </a><br /><br />
+                <a href="/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
+                <a href="/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
+                <a href="/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
+                <a href="/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Making the Most of Mechanical Turk: Tips and Best Practices  </a><br /><br />
+                <a href="/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
+                <a href="/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
+                <a href="/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
+                <a href="/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a href="/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
+            
+          </div>
+        </div>
+
+
+        <section id="extras" >
+       
+        
+        </section><!-- /#extras -->
+	
+        <footer id="contentinfo" >
+                <address id="about" class="vcard ">
+                Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
+                great advantage of <a href="http://python.org" target="_blank">Python</a>.
+		
+                </address><!-- /#about -->
+		
+
+                
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>Propensity Modeling, Causal Inference, and Sparkers of Growth</title>
+        <meta charset="utf-8" />
+	      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/theme/css/main.css" type="text/css" />
+
+        <!--[if IE]>
+                <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+        <!--[if lte IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie.css"/>
+                <script src="/js/IE8.js" type="text/javascript"></script><![endif]-->
+
+        <!--[if lt IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie6.css"/><![endif]-->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js" type="text/javascript"></script>
+
+
+</head>
+
+<body id="index" class="home">
+	
+<section id="content" >
+    <div class="body">
+      <article>
+        <header>
+          <h1 class="entry-title">
+            <a href="/2014/08/15/propensity-modeling-causal-inference-and-sparkers-of-growth/" rel="bookmark"
+               title="Permalink to Propensity Modeling, Causal Inference, and Sparkers of Growth">Propensity Modeling, Causal Inference, and Sparkers of Growth</a></h1>
+
+        </header>
+
+        <div class="entry-content">
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2014-08-15T00:00:00">
+          on&nbsp;Fri 15 August 2014
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->          <h1>Introduction</h1>
+<p>In the absence of a randomized experiment, causality is difficult to determine. Do patients who self-select into taking a new drug get better <em>because</em> the drug works, or would they have gotten better anyways? To answer such questions, causal inference techniques try to establish whether a treatment X <em>causes</em> some effect Y.</p>
+<p>For example, suppose we want to measure how well certain features increase user engagement on Quora. To be concrete, let's say we want to understand the effect of <a href="http://blog.quora.com/Introducing-Verified-Profiles">"Verified" badges</a> on user activity. Do users place more trust in verified accounts, thereby following and upvoting them more often?</p>
+<p>The naive approach to measuring this effect would be to form two groups, those users with a verified badge and those without, and compare their activity. ("<em>Verified users tend to have 10.2X as many followers as non-verified users.</em>") However, this comparison is obviously flawed – verified users are clearly different from non-verified users even before they receive a badge (e.g., verified users are more well-known, so would have more followers anyways), but what we really want to understand is how many followers, posts, and upvotes someone like Brad Pitt would have if he were verified, compared to how many he'd have if he weren't.</p>
+<p>It's unclear what heuristic we could use to remove this bias. An initial attempt at correction could be to filter for users well-known to the general populace, and within this filtered set compare verified against non-verified users, but such a comparison would undoubtedly remain biased. And now that the feature's launched, a randomized experiment -- that holy grail of causality -- is likely impossible to run. So what can we do?</p>
+<p>This is where propensity modeling, or other techniques of causal inference, comes into play.</p>
+<h1>Propensity Modeling</h1>
+<p>To explain the idea behind propensity modeling, let's start with a thought experiment. Imagine Brad Pitt had a twin brother, indistinguishable in every way: Brad 1 and Brad 2 have the same number of followers, they follow the exact same topics, and so on. One day, Brad 1 suddenly receives a verified badge, while Brad 2 does not, but otherwise they continue to behave identically. In this scenario, their subsequent difference in engagement is precisely the effect of receiving a verified badge.</p>
+<p>Moving this scenario into the real world, one way to estimate the effect of a verified badge would be as follows:</p>
+<ul>
+<li>For every verified user, find a non-verified user that's as close a match as possible. For example, we might match a verified Jay-Z with an unverified Kanye, a verified Natalie Portman with an unverified Keira Knightley, and a verified JK Rowling with an unverified Stephenie Meyer.</li>
+<li>The difference between each twin pair gives us the causal effect of a badge.</li>
+</ul>
+<p>However, finding closely matching twins is extremely difficult in practice. Is Jay-Z really a close match with Kanye, if they have fairly different numbers of followers? What about the Jonas Brothers and One Direction?</p>
+<p>Propensity modeling (at last!) is a simplification of this twin matching procedure. Instead of matching pairs of verified and unverified users based on all the variables we have, we simply match all users based on a single number, the likelihood ("propensity score") that they'll become verified.</p>
+<p>In more detail:</p>
+<ul>
+<li>First, we select which variables we'll use to model our users. (e.g., which topics a user follows, when they joined, whether they've connected a Facebook account, etc.)</li>
+<li>Next, we build a probabilistic model (say, a logistic regression) to predict whether a user will become verified or not. For example, our training set might consist of all users who were unverified as of February 28 2014, some of whom became verified in the first week of March 2014, and we would train the classifier to model which users receive a verification badge.</li>
+<li>The model's probabilistic estimate that a user will become verified is called a propensity score.</li>
+<li>We form some number of buckets, say 10 buckets in total (one bucket covers users with a 0.0 - 0.1 propensity to become verified, a second bucket covers users with a 0.1 - 0.2 propensity, and so on), and place users into these buckets.</li>
+<li>Finally, we compare the verified and non-verified users within each bucket (say, by measuring their number of followers in May and June) to estimate the causal effect of a verified badge.</li>
+</ul>
+<p>For example, here's a hypothetical distribution of verified and non-verified user ages. We see that verified users tend to be quite a bit older, which gives some extra support to why we can't simply run a correlational analysis.</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/age-distribution.png"><img alt="Age Distribution" src="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/age-distribution.png" /></a></p>
+<p>And after training a model to estimate verification propensity, and stratifying users into propensity buckets, here might be a graph of the effect that verification has on a user's followers.</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/verification-effect.png"><img alt="Verification Effect" src="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/verification-effect.png" /></a></p>
+<p>In the above (hypothetical) graph, each row represents a propensity bucket of users, and the exposure week denotes the first week of March, when the treatment group received their verified badges. We see that prior to that week, the untreated group (the users who remain unverified) and the treated group (the users who eventually become verified) track quite well. After the treatment group receives verification, however, they start to gain many more followers than the control group, which forms our estimate of the causal effect.</p>
+<h1>Other Methods of Causal Inference</h1>
+<p>Of course, there are many other methods of causal inference on observational data. I'm getting a bit off-topic now, but I'll run through two of my favorites anyways.</p>
+<h2>Regression Discontinuity</h2>
+<p>Suppose we've performed our analysis of verification, and now we want to understand the effect of the <a href="http://blog.quora.com/Announcing-Top-Writers-2013">"Top Writer 2013" badge</a>. Specifically, does the badge itself cause users to gain more followers?</p>
+<p>For simplicity, let's assume that the Top Writer badge was given to all users who received at least 5000 upvotes in 2013. The idea behind a regression discontinuity design is that the difference between those users who just barely receive a Top Writer badge (i.e., receive 5000 upvotes) and those who just barely don't (i.e., receive 4999 upvotes) is more or less random chance, so we can use this threshold to estimate a causal effect.</p>
+<p>For example, in the imaginary graph below, the discontinuity at 5000 upvotes suggests that a Top Writer Badge leads to around 100 more followers on average.</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/regression-discontinuity.png"><img alt="Regression Discontinuity" src="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/regression-discontinuity.png" /></a></p>
+<h2>Natural Experiments</h2>
+<p>Understanding the effect of a Top Writer badge is a fairly uninteresting question, though. (As is the question of verification! They just make easy examples.) A deeper, more fundamental question could be to ask: what happens when a user discovers a new top writer that they love? Does the top writer inspire them to write some of their own content, to explore more of the same topics, and perhaps even engage with the writer himself? How important, in other words, is the connection to a great <em>user</em> as opposed to the reading of random great <em>posts</em>?</p>
+<p>I actually studied an analogous question when I was at Google, so instead of making up an imaginary Quora case study, I'll describe some of that work here.</p>
+<p>So let's suppose we want to understand what would happen if we were able to match users to the perfect YouTube channel. That is, how much is the ultimate recommendation worth?</p>
+<ul>
+<li>Does falling in love with a new channel lead to engagement above and beyond activity on the channel itself, perhaps because users return to YouTube specifically for the new channel and then stay to watch more? (a multiplicative effect) In the TV world, for example, perhaps many people stay at home on Sunday nights <em>specifically</em> to catch the newest episode of Real Housewives (instead of going out), and channel surf for even more entertainment once it's over.</li>
+<li>Does falling in love with a new channel simply increase activity on the channel alone? (an additive effect)</li>
+<li>Does a new channel replace existing engagement on YouTube? After all, maybe users only have a limited amount of time they can spend on the site. (a neutral effect)</li>
+<li>Does the perfect channel actually cause users to spend less time overall on the site, since maybe they spend less time idly browsing and channel surfing once they have concrete channels they know how to turn to? (a negative effect)</li>
+</ul>
+<p>As always, an A/B test would be ideal, but it's impossible in this case to run: we can't force users to fall in love with a channel (we can recommend them channels, of course, but there's no guarantee they'll actually like them), and we can't forcibly block them from certain channels either.</p>
+<p>One approach, then, is to use a <strong>natural experiment</strong> (a scenario in which the universe itself somehow generates a random-like assignment) to study this effect. Here's the idea.</p>
+<p>Consider a user who uploads a new video every Wednesday. One month, he lets his subscribers know that he won’t be uploading any new videos for a few weeks, while he goes on vacation.</p>
+<p>How do his subscribers respond? Do they stop watching YouTube on Wednesdays, since his channel was the sole reason for their visits? Or is their activity relatively unaffected, since they only watch his content when it appears on the front page?</p>
+<p>Imagine, instead, that the channel starts uploading a new video every Friday. Do his subscribers start to visit then as well? And now that they're on YouTube, do they merely stay for the new video, or does their visit lead to a sinkhole of searches and related content too?</p>
+<p>As it turns out, these scenarios do happen. For example, here's a calendar of when one popular channel uploads videos. You can see that in 2011, it tended to upload videos on Tuesdays and Fridays, but it shifted to uploads on Wednesday and Saturday at the end of the year.</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/uploads-calendar.png"><img alt="Uploads Calendar" src="https://dl.dropboxusercontent.com/u/10506/blog/causal-inference/uploads-calendar.png" /></a></p>
+<p>By using this shift as natural experiment that "quasi-randomly" removes a well-loved channel on certain days and introduces it on others, we can try to understand the effect of successfully making the perfect recommendation.</p>
+<p>(This is probably a somewhat convoluted example of a natural experiment. For an example that perhaps illustrates the idea more clearly, suppose we want to understand the effect of income on mental health. Of course, we can't force some people to become poor or rich, and a correlational study is clearly flawed. This article describes a natural experiment when a group of Cherokee Indians opened up a casino and distributed profits to its members, thereby "randomly" lifting them out of poverty: http://opinionator.blogs.nytimes.com/2014/01/18/what-happens-when-the-poor-receive-a-stipend/)</p>
+<h1>Discovering Drivers of Growth</h1>
+<p>Let's go back to propensity modeling.</p>
+<p>So suppose that we're on Quora's Growth team, and we're tasked with figuring out how to turn casual users of the site into users that return every day. What do we do?</p>
+<p>The propensity modeling approach might be the following. We could take a list of features (installing the mobile app, logging in, badges, following certain topics, etc.), and build a propensity model for each one. We could then rank each feature by its estimated causal effect on engagement, and use the ordered list of features to prioritize the next sprint. (Or we could use these numbers in order to convince the exec team that we need more resources.) This is a slightly more sophisticated version of the idea of building an engagement regression model (or a churn regression model), and examining the weights on each feature.</p>
+<p>Despite writing this post, though, I admit I'm generally not a fan of propensity modeling for many applications in the tech world. (I haven't worked in the medical field, so I don't have a strong opinion on its usefulness there, though I think it's a little more necessary.) I'll save more of my reasons for another time, but after all, causal inference is incredibly difficult, and we're never going to be able to control for all the hidden influencers that can bias a treatment. Also, the mere fact that we have to choose which features to include in our model (and remember: building features is very time-consuming and difficult) means that we already have a strong prior belief on the usefulness of each feature, whereas what we'd really like to do is to discover hidden motivations of engagement that we've never thought of.</p>
+<p>So what can we do instead?</p>
+<p><strong>If we're trying to understand what drives people to become heavy users of the site, why don't we simply <em>ask</em> them?</strong></p>
+<p>In more detail, let's do the following:</p>
+<ul>
+<li>First, we'll run a survey on a couple hundred of users. (We can quickly find hundreds of users through a platform like, say, Mechanical Turk.)</li>
+<li>In the survey, we'll ask them whether their engagement on the site has increased, decreased, or remained about the same over the past year. We'll also ask them to explain possible reasons for their change in activity, and to describe how they use the site currently. We can also ask for supplemental details, like their demographic information.</li>
+<li>Finally, we can filter all the responses for those users who heavily increased their engagement over the past year (or who heavily decreased it, if we're trying to understand churn), and analyse their responses for the reasons.</li>
+</ul>
+<p>For example, here's one interesting response I got when I ran this study at YouTube.</p>
+<p>"I have always been a big music fan, but recently I took up playing the guitar. Because of my new found passion (playing the guitar) my desire to watch concerts has increased. I started watching a whole lot of music festivals and concerts that are posted on Youtube and other music videos. I have spent a lot of time also watching guitar lessons on Youtube (from www.justinguitar.com)."</p>
+<p>This response was actually representative of a general theme the survey uncovered: one big driver of engagement seemed to come from people discovering a new offline hobby, and using YouTube to increase their appreciation of it. People who wanted to start cooking at home would turn to YouTube for recipe videos, people who started playing tennis or some other sport would go to YouTube for lessons or other great shots, college students would look for channels like Khan Academy to supplement their lectures, and so on. In other words, offline activities were driving online growth, and instead of trying to figure out what kinds of <em>online</em> content people were interested in (which articles did they like on Facebook, who did they follow on Twitter, what did they read on Reddit), perhaps we should have been focusing on bringing their physical hobbies into the digital world.</p>
+<p>This "offline hobby" idea certainly wouldn't have been a feature I would have thrown into any engagement model, even if only because it's a very difficult feature to create (how would we know which videos are related to real-world behavior?). But now that we know it's a potentially big driver of growth ("potentially" because, of course, surveys aren't necessarily representative), it's something we can spend a lot more time studying in the logs.</p>
+<h1>End</h1>
+<p>To summarize: propensity modeling is a powerful technique for measuring causal effects in the absence of a randomized experiment. </p>
+<p>Purely correlational analyses on top of observational studies can be very dangerous, after all. To take my favorite example: if we find that cities with more policemen tend to have more crime, does this mean that we should try to reduce the size of our police forces in order to reduce the nation's amount of crime?</p>
+<p>For another example, here's a post by Gelman on contradictory conclusions about hormone replacement therapy: http://andrewgelman.com/2005/01/07/could_propensit/.</p>
+<p>That said, remember that (as always) a model is only as good as the data that you feed it. It's super difficult to account for all the hidden variables that might matter, and what you think might be a well-designed causal model might in fact be missing some hidden factor. (I actually remember hearing from someone that a propensity model on the nurses study generated a flawed conclusion, though I can't find any references to this right now.) So consider whether there are other approaches you can take, whether it's an easier-to-understand causal technique or even just asking your users, and even if a randomized experiment seems too difficult to run, the effort may be well worth the trouble in the end.</p>
+        </div><!-- /.entry-content -->
+
+      </article>
+    </div>
+</section>
+  
+	      <div class="LaunchyardDetail">
+	        <p>
+	          <a class="title" href="/">Edwin Chen</a>
+	          <br/>
+	          Hanging. MIT, Microsoft Research, Clarium, Twitter, Google, Dropbox.
+	          <br /><br />
+            <a href="mailto:hello[at]echen.me">Email</a><br />
+            <a href="https://twitter.com/#!/echen">Twitter</a><br/>
+            <a href="https://github.com/echen">Github</a><br/>
+            <a href="https://plus.google.com/113804726252165471503/">Google+</a><br/>
+            <a href="http://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
+            <a href="http://quora.com/edwin-chen-1">Quora</a>
+          </p>
+          <br />
+          <div id="recent_posts">
+              <h3>Recent Posts</h3>
+                <a href="/2014/08/15/propensity-modeling-causal-inference-and-sparkers-of-growth/">Propensity Modeling, Causal Inference, and Sparkers of Growth  </a><br /><br />
+                <a href="/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
+                <a href="/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
+                <a href="/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
+                <a href="/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Making the Most of Mechanical Turk: Tips and Best Practices  </a><br /><br />
+                <a href="/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
+                <a href="/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
+                <a href="/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
+                <a href="/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a href="/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
+            
+          </div>
+        </div>
+
+
+        <section id="extras" >
+       
+        
+        </section><!-- /#extras -->
+	
+        <footer id="contentinfo" >
+                <address id="about" class="vcard ">
+                Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
+                great advantage of <a href="http://python.org" target="_blank">Python</a>.
+		
+                </address><!-- /#about -->
+		
+
+                
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

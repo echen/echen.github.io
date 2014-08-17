@@ -1,0 +1,2309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>Edwin Chen's Blog</title>
+        <meta charset="utf-8" />
+	      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/theme/css/main.css" type="text/css" />
+
+        <!--[if IE]>
+                <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+        <!--[if lte IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie.css"/>
+                <script src="/js/IE8.js" type="text/javascript"></script><![endif]-->
+
+        <!--[if lt IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie6.css"/><![endif]-->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js" type="text/javascript"></script>
+
+
+</head>
+
+<body id="index" class="home">
+	
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2012-03-20T04:15:00">
+          on&nbsp;Tue 20 March 2012
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>Imagine you&#8217;re a budding chef. A data-curious one, of course, so you start by taking a set of foods (pizza, salad, spaghetti, etc.) and ask 10 friends how much of each they ate in the past day.</p>
+
+  <p>Your goal: to find natural <em>groups</em> of foodies, so that you can better cater to each cluster&#8217;s tastes. For example, your fratboy friends might love <a href="https://twitter.com/#!/edchedch/status/166343879547822080">wings and beer</a>, your anime friends might love soba and sushi, your hipster friends probably dig tofu, and so on.</p>
+
+  <p>So how can you use the data you&#8217;ve gathered to discover different kinds of groups?</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/clustering-example.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/clustering-example.png" alt="Clustering Example" /></a></p>
+
+  <p>One way is to use a standard clustering algorithm like <strong>k-means</strong> or <strong>Gaussian mixture modeling</strong> (see <a href="http://blog.echen.me/2011/03/19/counting-clusters/">this previous post</a> for a brief introduction). The problem is that these both assume a <em>fixed</em> number of clusters, which they need to be told to find. There are a couple methods for selecting the number of clusters to learn (e.g., the <a href="http://blog.echen.me/2011/03/19/counting-clusters/">gap and prediction strength statistics</a>), but the problem is a more fundamental one: most real-world data simply doesn&#8217;t have a fixed number of clusters.</p>
+
+  <p>That is, suppose we&#8217;ve asked 10 of our friends what they ate in the past day, and we want to find groups of eating preferences. There&#8217;s really an infinite number of foodie types (carnivore, vegan, snacker, Italian, healthy, fast food, heavy eaters, light eaters, and so on), but with only 10 friends, we simply don&#8217;t have enough data to detect them all. (Indeed, we&#8217;re limited to 10 clusters!) So whereas k-means starts with the incorrect assumption that there&#8217;s a fixed, finite number of clusters that our points come from, <em>no matter if we feed it more data</em>, what we&#8217;d really like is a method positing an infinite number of hidden clusters that naturally arise as we ask more friends about their food habits. (For example, with only 2 data points, we might not be able to tell the difference between vegans and vegetarians, but with 200 data points, we probably could.)</p>
+
+  <p>Luckily for us, this is precisely the purview of <strong>nonparametric Bayes</strong>.*</p>
+
+  <p>*Nonparametric Bayes refers to a class of techniques that allow some parameters to change with the data. In our case, for example, instead of fixing the number of clusters to be discovered, we allow it to grow as more data comes in.</p>
+
+  <h1>A Generative Story</h1>
+
+  <p>Let&#8217;s describe a generative model for finding clusters in any set of data. We assume an infinite set of latent groups, where each group is described by some set of parameters. For example, each group could be a Gaussian with a specified mean $\mu_i$ and standard deviation $\sigma_i$, and these group parameters themselves are assumed to come from some base distribution $G_0$. Data is then generated in the following manner:</p>
+
+  <ul>
+  <li>Select a cluster.</li>
+  <li>Sample from that cluster to generate a new point.</li>
+  </ul>
+
+
+  <p>(Note the resemblance to a <a href="http://en.wikipedia.org/wiki/Mixture_model">finite mixture model</a>.)</p>
+
+  <p>For example, suppose we ask 10 friends how many calories of pizza, salad, and rice they ate yesterday. Our groups could be:</p>
+
+  <ul>
+  <li>A Gaussian centered at (pizza = 5000, salad = 100, rice = 500) (i.e., a pizza lovers group).</li>
+  <li>A Gaussian centered at (pizza = 100, salad = 3000, rice = 1000) (maybe a vegan group).</li>
+  <li>A Gaussian centered at (pizza = 100, salad = 100, rice = 10000) (definitely Asian).</li>
+  <li>&#8230;</li>
+  </ul>
+
+
+  <p>When deciding what to eat when she woke up yesterday, Alice could have thought <em>girl, I&#8217;m in the mood for pizza</em> and her food consumption yesterday would have been a sample from the pizza Gaussian. Similarly, Bob could have spent the day in Chinatown, thereby sampling from the Asian Gaussian for his day&#8217;s meals. And so on.</p>
+
+  <p>The big question, then, is: how do we assign each friend to a group?</p>
+
+  <h1>Assigning Groups</h1>
+
+  <h2>Chinese Restaurant Process</h2>
+
+  <p>One way to assign friends to groups is to use a <strong>Chinese Restaurant Process</strong>. This works as follows: Imagine a restaurant where all your friends went to eat yesterday&#8230;</p>
+
+  <ul>
+  <li>Initially the restaurant is empty.</li>
+  <li>The first person to enter (Alice) sits down at a table (selects a group). She then orders food for the table (i.e., she selects parameters for the group); everyone else who joins the table will then be limited to eating from the food she ordered.</li>
+  <li>The second person to enter (Bob) sits down at a table. Which table does he sit at? With probability $\alpha / (1 + \alpha)$ he sits down at a new table (i.e., selects a new group) and orders food for the table; with probability $1 / (1 + \alpha)$ he sits with Alice and eats from the food she&#8217;s already ordered (i.e., he&#8217;s in the same group as Alice).</li>
+  <li>&#8230;</li>
+  <li>The (n+1)-st person sits down at a new table with probability $\alpha / (n + \alpha)$, and at table k with probability $n_k / (n + \alpha)$, where $n_k$ is the number of people currently sitting at table k.</li>
+  </ul>
+
+
+  <p>Note a couple things:</p>
+
+  <ul>
+  <li>The more people (data points) there are at a table (cluster), the more likely it is that people (new data points) will join it. In other words, our groups satisfy a <strong>rich get richer</strong> property.</li>
+  <li>There&#8217;s always a small probability that someone joins an entirely new table (i.e., a new group is formed).</li>
+  <li>The probability of a new group depends on $\alpha$. So we can think of $\alpha$ as a <strong>dispersion parameter</strong> that affects the dispersion of our datapoints. The lower alpha is, the more tightly clustered our data points; the higher it is, the more clusters we have in any finite set of points.</li>
+  </ul>
+
+
+  <p>(Also notice the resemblance between table selection probabilities and a Dirichlet distribution&#8230;)</p>
+
+  <p>Just to summarize, given n data points, the Chinese Restaurant Process specifies a distribution over partitions (table assignments) of these points. We can also generate parameters for each partition/table from a base distribution $G_0$ (for example, each table could represent a Gaussian whose mean and standard deviation are sampled from $G_0$), though to be clear, this is not part of the CRP itself.</p>
+
+  <h3>Code</h3>
+
+  <p>Since code makes everything better, here&#8217;s some Ruby to simulate a CRP:</p>
+
+  <figcaption><span>Chinese Restaurant Process </span><a href="https://github.com/echen/dirichlet-process/blob/master/chinese_restaurant_process.rb">chinese_restaurant_process.rb</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  <span class="line-number">27</span>
+  </pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="c1"># Generate table assignments for `num_customers` customers, according to</span>
+  </span><span class="line"><span class="c1"># a Chinese Restaurant Process with dispersion parameter `alpha`.</span>
+  </span><span class="line"><span class="c1">#</span>
+  </span><span class="line"><span class="c1"># returns an array of integer table assignments</span>
+  </span><span class="line"><span class="k">def</span> <span class="nf">chinese_restaurant_process</span><span class="p">(</span><span class="n">num_customers</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+  </span><span class="line"> <span class="k">return</span> <span class="o">[]</span> <span class="k">if</span> <span class="n">num_customers</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+  </span><span class="line">
+  </span><span class="line"> <span class="n">table_assignments</span> <span class="o">=</span> <span class="o">[</span><span class="mi">1</span><span class="o">]</span> <span class="c1"># first customer sits at table 1</span>
+  </span><span class="line"> <span class="n">next_open_table</span> <span class="o">=</span> <span class="mi">2</span> <span class="c1"># index of the next empty table</span>
+  </span><span class="line">
+  </span><span class="line"> <span class="c1"># Now generate table assignments for the rest of the customers.</span>
+  </span><span class="line"> <span class="mi">1</span><span class="o">.</span><span class="n">upto</span><span class="p">(</span><span class="n">num_customers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+  </span><span class="line">   <span class="k">if</span> <span class="nb">rand</span> <span class="o">&lt;</span> <span class="n">alpha</span><span class="o">.</span><span class="n">to_f</span> <span class="o">/</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span>
+  </span><span class="line">     <span class="c1"># Customer sits at new table.</span>
+  </span><span class="line">     <span class="n">table_assignments</span> <span class="o">&lt;&lt;</span> <span class="n">next_open_table</span>
+  </span><span class="line">     <span class="n">next_open_table</span> <span class="o">+=</span> <span class="mi">1</span>
+  </span><span class="line">   <span class="k">else</span>
+  </span><span class="line">     <span class="c1"># Customer sits at an existing table.</span>
+  </span><span class="line">     <span class="c1"># He chooses which table to sit at by giving equal weight to each</span>
+  </span><span class="line">     <span class="c1"># customer already sitting at a table. </span>
+  </span><span class="line">     <span class="n">which_table</span> <span class="o">=</span> <span class="n">table_assignments</span><span class="o">[</span><span class="nb">rand</span><span class="p">(</span><span class="n">table_assignments</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="o">]</span>
+  </span><span class="line">     <span class="n">table_assignments</span> <span class="o">&lt;&lt;</span> <span class="n">which_table</span>
+  </span><span class="line">   <span class="k">end</span>
+  </span><span class="line"> <span class="k">end</span>
+  </span><span class="line">
+  </span><span class="line"> <span class="n">table_assignments</span>
+  </span><span class="line"><span class="k">end</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>And here&#8217;s some sample output:</p>
+
+  <figcaption><span>Chinese Restaurant Process </span><a href="https://github.com/echen/dirichlet-process/blob/master/chinese_restaurant_process.rb">chinese_restaurant_process.rb</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  </pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="o">&gt;</span> <span class="n">chinese_restaurant_process</span><span class="p">(</span><span class="n">num_customers</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span> <span class="c1"># table assignments from run 1</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span> <span class="c1"># table assignments from run 2</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span> <span class="c1"># table assignments from run 3</span>
+  </span><span class="line">
+  </span><span class="line"><span class="o">&gt;</span> <span class="n">chinese_restaurant_process</span><span class="p">(</span><span class="n">num_customers</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span>
+  </span><span class="line">
+  </span><span class="line"><span class="o">&gt;</span> <span class="n">chinese_restaurant_process</span><span class="p">(</span><span class="n">num_customers</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">8</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Notice that as we increase $\alpha$, so too does the number of distinct tables increase.</p>
+
+  <h2>Polya Urn Model</h2>
+
+  <p>Another method for assigning friends to groups is to follow the <strong>Polya Urn Model</strong>. This is basically the same model as the Chinese Restaurant Process, just with a different metaphor.</p>
+
+  <ul>
+  <li>We start with an urn containing $\alpha G_0(x)$ balls of &#8220;color&#8221; $x$, for each possible value of $x$. ($G_0$ is our base distribution, and $G_0(x)$ is the probability of sampling $x$ from $G_0$). Note that these are possibly fractional balls.</li>
+  <li>At each time step, draw a ball from the urn, note its color, and then drop both the original ball plus a new ball of the same color back into the urn.</li>
+  </ul>
+
+
+  <p>Note the connection between this process and the CRP: balls correspond to people (i.e., data points), colors correspond to table assignments (i.e., clusters), alpha is again a dispersion parameter (put differently, a prior), colors satisfy a rich-get-richer property (since colors with many balls are more likely to get drawn), and so on. (Again, there&#8217;s also a connection between this urn model and <a href="http://en.wikipedia.org/wiki/Dirichlet_distribution#P.C3.B3lya.27s_urn">the urn model for the (finite) Dirichlet distribution</a>&#8230;)</p>
+
+  <p>To be precise, the difference between the CRP and the Polya Urn Model is that the CRP specifies only a distribution over <em>partitions</em> (i.e., table assignments), but doesn&#8217;t assign parameters to each group, whereas the Polya Urn Model does both.</p>
+
+  <h3>Code</h3>
+
+  <p>Again, here&#8217;s some code for simulating a Polya Urn Model:</p>
+
+  <figcaption><span>Polya Urn Model </span><a href="https://github.com/echen/dirichlet-process/blob/master/polya_urn_model.rb">polya_urn_model.rb</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  </pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="c1"># Draw `num_balls` colored balls according to a Polya Urn Model</span>
+  </span><span class="line"><span class="c1"># with a specified base color distribution and dispersion parameter</span>
+  </span><span class="line"><span class="c1"># `alpha`.</span>
+  </span><span class="line"><span class="c1">#</span>
+  </span><span class="line"><span class="c1"># returns an array of ball colors</span>
+  </span><span class="line"><span class="k">def</span> <span class="nf">polya_urn_model</span><span class="p">(</span><span class="n">base_color_distribution</span><span class="p">,</span> <span class="n">num_balls</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+  </span><span class="line">  <span class="k">return</span> <span class="o">[]</span> <span class="k">if</span> <span class="n">num_balls</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="n">balls_in_urn</span> <span class="o">=</span> <span class="o">[]</span>
+  </span><span class="line">  <span class="mi">0</span><span class="o">.</span><span class="n">upto</span><span class="p">(</span><span class="n">num_balls</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+  </span><span class="line">    <span class="k">if</span> <span class="nb">rand</span> <span class="o">&lt;</span> <span class="n">alpha</span><span class="o">.</span><span class="n">to_f</span> <span class="o">/</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">+</span> <span class="n">balls_in_urn</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+  </span><span class="line">      <span class="c1"># Draw a new color, put a ball of this color in the urn.</span>
+  </span><span class="line">      <span class="n">new_color</span> <span class="o">=</span> <span class="n">base_color_distribution</span><span class="o">.</span><span class="n">call</span>
+  </span><span class="line">      <span class="n">balls_in_urn</span> <span class="o">&lt;&lt;</span> <span class="n">new_color</span>
+  </span><span class="line">    <span class="k">else</span>
+  </span><span class="line">      <span class="c1"># Draw a ball from the urn, add another ball of the same color.</span>
+  </span><span class="line">      <span class="n">ball</span> <span class="o">=</span> <span class="n">balls_in_urn</span><span class="o">[</span><span class="nb">rand</span><span class="p">(</span><span class="n">balls_in_urn</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="o">]</span>
+  </span><span class="line">      <span class="n">balls_in_urn</span> <span class="o">&lt;&lt;</span> <span class="n">ball</span>
+  </span><span class="line">    <span class="k">end</span>
+  </span><span class="line">  <span class="k">end</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="n">balls_in_urn</span>
+  </span><span class="line"><span class="k">end</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>And here&#8217;s some sample output, using a uniform distribution over the unit interval as the color distribution to sample from:</p>
+
+  <figcaption><span>Polya Urn Model </span><a href="https://github.com/echen/dirichlet-process/blob/master/polya_urn_model.rb">polya_urn_model.rb</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  </pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="o">&gt;</span> <span class="n">unit_uniform</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="p">(</span><span class="nb">rand</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">to_i</span> <span class="o">/</span> <span class="mi">100</span><span class="o">.</span><span class="mi">0</span> <span class="p">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="o">&gt;</span> <span class="n">polya_urn_model</span><span class="p">(</span><span class="n">unit_uniform</span><span class="p">,</span> <span class="n">num_balls</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+  </span><span class="line"><span class="mi">0</span><span class="o">.</span><span class="mi">27</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">89</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">89</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">89</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">73</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">98</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">43</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">98</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">89</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">53</span> <span class="c1"># colors in the urn from run 1</span>
+  </span><span class="line"><span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">46</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">85</span> <span class="c1"># colors in the urn from run 2</span>
+  </span><span class="line"><span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">87</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">87</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">87</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span> <span class="c1"># colors in the urn from run 3</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h3>Code, Take 2</h3>
+
+  <p>Here&#8217;s the same code for a Polya Urn Model, but in R:</p>
+
+  <figcaption><span>Polya Urn Model </span><a href="https://github.com/echen/dirichlet-process/blob/master/polya_urn_model.R">polya_urn_model.R</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># Return a vector of `num_balls` ball colors according to a Polya Urn Model</span>
+  </span><span class="line"><span class="c1"># with dispersion `alpha`, sampling from a specified base color distribution.</span>
+  </span><span class="line">polya_urn_model <span class="o">=</span> <span class="kr">function</span><span class="p">(</span>base_color_distribution<span class="p">,</span> num_balls<span class="p">,</span> alpha<span class="p">)</span> <span class="p">{</span>
+  </span><span class="line">  balls <span class="o">=</span> c<span class="p">()</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="kr">for</span> <span class="p">(</span>i in <span class="m">1</span>:num_balls<span class="p">)</span> <span class="p">{</span>
+  </span><span class="line">    <span class="kr">if</span> <span class="p">(</span>runif<span class="p">(</span><span class="m">1</span><span class="p">)</span> <span class="o">&lt;</span> alpha <span class="o">/</span> <span class="p">(</span>alpha <span class="o">+</span> length<span class="p">(</span>balls<span class="p">)))</span> <span class="p">{</span>
+  </span><span class="line">      <span class="c1"># Add a new ball color.</span>
+  </span><span class="line">      new_color <span class="o">=</span> base_color_distribution<span class="p">()</span>
+  </span><span class="line">      balls <span class="o">=</span> c<span class="p">(</span>balls<span class="p">,</span> new_color<span class="p">)</span>
+  </span><span class="line">    <span class="p">}</span> <span class="kr">else</span> <span class="p">{</span>
+  </span><span class="line">      <span class="c1"># Pick out a ball from the urn, and add back a</span>
+  </span><span class="line">      <span class="c1"># ball of the same color.</span>
+  </span><span class="line">      ball <span class="o">=</span> balls<span class="p">[</span>sample<span class="p">(</span><span class="m">1</span>:length<span class="p">(</span>balls<span class="p">),</span> <span class="m">1</span><span class="p">)]</span>
+  </span><span class="line">      balls <span class="o">=</span> c<span class="p">(</span>balls<span class="p">,</span> ball<span class="p">)</span>
+  </span><span class="line">    <span class="p">}</span>
+  </span><span class="line">  <span class="p">}</span>
+  </span><span class="line">
+  </span><span class="line">  balls
+  </span><span class="line"><span class="p">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Here are some sample density plots of the colors in the urn, when using a unit normal as the base color distribution:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_1.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_1.png" alt="Polya Urn Model, Alpha = 1" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_5.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_5.png" alt="Polya Urn Model, Alpha = 5" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_25.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_25.png" alt="Polya Urn Model, Alpha = 25" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_50.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_50.png" alt="Polya Urn Model, Alpha = 50" /></a></p>
+
+  <p>Notice that as alpha increases (i.e., we sample more new ball colors from our base; i.e., as we place more weight on our prior), the colors in the urn tend to a unit normal (our base color distribution).</p>
+
+  <p>And here are some sample plots of points generated by the urn, for varying values of alpha:</p>
+
+  <ul>
+  <li>Each color in the urn is sampled from a uniform distribution over [0,10]x[0,10] (i.e., a [0, 10] square).</li>
+  <li>Each group is a Gaussian with standard deviation 0.1 and mean equal to its associated color, and these Gaussian groups generate points.</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.1.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.1.png" alt="Alpha 0.1" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.2.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.2.png" alt="Alpha 0.2" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.3.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.3.png" alt="Alpha 0.3" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.5.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.5.png" alt="Alpha 0.5" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-1.0.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-1.0.png" alt="Alpha 1.0" /></a></p>
+
+  <p>Notice that the points clump together in fewer clusters for low values of alpha, but become more dispersed as alpha increases.</p>
+
+  <h2>Stick-Breaking Process</h2>
+
+  <p>Imagine running either the Chinese Restaurant Process or the Polya Urn Model without stop. For each group $i$, this gives a proportion $w_i$ of points that fall into group $i$.</p>
+
+  <p>So instead of running the CRP or Polya Urn model to figure out these proportions, can we simply generate them directly?</p>
+
+  <p>This is exactly what the Stick-Breaking Process does:</p>
+
+  <ul>
+  <li>Start with a stick of length one.</li>
+  <li>Generate a random variable $\beta_1 \sim Beta(1, \alpha)$. By the definition of the <a href="http://en.wikipedia.org/wiki/Beta_distribution">Beta distribution</a>, this will be a real number between 0 and 1, with expected value $1 / (1 + \alpha)$. Break off the stick at $\beta_1$; $w_1$ is then the length of the stick on the left.</li>
+  <li>Now take the stick to the right, and generate $\beta_2 \sim Beta(1, \alpha)$. Break off the stick $\beta_2$ into the stick. Again, $w_2$ is the length of the stick to the left, i.e., $w_2 = (1 - \beta_1) \beta_2$.</li>
+  <li>And so on.</li>
+  </ul>
+
+
+  <p>Thus, the Stick-Breaking process is simply the CRP or Polya Urn Model from a different point of view. For example, assigning customers to table 1 according to the Chinese Restaurant Process is equivalent to assigning customers to table 1 with probability $w_1$.</p>
+
+  <h3>Code</h3>
+
+  <p>Here&#8217;s some R code for simulating a Stick-Breaking process:</p>
+
+  <figcaption><span>Stick-Breaking Process </span><a href="https://github.com/echen/dirichlet-process/blob/master/stick_breaking_process.R">stick_breaking_process.R</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># Return a vector of weights drawn from a stick-breaking process</span>
+  </span><span class="line"><span class="c1"># with dispersion `alpha`.</span>
+  </span><span class="line"><span class="c1">#</span>
+  </span><span class="line"><span class="c1"># Recall that the kth weight is</span>
+  </span><span class="line"><span class="c1">#   \beta_k = (1 - \beta_1) * (1 - \beta_2) * ... * (1 - \beta_{k-1}) * beta_k</span>
+  </span><span class="line"><span class="c1"># where each $\\beta\_i$ is drawn from a Beta distribution</span>
+  </span><span class="line"><span class="c1">#   \beta_i ~ Beta(1, \alpha)</span>
+  </span><span class="line">stick_breaking_process <span class="o">=</span> <span class="kr">function</span><span class="p">(</span>num_weights<span class="p">,</span> alpha<span class="p">)</span> <span class="p">{</span>
+  </span><span class="line">  betas <span class="o">=</span> rbeta<span class="p">(</span>num_weights<span class="p">,</span> <span class="m">1</span><span class="p">,</span> alpha<span class="p">)</span>
+  </span><span class="line">  remaining_stick_lengths <span class="o">=</span> c<span class="p">(</span><span class="m">1</span><span class="p">,</span> cumprod<span class="p">(</span><span class="m">1</span> <span class="o">-</span> betas<span class="p">))[</span><span class="m">1</span>:num_weights<span class="p">]</span>
+  </span><span class="line">  weights <span class="o">=</span> remaining_stick_lengths <span class="o">*</span> betas
+  </span><span class="line">  weights
+  </span><span class="line"><span class="p">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>And here&#8217;s some sample output:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/sbp_alpha_1.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/sbp_alpha_1.png" alt="Stick-Breaking Process, alpha = 1" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/sbp_alpha_3.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/sbp_alpha_3.png" alt="Stick-Breaking Process, alpha = 3" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/sbp_alpha_5.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/sbp_alpha_5.png" alt="Stick-Breaking Process, alpha = 5" /></a></p>
+
+  <p>Notice that for low values of alpha, the stick weights are concentrated on the first few weights (meaning our data points are concentrated on a few clusters), while the weights become more evenly dispersed as we increase alpha (meaning we posit more clusters in our data points).</p>
+
+  <h2>Dirichlet Process</h2>
+
+  <p>Suppose we run a Polya Urn Model several times, where we sample colors from a base distribution $G_0$. Each run produces a distribution of colors in the urn (say, 5% blue balls, 3% red balls, 2% pink balls, etc.), and the distribution will be different each time (for example, 5% blue balls in run 1, but 1% blue balls in run 2).</p>
+
+  <p>For example, let&#8217;s look again at the plots from above, where I generated samples from a Polya Urn Model with the standard unit normal as the base distribution:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_1.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_1.png" alt="Polya Urn Model, Alpha = 1" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_5.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_5.png" alt="Polya Urn Model, Alpha = 5" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_25.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_25.png" alt="Polya Urn Model, Alpha = 25" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_50.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_50.png" alt="Polya Urn Model, Alpha = 50" /></a></p>
+
+  <p>Each run of the Polya Urn Model produces a slighly different distribution, though each is &#8220;centered&#8221; in some fashion around the standard Gaussian I used as base. In other words, the Polya Urn Model gives us a <strong>distribution over distributions</strong> (we get a distribution of ball colors, and this distribution of colors changes each time) &#8211; and so we finally get to the Dirichlet Process.</p>
+
+  <p>Formally, given a base distribution $G_0$ and a dispersion parameter $\alpha$, a sample from the Dirichlet Process $DP(G_0, \alpha)$ is a distribution $G \sim DP(G_0, \alpha)$. This sample $G$ can be thought of as a distribution of colors in a single simulation of the Polya Urn Model; sampling from $G$ gives us the balls in the urn.</p>
+
+  <p>So here&#8217;s the connection between the Chinese Restaurant Process, the Polya Urn Model, the Stick-Breaking Process, and the Dirichlet Process:</p>
+
+  <ul>
+  <li><strong>Dirichlet Process</strong>: Suppose we want samples $x_i \sim G$, where $G$ is a distribution sampled from the Dirichlet Process $G \sim DP(G_0, \alpha)$.</li>
+  <li><strong>Polya Urn Model</strong>: One way to generate these values $x_i$ would be to take a Polya Urn Model with color distribution $G_0$ and dispersion $\alpha$. ($x_i$ would be the color of the ith ball in the urn.)</li>
+  <li><strong>Chinese Restaurant Process</strong>: Another way to generate $x_i$ would be to first assign tables to customers according to a Chinese Restaurant Process with dispersion $\alpha$. Every customer at the nth table would then be given the same value (color) sampled from $G_0$. ($x_i$ would be the value given to the ith customer; $x_i$ can also be thought of as the food at table $i$, or as the parameters of table $i$.)</li>
+  <li><strong>Stick-Breaking Process</strong>: Finally, we could generate weights $w_k$ according to a Stick-Breaking Process with dispersion $\alpha$. Next, we would give each weight $w_k$ a value (or color) $v_k$ sampled from $G_0$. Finally, we would assign $x_i$ to value (color) $v_k$ with probability $w_k$.</li>
+  </ul>
+
+
+  <h1>Recap</h1>
+
+  <p>Let&#8217;s summarize what we&#8217;ve discussed so far.</p>
+
+  <p>We have a bunch of data points $p_i$ that we want to cluster, and we&#8217;ve described four essentially equivalent generative models that allow us to describe how each cluster and point could have arisen.</p>
+
+  <p>In the <strong>Chinese Restaurant Process</strong>:</p>
+
+  <ul>
+  <li>We generate table assignments $g_1, \ldots, g_n \sim CRP(\alpha)$ according to a Chinese Restaurant Process. ($g_i$ is the table assigned to datapoint $i$.)</li>
+  <li>We generate table parameters $\phi_1, \ldots, \phi_n \sim G_0$ according to the base distribution $G_0$, where $\phi_k$ is the parameter for the kth distinct group.</li>
+  <li>Given table assignments and table parameters, we generate each datapoint $p_i \sim F(\phi_{g_i})$ from a distribution $F$ with the specified table parameters. (For example, $F$ could be a Gaussian, and $\phi_i$ could be a parameter vector specifying the mean and standard deviation).</li>
+  </ul>
+
+
+  <p>In the <strong>Polya Urn Model</strong>:</p>
+
+  <ul>
+  <li>We generate colors $\phi_1, \ldots, \phi_n \sim Polya(G_0, \alpha)$ according to a Polya Urn Model. ($\phi_i$ is the color of the ith ball.)</li>
+  <li>Given ball colors, we generate each datapoint $p_i \sim F(\phi_i)$.</li>
+  </ul>
+
+
+  <p>In the <strong>Stick-Breaking Process</strong>:</p>
+
+  <ul>
+  <li>We generate group probabilities (stick lengths) $w_1, \ldots, w_{\infty} \sim Stick(\alpha)$ according to a Stick-Breaking process.</li>
+  <li>We generate group parameters $\phi_1, \ldots, \phi_{\infty} \sim G_0$ from $G_0$, where $\phi_k$ is the parameter for the kth distinct group.</li>
+  <li>We generate group assignments $g_1, \ldots, g_n \sim Multinomial(w_1, \ldots, w_{\infty})$ for each datapoint.</li>
+  <li>Given group assignments and group parameters, we generate each datapoint $p_i \sim F(\phi_{g_i})$.</li>
+  </ul>
+
+
+  <p>In the <strong>Dirichlet Process</strong>:</p>
+
+  <ul>
+  <li>We generate a distribution $G \sim DP(G_0, \alpha)$ from a Dirichlet Process with base distribution $G_0$ and dispersion parameter $\alpha$.</li>
+  <li>We generate group-level parameters $x_i \sim G$ from $G$, where $x_i$ is the group parameter for the ith datapoint. (Note: this is not the same as $\phi_i$. $x_i$ is the parameter associated to the group that the ith datapoint belongs to, whereas $\phi_k$ is the parameter of the kth distinct group.)</li>
+  <li>Given group-level parameters $x_i$, we generate each datapoint $p_i \sim F(x_i)$.</li>
+  </ul>
+
+
+  <p>Also, remember that each model naturally allows the number of clusters to grow as more points come in.</p>
+
+  <h1>Inference in the Dirichlet Process Mixture</h1>
+
+  <p>So we&#8217;ve described a generative model that allows us to calculate the probability of any particular set of group assignments to data points, but we haven&#8217;t described how to actually learn a good set of group assignments.</p>
+
+  <p>Let&#8217;s briefly do this now. Very roughly, the <strong>Gibbs sampling</strong> approach works as follows:</p>
+
+  <ul>
+  <li>Take the set of data points, and randomly initialize group assignments.</li>
+  <li>Pick a point. Fix the group assignments of all the other points, and assign the chosen point a new group (which can be either an existing cluster or a new cluster) with a CRP-ish probability (as described in the models above) that depends on the group assignments and values of all the other points.</li>
+  <li>We will eventually converge on a good set of group assignments, so repeat the previous step until happy.</li>
+  </ul>
+
+
+  <p>For more details, <a href="http://www.cs.toronto.edu/~radford/ftp/mixmc.pdf">this paper</a> provides a good description. Philip Resnick and Eric Hardisty also have a friendlier, more general description of Gibbs sampling (plus an application to naive Bayes) <a href="http://www.cs.umd.edu/~hardisty/papers/gsfu.pdf">here</a>.</p>
+
+  <h1>Fast Food Application: Clustering the McDonald&#8217;s Menu</h1>
+
+  <p>Finally, let&#8217;s show an application of the Dirichlet Process Mixture. Unfortunately, I didn&#8217;t have a data set of people&#8217;s food habits offhand, so instead I took <a href="http://nutrition.mcdonalds.com/nutritionexchange/nutritionfacts.pdf">this list</a> of McDonald&#8217;s foods and nutrition facts.</p>
+
+  <p>After normalizing each item to have an equal number of calories, and representing each item as a vector of <strong>(total fat, cholesterol, sodium, dietary fiber, sugars, protein, vitamin A, vitamin C, calcium, iron, calories from fat, satured fat, trans fat, carbohydrates)</strong>, I ran <a href="http://scikit-learn.sourceforge.net/dev/index.html">scikit-learn</a>&#8217;s <a href="http://scikit-learn.sourceforge.net/dev/modules/mixture.html">Dirichlet Process Gaussian Mixture Model</a> to cluster McDonald&#8217;s menu based on nutritional value.</p>
+
+  <p>First, how does the number of clusters inferred by the Dirichlet Process mixture vary as we feed in more (randomly ordered) points?</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/num-clusters-vary.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/num-clusters-vary.png" alt="Growth of Number of Clusters" /></a></p>
+
+  <p>As expected, the Dirichlet Process model discovers more and more clusters as more and more food items arrive. (And indeed, the number of clusters appears to grow logarithmically, which can in fact be proved.)</p>
+
+  <p>How many clusters does the mixture model infer from the entire dataset? Running the Gibbs sampler several times, we find that the number of clusters tends around 11:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/num_mcdonalds_clusters.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/num_mcdonalds_clusters_small.png" alt="Number of clusters" /></a></p>
+
+  <p>Let&#8217;s dive into one of these clusterings.</p>
+
+  <p><strong>Cluster 1 (Desserts)</strong></p>
+
+  <p>Looking at a sample of foods from the first cluster, we find a lot of desserts and dessert-y drinks:</p>
+
+  <ul>
+  <li>Caramel Mocha</li>
+  <li>Frappe Caramel</li>
+  <li>Iced Hazelnut Latte</li>
+  <li>Iced Coffee</li>
+  <li>Strawberry Triple Thick Shake</li>
+  <li>Snack Size McFlurry</li>
+  <li>Hot Caramel Sundae</li>
+  <li>Baked Hot Apple Pie</li>
+  <li>Cinnamon Melts</li>
+  <li>Kiddie Cone</li>
+  <li>Strawberry Sundae</li>
+  </ul>
+
+
+  <p>We can also look at the nutritional profile of some foods from this cluster (after <a href="http://en.wikipedia.org/wiki/Standard_score">z-scaling</a> each nutrition dimension to have mean 0 and standard deviation 1):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster1.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster1.png" alt="Cluster 1" /></a></p>
+
+  <p>We see that foods in this cluster tend to be high in trans fat and low in vitamins, protein, fiber, and sodium.</p>
+
+  <p><strong>Cluster 2 (Sauces)</strong></p>
+
+  <p>Here&#8217;s a sample from the second cluster, which contains a lot of sauces:</p>
+
+  <ul>
+  <li>Hot Mustard Sauce</li>
+  <li>Spicy Buffalo Sauce</li>
+  <li>Newman&#8217;s Own Low Fat Balsamic Vinaigrette</li>
+  </ul>
+
+
+  <p>And looking at the nutritional profile of points in this cluster, we see that it&#8217;s heavy in sodium and fat:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster2.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster2.png" alt="Cluster 2" /></a></p>
+
+  <p><strong>Cluster 3 (Burgers, Crispy Foods, High-Cholesterol)</strong></p>
+
+  <p>The third cluster is very burgery:</p>
+
+  <ul>
+  <li>Hamburger</li>
+  <li>Cheeseburger</li>
+  <li>Filet-O-Fish</li>
+  <li>Quarter Pounder with Cheese</li>
+  <li>Premium Grilled Chicken Club Sandwich</li>
+  <li>Ranch Snack Wrap</li>
+  <li>Premium Asian Salad with Crispy Chicken</li>
+  <li>Butter Garlic Croutons</li>
+  <li>Sausage McMuffin</li>
+  <li>Sausage McGriddles</li>
+  </ul>
+
+
+  <p>It&#8217;s also high in fat and sodium, and low in carbs and sugar</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster3.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster3.png" alt="Cluster 3" /></a></p>
+
+  <p><strong>Cluster 4 (Creamy Sauces)</strong></p>
+
+  <p>Interestingly, even though we already found a cluster of sauces above, we discover another one as well. These sauces appear to be much more cream-based:</p>
+
+  <ul>
+  <li>Creamy Ranch Sauce</li>
+  <li>Newman&#8217;s Own Creamy Caesar Dressing</li>
+  <li>Coffee Cream</li>
+  <li>Iced Coffee with Sugar Free Vanilla Syrup</li>
+  </ul>
+
+
+  <p>Nutritionally, these sauces are higher in calories from fat, and much lower in sodium:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster4.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster4.png" alt="Cluster 4" /></a></p>
+
+  <p><strong>Cluster 5 (Salads)</strong></p>
+
+  <p>Here&#8217;s a salad cluster. A lot of salads also appeared in the third cluster (along with hamburgers and McMuffins), but that&#8217;s because those salads also all contained crispy chicken. The salads in this cluster are either crisp-free or have their chicken grilled instead:</p>
+
+  <ul>
+  <li>Premium Southwest Salad with Grilled Chicken</li>
+  <li>Premium Caesar Salad with Grilled Chicken</li>
+  <li>Side Salad</li>
+  <li>Premium Asian Salad without Chicken</li>
+  <li>Premium Bacon Ranch Salad without Chicken</li>
+  </ul>
+
+
+  <p>This is reflected in the higher content of iron, vitamin A, and fiber:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster5.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster5.png" alt="Cluster 5" /></a></p>
+
+  <p><strong>Cluster 6 (More Sauces)</strong></p>
+
+  <p>Again, we find another cluster of sauces:</p>
+
+  <ul>
+  <li>Ketchup Packet</li>
+  <li>Barbeque Sauce</li>
+  <li>Chipotle Barbeque Sauce</li>
+  </ul>
+
+
+  <p>These are still high in sodium, but much lower in fat compared to the other sauce clusters:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster6.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster6.png" alt="Cluster 6" /></a></p>
+
+  <p><strong>Cluster 7 (Fruit and Maple Oatmeal)</strong></p>
+
+  <p>Amusingly, fruit and maple oatmeal is in a cluster by itself:</p>
+
+  <ul>
+  <li>Fruit &amp; Maple Oatmeal</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster7.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster7.png" alt="Cluster 7" /></a></p>
+
+  <p><strong>Cluster 8 (Sugary Drinks)</strong></p>
+
+  <p>We also get a cluster of sugary drinks:</p>
+
+  <ul>
+  <li>Strawberry Banana Smoothie</li>
+  <li>Wild Berry Smoothie</li>
+  <li>Iced Nonfat Vanilla Latte</li>
+  <li>Nonfat Hazelnut</li>
+  <li>Nonfat Vanilla Cappuccino</li>
+  <li>Nonfat Caramel Cappuccino</li>
+  <li>Sweet Tea</li>
+  <li>Frozen Strawberry Lemonade</li>
+  <li>Coca-Cola</li>
+  <li>Minute Maid Orange Juice</li>
+  </ul>
+
+
+  <p>In addition to high sugar content, this cluster is also high in carbohydrates and calcium, and low in fat.</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster8.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster8.png" alt="Cluster 8" /></a></p>
+
+  <p><strong>Cluster 9 (Breakfast Foods)</strong></p>
+
+  <p>Here&#8217;s a cluster of high-cholesterol breakfast foods:</p>
+
+  <ul>
+  <li>Sausage McMuffin with Egg</li>
+  <li>Sausage Burrito</li>
+  <li>Egg McMuffin</li>
+  <li>Bacon, Egg &amp; Chees Biscuit</li>
+  <li>McSkillet Burrito with Sausage</li>
+  <li>Big Breakfast with Hotcakes</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster9.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster9.png" alt="Cluster 9" /></a></p>
+
+  <p><strong>Cluster 10 (Coffee Drinks)</strong></p>
+
+  <p>We find a group of coffee drinks next:</p>
+
+  <ul>
+  <li>Nonfat Cappuccino</li>
+  <li>Nonfat Latte</li>
+  <li>Nonfat Latte with Sugar Free Vanilla Syrup</li>
+  <li>Iced Nonfat Latte</li>
+  </ul>
+
+
+  <p>These are much higher in calcium and protein, and lower in sugar, than the other drink cluster above:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster11.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster11.png" alt="Cluster 11" /></a></p>
+
+  <p><strong>Cluster 11 (Apples)</strong></p>
+
+  <p>Here&#8217;s a cluster of apples:</p>
+
+  <ul>
+  <li>Apple Dippers with Low Fat Caramel Dip</li>
+  <li>Apple Slices</li>
+  </ul>
+
+
+  <p>Vitamin C, check.</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster10.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster10.png" alt="Cluster 10" /></a></p>
+
+  <p>And finally, here&#8217;s an overview of all the clusters at once (using a different clustering run):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/all-clusters.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/all-clusters-small.png" alt="All Clusters" /></a></p>
+
+  <h1>No More!</h1>
+
+  <p>I&#8217;ll end with a couple notes:</p>
+
+  <ul>
+  <li>Kevin Knight has a <a href="http://www.isi.edu/natural-language/people/bayes-with-tears.pdf">hilarious introduction</a> to Bayesian inference that describes some applications of nonparametric Bayesian techniques to computational linguistics (though I don&#8217;t think he ever quite says &#8220;nonparametric Bayes&#8221; directly).</li>
+  <li>In the Chinese Restaurant Process, each customer sits at a single table. The <a href="http://en.wikipedia.org/wiki/Chinese_restaurant_process#The_Indian_buffet_process">Indian Buffet Process</a> is an extension that allows customers to sample food from multiple tables (i.e., belong to multiple clusters).</li>
+  <li>The Chinese Restaurant Process, the Polya Urn Model, and the Stick-Breaking Process are all <em>sequential</em> models for generating groups: to figure out table parameters in the CRP, for example, you wait for customer 1 to come in, then customer 2, then customer 3, and so on. The equivalent Dirichlet Process, on the other hand, is a <em>parallel</em> model for generating groups: just sample $G \sim DP(G_0, alpha)$, and then all your group parameters can be independently generated by sampling from $G$ at once. This duality is an instance of a more general phenomenon known as <a href="http://en.wikipedia.org/wiki/De_Finetti's_theorem">de Finetti&#8217;s theorem</a>.</li>
+  </ul>
+
+
+  <p>And that&#8217;s it.</p>
+  </div>  
+<script type= "text/javascript">
+    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+        var mathjaxscript = document.createElement('script');
+        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+        mathjaxscript.type = 'text/javascript';
+        mathjaxscript.src = 'https:' == document.location.protocol
+                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+            "MathJax.Hub.Config({" +
+            "    config: ['MMLorHTML.js']," +
+            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+            "    displayAlign: 'center'," +
+            "    displayIndent: '0em'," +
+            "    showMathMenu: true," +
+            "    tex2jax: { " +
+            "        inlineMath: [ ['$','$'] ], " +
+            "        displayMath: [ ['$$','$$'] ]," +
+            "        processEscapes: true," +
+            "        preview: 'TeX'," +
+            "    }, " +
+            "    'HTML-CSS': { " +
+            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
+            "    } " +
+            "}); ";
+        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+    }
+</script>
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2012-03-05T04:15:00">
+          on&nbsp;Mon 05 March 2012
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>It&#8217;s often easier to understand a chart than a table. So why is it still so hard to make a simple data graphic, and why am I still bombarded by mind-numbing reams of raw <em>numbers</em>?</p>
+
+  <p>(Yeah, I love <a href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">ggplot2</a> to death. But sometimes I want a little more interaction, and sometimes all I want is to drag-and-drop and be done.)</p>
+
+  <p>So I&#8217;ve been experimenting with <a href="http://minifolds.herokuapp.com/graphs/1?x=health&amp;y=speed&amp;size=intelligence&amp;color=age&amp;group=height">a small, ggplot2-inspired d3 app</a>.</p>
+
+  <p>Simply drop a file, and bam! Instant scatterplot:</p>
+
+  <p><a href="http://minifolds.herokuapp.com/graphs/1?x=health&amp;y=speed"><img src="http://dl.dropbox.com/u/10506/blog/minifolds/swiss-roll-bw.png" alt="Swiss Roll B&amp;W" /></a></p>
+
+  <p>But wait &#8211; that&#8217;s only 2 dimensions. You can add some more through color, size, and groups:</p>
+
+  <p><a href="http://minifolds.herokuapp.com/graphs/1?x=health&amp;y=speed&amp;size=intelligence&amp;color=age&amp;group=height"><img src="http://dl.dropbox.com/u/10506/blog/minifolds/swiss-roll-edit.png" alt="Swiss Roll Edit" /></a></p>
+
+  <p>(Click <a href="http://minifolds.herokuapp.com/graphs/1?x=health&amp;y=speed&amp;size=intelligence&amp;color=age&amp;group=height">here</a> to play with the data yourself.)</p>
+
+  <p>And you can easily switch which variables are getting plotted, and see all the information associated with each point.</p>
+
+  <p><a href="http://minifolds.herokuapp.com/graphs/1?x=weight&amp;y=speed&amp;size=health&amp;color=age&amp;group=height"><img src="http://dl.dropbox.com/u/10506/blog/minifolds/swiss-roll-pivot.png" alt="Swiss Roll Pivot" /></a></p>
+
+  <p>(Same dataset, different aesthetic assignments.)</p>
+
+  <p>I&#8217;m thinking of adding more kinds of charts, support for categorical variables, more interactivity (sliders to interact with other dimensions?!), and making the UI even easier (e.g., simplify column naming). In the meantime, the code is <a href="https://github.com/echen/minifolds">here</a> on Github, and tips and suggestions are welcome!</p>
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2012-02-09T04:15:00">
+          on&nbsp;Thu 09 February 2012
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p><em>Scalding is an in-house MapReduce framework that Twitter recently open-sourced. Like <a href="http://pig.apache.org/">Pig</a>, it provides an abstraction on top of MapReduce that makes it easy to write big data jobs in a syntax that&#8217;s simple and concise. Unlike Pig, Scalding is written in pure Scala &#8211; which means all the power of Scala and the JVM is already built-in. No more UDFs, folks!</em></p>
+
+  <p>This is going to be an in-your-face introduction to <a href="https://github.com/twitter/scalding">Scalding</a>, Twitter&#8217;s (Scala + Cascading) MapReduce framework.</p>
+
+  <p>In 140: instead of forcing you to write raw <code>map</code> and <code>reduce</code> functions, Scalding allows you to write <em>natural</em> code like</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="c1">// Create a histogram of tweet lengths.</span>
+  </span><span class="line"><span class="n">tweets</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="-Symbol">&#39;tweet</span> <span class="o">-&gt;</span> <span class="-Symbol">&#39;length</span><span class="o">)</span> <span class="o">{</span> <span class="n">tweet</span> <span class="k">:</span> <span class="kt">String</span> <span class="o">=&gt;</span> <span class="n">tweet</span><span class="o">.</span><span class="n">size</span> <span class="o">}.</span><span class="n">groupBy</span><span class="o">(</span><span class="-Symbol">&#39;length</span><span class="o">)</span> <span class="o">{</span> <span class="n">_</span><span class="o">.</span><span class="n">size</span> <span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Not much different from the Ruby you&#8217;d write to compute tweet distributions over <em>small</em> data? <strong>Exactly.</strong></p>
+
+  <p>Two notes before we begin:</p>
+
+  <ul>
+  <li><a href="https://github.com/echen/scaldingale">This Github repository</a> contains all the code used.</li>
+  <li>For a gentler introduction to Scalding, see <a href="https://github.com/twitter/scalding/wiki/Getting-Started">this Getting Started guide</a> on the Scalding wiki.</li>
+  </ul>
+
+
+  <h1>Movie Similarities</h1>
+
+  <p>Imagine you run an online movie business, and you want to generate movie recommendations. You have a rating system (people can rate movies with 1 to 5 stars), and we&#8217;ll assume for simplicity that all of the ratings are stored in a TSV file somewhere.</p>
+
+  <p>Let&#8217;s start by reading the ratings into a Scalding job.</p>
+
+  <figcaption><span>Input </span><a href="https://github.com/echen/scaldingale/blob/master/MovieSimilarities.scala">MovieSimilarities.scala</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * The input is a TSV file with three columns: (user, movie, rating).</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">val</span> <span class="nc">INPUT_FILENAME</span> <span class="k">=</span> <span class="s">&quot;data/ratings.tsv&quot;</span>
+  </span><span class="line">
+  </span><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Read in the input and give each field a type and name.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">ratings</span> <span class="k">=</span> <span class="nc">Tsv</span><span class="o">(</span><span class="nc">INPUT_FILENAME</span><span class="o">,</span> <span class="o">(</span><span class="-Symbol">&#39;user</span><span class="o">,</span> <span class="-Symbol">&#39;movie</span><span class="o">,</span> <span class="-Symbol">&#39;rating</span><span class="o">))</span>
+  </span><span class="line">
+  </span><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Let&#39;s also keep track of the total number of people who rated each movie.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">numRaters</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">ratings</span>
+  </span><span class="line">    <span class="c1">// Put the number of people who rated each movie into a field called &quot;numRaters&quot;.    </span>
+  </span><span class="line">    <span class="o">.</span><span class="n">groupBy</span><span class="o">(</span><span class="-Symbol">&#39;movie</span><span class="o">)</span> <span class="o">{</span> <span class="n">_</span><span class="o">.</span><span class="n">size</span> <span class="o">}.</span><span class="n">rename</span><span class="o">(</span><span class="-Symbol">&#39;size</span> <span class="o">-&gt;</span> <span class="-Symbol">&#39;numRaters</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// Merge `ratings` with `numRaters`, by joining on their movie fields.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">ratingsWithSize</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">ratings</span><span class="o">.</span><span class="n">joinWithSmaller</span><span class="o">(</span><span class="-Symbol">&#39;movie</span> <span class="o">-&gt;</span> <span class="-Symbol">&#39;movie</span><span class="o">,</span> <span class="n">numRaters</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// ratingsWithSize now contains the following fields: (user, movie, rating, numRaters).</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>You want to calculate how similar pairs of movies are, so that if someone watches <em>The Lion King</em>, you can recommend films like <em>Toy Story</em>. So how should you define the similarity between two movies?</p>
+
+  <p>One way is to use their <strong>correlation</strong>:</p>
+
+  <ul>
+  <li>For every pair of movies A and B, find all the people who rated both A and B.</li>
+  <li>Use these ratings to form a Movie A vector and a Movie B vector.</li>
+  <li>Calculate the correlation between these two vectors.</li>
+  <li>Whenever someone watches a movie, you can then recommend the movies most correlated with it.</li>
+  </ul>
+
+
+  <p>Let&#8217;s start with the first two steps.</p>
+
+  <figcaption><span>Find rating pairs </span><a href="https://github.com/echen/scaldingale/blob/master/MovieSimilarities.scala">MovieSimilarities.scala</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * To get all pairs of co-rated movies, we&#39;ll join `ratings` against itself.</span>
+  </span><span class="line"><span class="cm"> * So first make a dummy copy of the ratings that we can join against.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">ratings2</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">ratingsWithSize</span>
+  </span><span class="line">    <span class="o">.</span><span class="n">rename</span><span class="o">((</span><span class="-Symbol">&#39;user</span><span class="o">,</span> <span class="-Symbol">&#39;movie</span><span class="o">,</span> <span class="-Symbol">&#39;rating</span><span class="o">,</span> <span class="-Symbol">&#39;numRaters</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="-Symbol">&#39;user2</span><span class="o">,</span> <span class="-Symbol">&#39;movie2</span><span class="o">,</span> <span class="-Symbol">&#39;rating2</span><span class="o">,</span> <span class="-Symbol">&#39;numRaters2</span><span class="o">))</span>
+  </span><span class="line">
+  </span><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Now find all pairs of co-rated movies (pairs of movies that a user has rated) by</span>
+  </span><span class="line"><span class="cm"> * joining the duplicate rating streams on their user fields, </span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">ratingPairs</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">ratingsWithSize</span>
+  </span><span class="line">    <span class="o">.</span><span class="n">joinWithSmaller</span><span class="o">(</span><span class="-Symbol">&#39;user</span> <span class="o">-&gt;</span> <span class="-Symbol">&#39;user2</span><span class="o">,</span> <span class="n">ratings2</span><span class="o">)</span>
+  </span><span class="line">    <span class="c1">// De-dupe so that we don&#39;t calculate similarity of both (A, B) and (B, A).</span>
+  </span><span class="line">    <span class="o">.</span><span class="n">filter</span><span class="o">(</span><span class="-Symbol">&#39;movie</span><span class="o">,</span> <span class="-Symbol">&#39;movie2</span><span class="o">)</span> <span class="o">{</span> <span class="n">movies</span> <span class="k">:</span> <span class="o">(</span><span class="kt">String</span><span class="o">,</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">movies</span><span class="o">.</span><span class="n">_1</span> <span class="o">&lt;</span> <span class="n">movies</span><span class="o">.</span><span class="n">_2</span> <span class="o">}</span>
+  </span><span class="line">    <span class="o">.</span><span class="n">project</span><span class="o">(</span><span class="-Symbol">&#39;movie</span><span class="o">,</span> <span class="-Symbol">&#39;rating</span><span class="o">,</span> <span class="-Symbol">&#39;numRaters</span><span class="o">,</span> <span class="-Symbol">&#39;movie2</span><span class="o">,</span> <span class="-Symbol">&#39;rating2</span><span class="o">,</span> <span class="-Symbol">&#39;numRaters2</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// By grouping on (&#39;movie, &#39;movie2), we can now get all the people who rated any pair of movies.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Before using these rating pairs to calculate correlation, let&#8217;s stop for a bit.</p>
+
+  <p>Since we&#8217;re explicitly thinking of movies as <strong>vectors</strong> of ratings, it&#8217;s natural to compute some very vector-y things like norms and dot products, as well as the length of each vector and the sum over all elements in each vector. So let&#8217;s compute these:</p>
+
+  <figcaption><span>Vector calculations </span><a href="https://github.com/echen/scaldingale/blob/master/MovieSimilarities.scala">MovieSimilarities.scala</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Compute dot products, norms, sums, and sizes of the rating vectors.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">vectorCalcs</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">ratingPairs</span>
+  </span><span class="line">    <span class="c1">// Compute (x*y, x^2, y^2), which we need for dot products and norms.</span>
+  </span><span class="line">    <span class="o">.</span><span class="n">map</span><span class="o">((</span><span class="-Symbol">&#39;rating</span><span class="o">,</span> <span class="-Symbol">&#39;rating2</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="-Symbol">&#39;ratingProd</span><span class="o">,</span> <span class="-Symbol">&#39;ratingSq</span><span class="o">,</span> <span class="-Symbol">&#39;rating2Sq</span><span class="o">))</span> <span class="o">{</span>
+  </span><span class="line">      <span class="n">ratings</span> <span class="k">:</span> <span class="o">(</span><span class="kt">Double</span><span class="o">,</span> <span class="kt">Double</span><span class="o">)</span> <span class="k">=&gt;</span>
+  </span><span class="line">      <span class="o">(</span><span class="n">ratings</span><span class="o">.</span><span class="n">_1</span> <span class="o">*</span> <span class="n">ratings</span><span class="o">.</span><span class="n">_2</span><span class="o">,</span> <span class="n">math</span><span class="o">.</span><span class="n">pow</span><span class="o">(</span><span class="n">ratings</span><span class="o">.</span><span class="n">_1</span><span class="o">,</span> <span class="mi">2</span><span class="o">),</span> <span class="n">math</span><span class="o">.</span><span class="n">pow</span><span class="o">(</span><span class="n">ratings</span><span class="o">.</span><span class="n">_2</span><span class="o">,</span> <span class="mi">2</span><span class="o">))</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line">    <span class="o">.</span><span class="n">groupBy</span><span class="o">(</span><span class="-Symbol">&#39;movie</span><span class="o">,</span> <span class="-Symbol">&#39;movie2</span><span class="o">)</span> <span class="o">{</span> <span class="n">group</span> <span class="k">=&gt;</span>
+  </span><span class="line">        <span class="n">group</span><span class="o">.</span><span class="n">size</span> <span class="c1">// length of each vector</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">sum</span><span class="o">(</span><span class="-Symbol">&#39;ratingProd</span> <span class="o">-&gt;</span> <span class="-Symbol">&#39;dotProduct</span><span class="o">)</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">sum</span><span class="o">(</span><span class="-Symbol">&#39;rating</span> <span class="o">-&gt;</span> <span class="-Symbol">&#39;ratingSum</span><span class="o">)</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">sum</span><span class="o">(</span><span class="-Symbol">&#39;rating2</span> <span class="o">-&gt;</span> <span class="-Symbol">&#39;rating2Sum</span><span class="o">)</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">sum</span><span class="o">(</span><span class="-Symbol">&#39;ratingSq</span> <span class="o">-&gt;</span> <span class="-Symbol">&#39;ratingNormSq</span><span class="o">)</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">sum</span><span class="o">(</span><span class="-Symbol">&#39;rating2Sq</span> <span class="o">-&gt;</span> <span class="-Symbol">&#39;rating2NormSq</span><span class="o">)</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">max</span><span class="o">(</span><span class="-Symbol">&#39;numRaters</span><span class="o">)</span> <span class="c1">// Just an easy way to make sure the numRaters field stays.</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">max</span><span class="o">(</span><span class="-Symbol">&#39;numRaters2</span><span class="o">)</span>                
+  </span><span class="line">        <span class="c1">// All of these operations chain together like in a builder object.</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>To summarize, each row in <code>vectorCalcs</code> now contains the following fields:</p>
+
+  <ul>
+  <li><strong>movie, movie2</strong></li>
+  <li><strong>numRaters, numRaters2</strong>: the total number of people who rated each movie</li>
+  <li><strong>size</strong>: the number of people who rated both movie and movie2</li>
+  <li><strong>dotProduct</strong>: dot product between the movie vector (a vector of ratings) and the movie2 vector (also a vector of ratings)</li>
+  <li><strong>ratingSum, rating2sum</strong>: sum over all elements in each ratings vector</li>
+  <li><strong>ratingNormSq, rating2Normsq</strong>: squared norm of each vector</li>
+  </ul>
+
+
+  <p>So let&#8217;s go back to calculating the correlation between movie and movie2. We could, of course, calculate correlation in the standard way: find the covariance between the movie and movie2 ratings, and divide by their standard deviations.</p>
+
+  <p>But recall that we can also write correlation in the following form:</p>
+
+  <p>$Corr(X, Y) = \frac{n \sum xy - \sum x \sum y}{\sqrt{n \sum x^2 - (\sum x)^2} \sqrt{n \sum y^2 - (\sum y)^2}}$</p>
+
+  <p>(See the <a href="http://en.wikipedia.org/wiki/Correlation_and_dependence">Wikipedia page</a> on correlation.)</p>
+
+  <p>Notice that every one of the elements in this formula is a field in <code>vectorCalcs</code>! So instead of using the standard calculation, we can use this form instead:</p>
+
+  <figcaption><span>Correlation </span><a href="https://github.com/echen/scaldingale/blob/master/MovieSimilarities.scala">MovieSimilarities.scala</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="k">val</span> <span class="n">correlations</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">vectorCalcs</span>
+  </span><span class="line">    <span class="o">.</span><span class="n">map</span><span class="o">((</span><span class="-Symbol">&#39;size</span><span class="o">,</span> <span class="-Symbol">&#39;dotProduct</span><span class="o">,</span> <span class="-Symbol">&#39;ratingSum</span><span class="o">,</span> <span class="-Symbol">&#39;rating2Sum</span><span class="o">,</span> <span class="-Symbol">&#39;ratingNormSq</span><span class="o">,</span> <span class="-Symbol">&#39;rating2NormSq</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="-Symbol">&#39;correlation</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">      <span class="k">val</span> <span class="n">fields</span> <span class="k">:</span> <span class="o">(</span><span class="kt">Double</span><span class="o">,</span> <span class="kt">Double</span><span class="o">,</span> <span class="nc">Double</span><span class="o">,</span> <span class="nc">Double</span><span class="o">,</span> <span class="nc">Double</span><span class="o">,</span> <span class="nc">Double</span><span class="o">)</span> <span class="k">=&gt;</span>
+  </span><span class="line">      <span class="n">correlation</span><span class="o">(</span><span class="n">fields</span><span class="o">.</span><span class="n">_1</span><span class="o">,</span> <span class="n">fields</span><span class="o">.</span><span class="n">_2</span><span class="o">,</span> <span class="n">fields</span><span class="o">.</span><span class="n">_3</span><span class="o">,</span> <span class="n">fields</span><span class="o">.</span><span class="n">_4</span><span class="o">,</span> <span class="n">fields</span><span class="o">.</span><span class="n">_5</span><span class="o">,</span> <span class="n">fields</span><span class="o">.</span><span class="n">_6</span><span class="o">)</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="k">def</span> <span class="n">correlation</span><span class="o">(</span><span class="n">size</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">dotProduct</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">ratingSum</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span>
+  </span><span class="line">  <span class="n">rating2Sum</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">ratingNormSq</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">rating2NormSq</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="k">val</span> <span class="n">numerator</span> <span class="k">=</span> <span class="n">size</span> <span class="o">*</span> <span class="n">dotProduct</span> <span class="o">-</span> <span class="n">ratingSum</span> <span class="o">*</span> <span class="n">rating2Sum</span>
+  </span><span class="line">  <span class="k">val</span> <span class="n">denominator</span> <span class="k">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="o">(</span><span class="n">size</span> <span class="o">*</span> <span class="n">ratingNormSq</span> <span class="o">-</span> <span class="n">ratingSum</span> <span class="o">*</span> <span class="n">ratingSum</span><span class="o">)</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="o">(</span><span class="n">size</span> <span class="o">*</span> <span class="n">rating2NormSq</span> <span class="o">-</span> <span class="n">rating2Sum</span> <span class="o">*</span> <span class="n">rating2Sum</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="n">numerator</span> <span class="o">/</span> <span class="n">denominator</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>And that&#8217;s it! To see the full code, check out the Github repository <a href="https://github.com/echen/scaldingale">here</a>.</p>
+
+  <h1>Book Similarities</h1>
+
+  <p>Let&#8217;s run this code over some real data. Unfortunately, I didn&#8217;t have a clean source of movie ratings available, so instead I used <a href="http://www.informatik.uni-freiburg.de/~cziegler/BX/">this dataset</a> of 1 million book ratings.</p>
+
+  <p>I ran a quick command, using the handy <a href="https://github.com/twitter/scalding/wiki/Scald.rb">scald.rb script</a> that Scalding provides&#8230;</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="c"># Send the job off to a Hadoop cluster</span>
+  </span><span class="line">scald.rb MovieSimilarities.scala --input ratings.tsv --output similarities.tsv
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>&#8230;and here&#8217;s a sample of the top output I got:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/scaldingale/top-book-crossing-sims-correlation.png"><img src="http://dl.dropbox.com/u/10506/blog/scaldingale/top-book-crossing-sims-correlation.png" alt="Top Book-Crossing Pairs" /></a></p>
+
+  <p>As we&#8217;d expect, we see that</p>
+
+  <ul>
+  <li><em>Harry Potter</em> books are similar to other <em>Harry Potter</em> books</li>
+  <li><em>Lord of the Rings</em> books are similar to other <em>Lord of the Rings</em> books</li>
+  <li>Tom Clancy is similar to John Grisham</li>
+  <li>Chick lit (<em>Summer Sisters</em>, by Judy Blume) is similar to chick lit (<em>Bridget Jones</em>)</li>
+  </ul>
+
+
+  <p>Just for fun, let&#8217;s also look at books similar to <em>The Great Gatsby</em>:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/scaldingale/great-gatsby-correlation.png"><img src="http://dl.dropbox.com/u/10506/blog/scaldingale/great-gatsby-correlation.png" alt="Great Gatsby" /></a></p>
+
+  <p>(Schoolboy memories, exactly.)</p>
+
+  <h1>More Similarity Measures</h1>
+
+  <p>Of course, there are lots of other similarity measures we could use besides correlation.</p>
+
+  <h2>Cosine Similarity</h2>
+
+  <p><a href="http://en.wikipedia.org/wiki/Cosine_similarity">Cosine similarity</a> is a another common vector-based similarity measure.</p>
+
+  <figcaption><span>Cosine Similarity </span><a href="https://github.com/echen/scaldingale/blob/master/MovieSimilarities.scala">MovieSimilarities.scala</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="k">def</span> <span class="n">cosineSimilarity</span><span class="o">(</span><span class="n">dotProduct</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">ratingNorm</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">rating2Norm</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="n">dotProduct</span> <span class="o">/</span> <span class="o">(</span><span class="n">ratingNorm</span> <span class="o">*</span> <span class="n">rating2Norm</span><span class="o">)</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>Correlation, Take II</h2>
+
+  <p>We can also also add a <em>regularized</em> correlation, by (say) adding N virtual movie pairs that have zero correlation. This helps avoid noise if some movie pairs have very few raters in common (for example, <em>The Great Gatsby</em> had an unlikely raw correlation of 1 with many other books, due simply to the fact that those book pairs had very few ratings).</p>
+
+  <figcaption><span>Regularized Correlation </span><a href="https://github.com/echen/scaldingale/blob/master/MovieSimilarities.scala">MovieSimilarities.scala</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="k">def</span> <span class="n">regularizedCorrelation</span><span class="o">(</span><span class="n">size</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">dotProduct</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">ratingSum</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span>
+  </span><span class="line">  <span class="n">rating2Sum</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">ratingNormSq</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">rating2NormSq</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span>
+  </span><span class="line">  <span class="n">virtualCount</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">priorCorrelation</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="k">val</span> <span class="n">unregularizedCorrelation</span> <span class="k">=</span> <span class="n">correlation</span><span class="o">(</span><span class="n">size</span><span class="o">,</span> <span class="n">dotProduct</span><span class="o">,</span> <span class="n">ratingSum</span><span class="o">,</span> <span class="n">rating2Sum</span><span class="o">,</span> <span class="n">ratingNormSq</span><span class="o">,</span> <span class="n">rating2NormSq</span><span class="o">)</span>
+  </span><span class="line">  <span class="k">val</span> <span class="n">w</span> <span class="k">=</span> <span class="n">size</span> <span class="o">/</span> <span class="o">(</span><span class="n">size</span> <span class="o">+</span> <span class="n">virtualCount</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="n">w</span> <span class="o">*</span> <span class="n">unregularizedCorrelation</span> <span class="o">+</span> <span class="o">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">w</span><span class="o">)</span> <span class="o">*</span> <span class="n">priorCorrelation</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>Jaccard Similarity</h2>
+
+  <p>Recall that <a href="http://blog.echen.me/blog/2011/10/24/winning-the-netflix-prize-a-summary/">one of the lessons of the Netflix prize</a> was that implicit data can be quite useful &#8211; the mere fact that you rate a James Bond movie, even if you rate it quite horribly, suggests that you&#8217;d probably be interested in similar action films. So we can also ignore the value itself of each rating and use a <em>set</em>-based similarity measure like <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard similarity</a>.</p>
+
+  <figcaption><span>Jaccard Similarity </span><a href="https://github.com/echen/scaldingale/blob/master/MovieSimilarities.scala">MovieSimilarities.scala</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="k">def</span> <span class="n">jaccardSimilarity</span><span class="o">(</span><span class="n">usersInCommon</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">totalUsers1</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">totalUsers2</span> <span class="k">:</span> <span class="kt">Double</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="k">val</span> <span class="n">union</span> <span class="k">=</span> <span class="n">totalUsers1</span> <span class="o">+</span> <span class="n">totalUsers2</span> <span class="o">-</span> <span class="n">usersInCommon</span>
+  </span><span class="line">  <span class="n">usersInCommon</span> <span class="o">/</span> <span class="n">union</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>Incorporation</h2>
+
+  <p>Finally, let&#8217;s add all these similarity measures to our output.</p>
+
+  <figcaption><span>Similarity Measures </span><a href="https://github.com/echen/scaldingale/blob/master/MovieSimilarities.scala">MovieSimilarities.scala</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="k">val</span> <span class="nc">PRIOR_COUNT</span> <span class="k">=</span> <span class="mi">10</span>
+  </span><span class="line"><span class="k">val</span> <span class="nc">PRIOR_CORRELATION</span> <span class="k">=</span> <span class="mi">0</span>
+  </span><span class="line">
+  </span><span class="line"><span class="k">val</span> <span class="n">similarities</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">vectorCalcs</span>
+  </span><span class="line">    <span class="o">.</span><span class="n">map</span><span class="o">((</span><span class="-Symbol">&#39;size</span><span class="o">,</span> <span class="-Symbol">&#39;dotProduct</span><span class="o">,</span> <span class="-Symbol">&#39;ratingSum</span><span class="o">,</span> <span class="-Symbol">&#39;rating2Sum</span><span class="o">,</span> <span class="-Symbol">&#39;ratingNormSq</span><span class="o">,</span> <span class="-Symbol">&#39;rating2NormSq</span><span class="o">,</span> <span class="-Symbol">&#39;numRaters</span><span class="o">,</span> <span class="-Symbol">&#39;numRaters2</span><span class="o">)</span> <span class="o">-&gt;</span>
+  </span><span class="line">      <span class="o">(</span><span class="-Symbol">&#39;correlation</span><span class="o">,</span> <span class="-Symbol">&#39;regularizedCorrelation</span><span class="o">,</span> <span class="-Symbol">&#39;cosineSimilarity</span><span class="o">,</span> <span class="-Symbol">&#39;jaccardSimilarity</span><span class="o">))</span> <span class="o">{</span>
+  </span><span class="line">
+  </span><span class="line">      <span class="n">fields</span> <span class="k">:</span> <span class="o">(</span><span class="kt">Double</span><span class="o">,</span> <span class="kt">Double</span><span class="o">,</span> <span class="nc">Double</span><span class="o">,</span> <span class="nc">Double</span><span class="o">,</span> <span class="nc">Double</span><span class="o">,</span> <span class="nc">Double</span><span class="o">,</span> <span class="nc">Double</span><span class="o">,</span> <span class="nc">Double</span><span class="o">)</span> <span class="k">=&gt;</span>
+  </span><span class="line">
+  </span><span class="line">      <span class="k">val</span> <span class="o">(</span><span class="n">size</span><span class="o">,</span> <span class="n">dotProduct</span><span class="o">,</span> <span class="n">ratingSum</span><span class="o">,</span> <span class="n">rating2Sum</span><span class="o">,</span> <span class="n">ratingNormSq</span><span class="o">,</span> <span class="n">rating2NormSq</span><span class="o">,</span> <span class="n">numRaters</span><span class="o">,</span> <span class="n">numRaters2</span><span class="o">)</span> <span class="k">=</span> <span class="n">fields</span>
+  </span><span class="line">
+  </span><span class="line">      <span class="k">val</span> <span class="n">corr</span> <span class="k">=</span> <span class="n">correlation</span><span class="o">(</span><span class="n">size</span><span class="o">,</span> <span class="n">dotProduct</span><span class="o">,</span> <span class="n">ratingSum</span><span class="o">,</span> <span class="n">rating2Sum</span><span class="o">,</span> <span class="n">ratingNormSq</span><span class="o">,</span> <span class="n">rating2NormSq</span><span class="o">)</span>
+  </span><span class="line">      <span class="k">val</span> <span class="n">regCorr</span> <span class="k">=</span> <span class="n">regularizedCorrelation</span><span class="o">(</span><span class="n">size</span><span class="o">,</span> <span class="n">dotProduct</span><span class="o">,</span> <span class="n">ratingSum</span><span class="o">,</span> <span class="n">rating2Sum</span><span class="o">,</span> <span class="n">ratingNormSq</span><span class="o">,</span> <span class="n">rating2NormSq</span><span class="o">,</span> <span class="nc">PRIOR_COUNT</span><span class="o">,</span> <span class="nc">PRIOR_CORRELATION</span><span class="o">)</span>
+  </span><span class="line">      <span class="k">val</span> <span class="n">cosSim</span> <span class="k">=</span> <span class="n">cosineSimilarity</span><span class="o">(</span><span class="n">dotProduct</span><span class="o">,</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="o">(</span><span class="n">ratingNormSq</span><span class="o">),</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="o">(</span><span class="n">rating2NormSq</span><span class="o">))</span>
+  </span><span class="line">      <span class="k">val</span> <span class="n">jaccard</span> <span class="k">=</span> <span class="n">jaccardSimilarity</span><span class="o">(</span><span class="n">size</span><span class="o">,</span> <span class="n">numRaters</span><span class="o">,</span> <span class="n">numRaters2</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line">      <span class="o">(</span><span class="n">corr</span><span class="o">,</span> <span class="n">regCorr</span><span class="o">,</span> <span class="n">cosSim</span><span class="o">,</span> <span class="n">jaccard</span><span class="o">)</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h1>Book Similarities Revisited</h1>
+
+  <p>Let&#8217;s take another look at the book similarities above, now that we have these new fields.</p>
+
+  <p>Here are some of the top Book-Crossing pairs, sorted by their shrunk correlation:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/scaldingale/top-book-crossing-sims.png"><img src="http://dl.dropbox.com/u/10506/blog/scaldingale/top-book-crossing-sims.png" alt="Top Book-Crossing Pairs" /></a></p>
+
+  <p>Notice how regularization affects things: the <em>Dark Tower</em> pair has a pretty high raw correlation, but relatively few ratings (reducing our confidence in the raw correlation), so it ends up below the others.</p>
+
+  <p>And here are books similar to <em>The Great Gatsby</em>, this time ordered by cosine similarity:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/scaldingale/great-gatsby.png"><img src="http://dl.dropbox.com/u/10506/blog/scaldingale/great-gatsby.png" alt="Great Gatsby" /></a></p>
+
+  <h1>Input Abstraction</h1>
+
+  <p>So our code right now is tied to our specific <code>ratings.tsv</code> input. But what if we change the way we store our ratings, or what if we want to generate similarities for something entirely different?</p>
+
+  <p>Let&#8217;s abstract away our input. We&#8217;ll create a <a href="https://github.com/echen/scaldingale/blob/master/VectorSimilarities.scala">VectorSimilarities class</a> that represents input data in the following format:</p>
+
+  <figcaption><span>Input abstraction </span><a href="https://github.com/echen/scaldingale/blob/master/VectorSimilarities.scala">VectorSimilarities.scala</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="c1">// This is an abstract method that returns a Pipe (aka, a stream of rating tuples).</span>
+  </span><span class="line"><span class="c1">// It takes in three symbols that name the user, item, and rating fields.</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">input</span><span class="o">(</span><span class="n">userField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">,</span> <span class="n">itemField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">,</span> <span class="n">ratingField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">)</span> <span class="k">:</span> <span class="kt">Pipe</span>
+  </span><span class="line">
+  </span><span class="line"><span class="k">val</span> <span class="n">ratings</span> <span class="k">=</span> <span class="n">input</span><span class="o">(</span><span class="-Symbol">&#39;user</span><span class="o">,</span> <span class="-Symbol">&#39;item</span><span class="o">,</span> <span class="-Symbol">&#39;rating</span><span class="o">)</span>
+  </span><span class="line"><span class="c1">// ...</span>
+  </span><span class="line"><span class="c1">// The rest of the code remains essentially the same.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Whenever we want to define a new input format, we simply subclass <code>VectorSimilarities</code> and provide a concrete implementation of the <code>input</code> method.</p>
+
+  <h2>Book-Crossings</h2>
+
+  <p>For example, here&#8217;s a class I could have used to generate the book recommendations above:</p>
+
+  <figcaption><span>BookCrossing similarities </span><a href="https://github.com/echen/scaldingale/blob/master/BookCrossing.scala">BookCrossing.scala</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="k">class</span> <span class="nc">BookCrossing</span><span class="o">(</span><span class="n">args</span> <span class="k">:</span> <span class="kt">Args</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">VectorSimilarities</span><span class="o">(</span><span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">  <span class="k">override</span> <span class="k">def</span> <span class="n">input</span><span class="o">(</span><span class="n">userField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">,</span> <span class="n">itemField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">,</span> <span class="n">ratingField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">)</span> <span class="k">:</span> <span class="kt">Pipe</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">    <span class="k">val</span> <span class="n">bookCrossingRatings</span> <span class="k">=</span>
+  </span><span class="line">      <span class="nc">Tsv</span><span class="o">(</span><span class="s">&quot;book-crossing-ratings.tsv&quot;</span><span class="o">)</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">read</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">mapTo</span><span class="o">((</span><span class="mi">0</span><span class="o">,</span> <span class="mi">1</span><span class="o">,</span> <span class="mi">2</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="n">userField</span><span class="o">,</span> <span class="n">itemField</span><span class="o">,</span> <span class="n">ratingField</span><span class="o">))</span> <span class="o">{</span> <span class="n">fields</span> <span class="k">:</span> <span class="o">(</span><span class="kt">String</span><span class="o">,</span> <span class="kt">String</span><span class="o">,</span> <span class="nc">Double</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">fields</span> <span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="n">bookCrossingRatings</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>The input method simply reads from a TSV file and lets the <code>VectorSimilarities</code> superclass do all the work. Instant recommendations, BOOM.</p>
+
+  <h2>Song Similarities with Twitter + iTunes</h2>
+
+  <p>But why limit ourselves to books? We do, after all, have Twitter at our fingertips&#8230;</p>
+
+  <blockquote class="twitter-tweet"><p>rated Born This Way by Lady GaGa 5 stars <a href="http://t.co/wTYAwWqm" title="http://itun.es/iSg92N">itun.es/iSg92N</a> <a href="https://twitter.com/search/%2523iTunes">#iTunes</a></p>&mdash; gggf (@GalMusic92) <a href="https://twitter.com/GalMusic92/status/167267017865428996" data-datetime="2012-02-08T15:22:19+00:00">February 8, 2012</a></blockquote>
+
+
+  <script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+  <p>Since iTunes lets you send a tweet whenever you rate a song, we can use these to generate music recommendations!</p>
+
+  <p>Again, we create a new class that overrides the abstract <code>input</code> defined in <code>VectorSimilarities</code>&#8230;</p>
+
+  <figcaption><span>Song similarities with Twitter + iTunes </span><a href="https://github.com/echen/scaldingale/blob/master/ITunes.scala">ITunes.scala</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="k">class</span> <span class="nc">ITunes</span><span class="o">(</span><span class="n">args</span> <span class="k">:</span> <span class="kt">Args</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">VectorSimilarities</span><span class="o">(</span><span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">  <span class="c1">// Example tweet:</span>
+  </span><span class="line">  <span class="c1">// rated New Kids On the Block: Super Hits by New Kids On the Block 5 stars http://itun.es/iSg3Fc #iTunes</span>
+  </span><span class="line">  <span class="k">val</span> <span class="nc">ITUNES_REGEX</span> <span class="k">=</span> <span class="s">&quot;&quot;&quot;rated (.+?) by (.+?) (\d) stars .*? #iTunes&quot;&quot;&quot;</span><span class="o">.</span><span class="n">r</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="k">override</span> <span class="k">def</span> <span class="n">input</span><span class="o">(</span><span class="n">userField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">,</span> <span class="n">itemField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">,</span> <span class="n">ratingField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">)</span> <span class="k">:</span> <span class="kt">Pipe</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">    <span class="k">val</span> <span class="n">itunesRatings</span> <span class="k">=</span>
+  </span><span class="line">      <span class="c1">// This is a Twitter-internal tweet source, but you could just as easily scrape </span>
+  </span><span class="line">      <span class="c1">// Twitter yourself and provide your own source of tweets: https://dev.twitter.com/docs</span>
+  </span><span class="line">      <span class="nc">TweetSource</span><span class="o">()</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">mapTo</span><span class="o">(</span><span class="-Symbol">&#39;userId</span><span class="o">,</span> <span class="-Symbol">&#39;text</span><span class="o">)</span> <span class="o">{</span> <span class="n">s</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">s</span><span class="o">.</span><span class="n">getUserId</span><span class="o">,</span> <span class="n">s</span><span class="o">.</span><span class="n">getText</span><span class="o">)</span> <span class="o">}</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">filter</span><span class="o">(</span><span class="-Symbol">&#39;text</span><span class="o">)</span> <span class="o">{</span> <span class="n">text</span> <span class="k">:</span> <span class="kt">String</span> <span class="o">=&gt;</span> <span class="n">text</span><span class="o">.</span><span class="n">contains</span><span class="o">(</span><span class="s">&quot;#iTunes&quot;</span><span class="o">)</span> <span class="o">}</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">flatMap</span><span class="o">(</span><span class="-Symbol">&#39;text</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="-Symbol">&#39;song</span><span class="o">,</span> <span class="-Symbol">&#39;artist</span><span class="o">,</span> <span class="-Symbol">&#39;rating</span><span class="o">))</span> <span class="o">{</span>
+  </span><span class="line">          <span class="n">text</span> <span class="k">:</span> <span class="kt">String</span> <span class="o">=&gt;</span>
+  </span><span class="line">          <span class="nc">ITUNES_REGEX</span><span class="o">.</span><span class="n">findFirstMatchIn</span><span class="o">(</span><span class="n">text</span><span class="o">).</span><span class="n">map</span> <span class="o">{</span> <span class="n">_</span><span class="o">.</span><span class="n">subgroups</span> <span class="o">}.</span><span class="n">map</span> <span class="o">{</span> <span class="n">l</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">l</span><span class="o">(</span><span class="mi">0</span><span class="o">),</span> <span class="n">l</span><span class="o">(</span><span class="mi">1</span><span class="o">),</span> <span class="n">l</span><span class="o">(</span><span class="mi">2</span><span class="o">))</span> <span class="o">}</span>
+  </span><span class="line">        <span class="o">}</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">rename</span><span class="o">((</span><span class="-Symbol">&#39;userId</span><span class="o">,</span> <span class="-Symbol">&#39;song</span><span class="o">,</span> <span class="-Symbol">&#39;rating</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="n">userField</span><span class="o">,</span> <span class="n">itemField</span><span class="o">,</span> <span class="n">ratingField</span><span class="o">))</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">project</span><span class="o">(</span><span class="n">userField</span><span class="o">,</span> <span class="n">itemField</span><span class="o">,</span> <span class="n">ratingField</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="n">itunesRatings</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>&#8230;and snap! Here are some songs you might like if you recently listened to <strong>Beyoncé</strong>:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/scaldingale/beyonce.png"><img src="http://dl.dropbox.com/u/10506/blog/scaldingale/beyonce.png" alt="Jason Mraz" /></a></p>
+
+  <p>And some recommended songs if you like <strong>Lady Gaga</strong>:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/scaldingale/lady-gaga.png"><img src="http://dl.dropbox.com/u/10506/blog/scaldingale/lady-gaga.png" alt="Lady Gaga" /></a></p>
+
+  <p>GG Pandora.</p>
+
+  <h2>Location Similarities with Foursquare Check-ins</h2>
+
+  <p>But what if we don&#8217;t have explicit ratings? For example, we could be a news site that wants to generate article recommendations, and maybe we only have user <em>visits</em> on each story.</p>
+
+  <p>Or what if we want to generate restaurant or tourist recommendations, when all we know is who visits each location?</p>
+
+  <blockquote class="twitter-tweet"><p>I&#8217;m at Empire State Building (350 5th Ave., btwn 33rd & 34th St., New York) <a href="http://t.co/q6tXzf3n" title="http://4sq.com/zZ5xGd">4sq.com/zZ5xGd</a></p>&mdash; Simon Ackerman (@SimonAckerman) <a href="https://twitter.com/SimonAckerman/status/167232054247956481" data-datetime="2012-02-08T13:03:23+00:00">February 8, 2012</a></blockquote>
+
+
+  <script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+  <p>Let&#8217;s finally make Foursquare check-ins useful. (I kid, I kid.)</p>
+
+  <p>Instead of using an explicit rating given to us, we can simply generate a dummy rating of 1 for each check-in. Correlation doesn&#8217;t make sense any more, but we can still pay attention to a measure like Jaccard simiilarity.</p>
+
+  <p>So we simply create a new class that scrapes tweets for Foursquare check-in information&#8230;</p>
+
+  <figcaption><span>Location similarities with Foursquare </span><a href="https://github.com/echen/scaldingale/blob/master/Foursquare.scala">Foursquare.scala</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="k">class</span> <span class="nc">Foursquare</span><span class="o">(</span><span class="n">args</span> <span class="k">:</span> <span class="kt">Args</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">VectorSimilarities</span><span class="o">(</span><span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">  <span class="c1">// Example tweet: I&#39;m at The Ambassador (673 Geary St, btw Leavenworth &amp; Jones, San Francisco) w/ 2 others http://4sq.com/xok3rI</span>
+  </span><span class="line">  <span class="c1">// Let&#39;s limit to New York for simplicity.</span>
+  </span><span class="line">  <span class="k">val</span> <span class="nc">FOURSQUARE_REGEX</span> <span class="k">=</span> <span class="s">&quot;&quot;&quot;I&#39;m at (.+?) \(.*? New York&quot;&quot;&quot;</span><span class="o">.</span><span class="n">r</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="k">override</span> <span class="k">def</span> <span class="n">input</span><span class="o">(</span><span class="n">userField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">,</span> <span class="n">itemField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">,</span> <span class="n">ratingField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">)</span> <span class="k">:</span> <span class="kt">Pipe</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">    <span class="k">val</span> <span class="n">foursquareCheckins</span> <span class="k">=</span>
+  </span><span class="line">      <span class="nc">TweetSource</span><span class="o">()</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">mapTo</span><span class="o">(</span><span class="-Symbol">&#39;userId</span><span class="o">,</span> <span class="-Symbol">&#39;text</span><span class="o">)</span> <span class="o">{</span> <span class="n">s</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">s</span><span class="o">.</span><span class="n">getUserId</span><span class="o">.</span><span class="n">toLong</span><span class="o">,</span> <span class="n">s</span><span class="o">.</span><span class="n">getText</span><span class="o">)</span> <span class="o">}</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">flatMap</span><span class="o">(</span><span class="-Symbol">&#39;text</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="-Symbol">&#39;location</span><span class="o">,</span> <span class="-Symbol">&#39;rating</span><span class="o">))</span> <span class="o">{</span>
+  </span><span class="line">          <span class="n">text</span> <span class="k">:</span> <span class="kt">String</span> <span class="o">=&gt;</span>
+  </span><span class="line">          <span class="nc">FOURSQUARE_REGEX</span><span class="o">.</span><span class="n">findFirstMatchIn</span><span class="o">(</span><span class="n">text</span><span class="o">).</span><span class="n">map</span> <span class="o">{</span> <span class="n">_</span><span class="o">.</span><span class="n">subgroups</span> <span class="o">}.</span><span class="n">map</span> <span class="o">{</span> <span class="n">l</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">l</span><span class="o">(</span><span class="mi">0</span><span class="o">),</span> <span class="mi">1</span><span class="o">)</span> <span class="o">}</span>
+  </span><span class="line">        <span class="o">}</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">rename</span><span class="o">((</span><span class="-Symbol">&#39;userId</span><span class="o">,</span> <span class="-Symbol">&#39;location</span><span class="o">,</span> <span class="-Symbol">&#39;rating</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="n">userField</span><span class="o">,</span> <span class="n">itemField</span><span class="o">,</span> <span class="n">ratingField</span><span class="o">))</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">unique</span><span class="o">(</span><span class="n">userField</span><span class="o">,</span> <span class="n">itemField</span><span class="o">,</span> <span class="n">ratingField</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="n">foursquareCheckins</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>&#8230;and bam! Here are locations similar to the <strong>Empire State Building</strong>:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/scaldingale/empire-state-building.png"><img src="http://dl.dropbox.com/u/10506/blog/scaldingale/empire-state-building.png" alt="Empire State Building" /></a></p>
+
+  <p>Here are places you might want to check out, if you check-in at <strong>Bergdorf Goodman</strong>:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/scaldingale/bergdorf-goodman.png"><img src="http://dl.dropbox.com/u/10506/blog/scaldingale/bergdorf-goodman.png" alt="Bergdorf Goodman" /></a></p>
+
+  <p>And here&#8217;s where to go after the <strong>Statue of Liberty</strong>:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/scaldingale/statue-of-liberty.png"><img src="http://dl.dropbox.com/u/10506/blog/scaldingale/statue-of-liberty.png" alt="Statue of Liberty" /></a></p>
+
+  <p>Power of Twitter, yo.</p>
+
+  <h1>RottenTomatoes Similarities</h1>
+
+  <p>UPDATE: I found some movie data after all&#8230;</p>
+
+  <blockquote class="twitter-tweet"><p>My review for &#8216;How to Train Your Dragon&#8217; on Rotten Tomatoes: 4 1/2 stars &gt;<a href="http://t.co/YTOKWLEt" title="http://bit.ly/xtw3d3">bit.ly/xtw3d3</a></p>&mdash; Benjamin West (@BenTheWest) <a href="https://twitter.com/BenTheWest/status/171772890121895936" data-datetime="2012-02-21T01:47:03+00:00">February 21, 2012</a></blockquote>
+
+
+  <p>So let&#8217;s use RottenTomatoes tweets to recommend movies! Here&#8217;s the code for a class that searches for RottenTomatoes tweets:</p>
+
+  <figcaption><span>Movie similarities with RottenTomatoes </span><a href="https://github.com/echen/scaldingale/blob/master/RottenTomatoes.scala">RottenTomatoes.scala</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="k">class</span> <span class="nc">RottenTomatoes</span><span class="o">(</span><span class="n">args</span> <span class="k">:</span> <span class="kt">Args</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">VectorSimilarities</span><span class="o">(</span><span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">  <span class="cm">/**</span>
+  </span><span class="line"><span class="cm">   * Example tweets:</span>
+  </span><span class="line"><span class="cm">   * My review for &#39;Hop&#39; on Rotten Tomatoes: 1 star &gt; http://bit.ly/AB7Tl4</span>
+  </span><span class="line"><span class="cm">   * My review for &#39;The Bothersome Man (Den Brysomme mannen)&#39; on Rotten Tomatoes: 3 stars-A muddled Playtime in Paris,... http://tmto.es/AvPoO2</span>
+  </span><span class="line"><span class="cm">   */</span>
+  </span><span class="line">  <span class="k">val</span> <span class="nc">ROTTENTOMATOES_REGEX</span> <span class="k">=</span> <span class="s">&quot;&quot;&quot;My review for &#39;(.+?)&#39; on Rotten Tomatoes: (\d) star&quot;&quot;&quot;</span><span class="o">.</span><span class="n">r</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="k">override</span> <span class="k">val</span> <span class="nc">MIN_NUM_RATERS</span> <span class="k">=</span> <span class="mi">2</span>
+  </span><span class="line">  <span class="k">override</span> <span class="k">val</span> <span class="nc">MAX_NUM_RATERS</span> <span class="k">=</span> <span class="mi">1000</span>
+  </span><span class="line">  <span class="k">override</span> <span class="k">val</span> <span class="nc">MIN_INTERSECTION</span> <span class="k">=</span> <span class="mi">2</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="k">override</span> <span class="k">def</span> <span class="n">input</span><span class="o">(</span><span class="n">userField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">,</span> <span class="n">itemField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">,</span> <span class="n">ratingField</span> <span class="k">:</span> <span class="kt">Symbol</span><span class="o">)</span> <span class="k">:</span> <span class="kt">Pipe</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">    <span class="k">val</span> <span class="n">rottenTomatoesRatings</span> <span class="k">=</span>
+  </span><span class="line">      <span class="nc">TweetSource</span><span class="o">()</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">mapTo</span><span class="o">(</span><span class="-Symbol">&#39;userId</span><span class="o">,</span> <span class="-Symbol">&#39;text</span><span class="o">)</span> <span class="o">{</span> <span class="n">s</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">s</span><span class="o">.</span><span class="n">getUserId</span><span class="o">.</span><span class="n">toLong</span><span class="o">,</span> <span class="n">s</span><span class="o">.</span><span class="n">getText</span><span class="o">)</span> <span class="o">}</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">flatMap</span><span class="o">(</span><span class="-Symbol">&#39;text</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="-Symbol">&#39;movie</span><span class="o">,</span> <span class="-Symbol">&#39;rating</span><span class="o">))</span> <span class="o">{</span>
+  </span><span class="line">          <span class="n">text</span> <span class="k">:</span> <span class="kt">String</span> <span class="o">=&gt;</span>
+  </span><span class="line">          <span class="nc">ROTTENTOMATOES_REGEX</span><span class="o">.</span><span class="n">findFirstMatchIn</span><span class="o">(</span><span class="n">text</span><span class="o">).</span><span class="n">map</span> <span class="o">{</span> <span class="n">_</span><span class="o">.</span><span class="n">subgroups</span> <span class="o">}.</span><span class="n">map</span> <span class="o">{</span> <span class="n">x</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">x</span><span class="o">(</span><span class="mi">0</span><span class="o">),</span> <span class="n">x</span><span class="o">(</span><span class="mi">1</span><span class="o">).</span><span class="n">toInt</span><span class="o">)</span> <span class="o">}</span>
+  </span><span class="line">        <span class="o">}</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">rename</span><span class="o">((</span><span class="-Symbol">&#39;userId</span><span class="o">,</span> <span class="-Symbol">&#39;movie</span><span class="o">,</span> <span class="-Symbol">&#39;rating</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="n">userField</span><span class="o">,</span> <span class="n">itemField</span><span class="o">,</span> <span class="n">ratingField</span><span class="o">))</span>
+  </span><span class="line">        <span class="o">.</span><span class="n">unique</span><span class="o">(</span><span class="n">userField</span><span class="o">,</span> <span class="n">itemField</span><span class="o">,</span> <span class="n">ratingField</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="n">rottenTomatoesRatings</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>And here are the most similar movies discovered:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/scaldingale/top-rottentomatoes-sims.png"><img src="http://dl.dropbox.com/u/10506/blog/scaldingale/top-rottentomatoes-sims.png" alt="Top RottenTomatoes Movies" /></a></p>
+
+  <p>We see that</p>
+
+  <ul>
+  <li><em>Lord of the Rings</em>, <em>Harry Potter</em>, and <em>Star Wars</em> movies are similar to other <em>Lord of the Rings</em>, <em>Harry Potter</em>, and <em>Star Wars</em> movies</li>
+  <li>Big science fiction blockbusters (<em>Avatar</em>) are similar to big science fiction blockbusters (<em>Inception</em>)</li>
+  <li>People who like one Justin Timberlake movie (<em>Bad Teacher</em>) also like other Justin Timberlake Movies (<em>In Time</em>). Similarly with Michael Fassbender (<em>A Dangerous Method</em>, <em>Shame</em>)</li>
+  <li>Art house movies (<em>The Tree of Life</em>) stick together (<em>Tinker Tailor Soldier Spy</em>)</li>
+  </ul>
+
+
+  <p>Let&#8217;s also look at the movies with the most <em>negative</em> correlation:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/scaldingale/bottom-rottentomatoes-sims.png"><img src="http://dl.dropbox.com/u/10506/blog/scaldingale/bottom-rottentomatoes-sims.png" alt="Negative RottenTomatoes Movies" /></a></p>
+
+  <p>(The more you like loud and dirty popcorn movies (<em>Thor</em>) and vamp romance (<em>Twilight</em>), the less you like arthouse? SGTM.)</p>
+
+  <h1>Next Steps</h1>
+
+  <p>Hopefully I gave you a taste of the awesomeness of Scalding. To learn even more:</p>
+
+  <ul>
+  <li>Check out <a href="https://github.com/twitter/scalding">Scalding on Github</a>.</li>
+  <li>Read <a href="https://github.com/twitter/scalding/wiki/Getting-Started">this Getting Started Guide</a> on the Scalding wiki.</li>
+  <li>Run through <a href="https://github.com/twitter/scalding/tree/master/tutorial">this code-based introduction</a>, complete with Scalding jobs that you can run in local mode.</li>
+  <li>Browse <a href="https://github.com/twitter/scalding/wiki/API-Reference">the API reference</a>, which also contains many code snippets illustrating different Scalding functions (e.g., <code>map</code>, <code>filter</code>, <code>flatMap</code>, <code>groupBy</code>, <code>count</code>, <code>join</code>).</li>
+  <li>And all the code for this post is <a href="https://github.com/echen/scaldingale">here</a>.</li>
+  </ul>
+
+
+  <p>Watch out for more documentation soon, and you should most definitely <a href="https://twitter.com/#!/scalding">follow @Scalding</a> on Twitter for updates or to ask any questions.</p>
+
+  <h1>Mad Props</h1>
+
+  <p>And finally, a huge shoutout to <a href="https://twitter.com/argyris">Argyris Zymnis</a>, <a href="https://twitter.com/avibryant">Avi Bryant</a>, and <a href="https://twitter.com/posco">Oscar Boykin</a>, the mastermind hackers who have spent (and continue spending!) unimaginable hours making Scalding a joy to use.</p>
+
+  <p>@argyris, @avibryant, @posco: Thanks for it all. #awesomejobguys #loveit</p>
+  </div>  
+<script type= "text/javascript">
+    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+        var mathjaxscript = document.createElement('script');
+        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+        mathjaxscript.type = 'text/javascript';
+        mathjaxscript.src = 'https:' == document.location.protocol
+                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+            "MathJax.Hub.Config({" +
+            "    config: ['MMLorHTML.js']," +
+            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+            "    displayAlign: 'center'," +
+            "    displayIndent: '0em'," +
+            "    showMathMenu: true," +
+            "    tex2jax: { " +
+            "        inlineMath: [ ['$','$'] ], " +
+            "        displayMath: [ ['$$','$$'] ]," +
+            "        processEscapes: true," +
+            "        preview: 'TeX'," +
+            "    }, " +
+            "    'HTML-CSS': { " +
+            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
+            "    } " +
+            "}); ";
+        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+    }
+</script>
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2012-01-17T04:15:00">
+          on&nbsp;Tue 17 January 2012
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>This is a bare-bones introduction to <a href="http://had.co.nz/ggplot2/">ggplot2</a>, a visualization package in R. It assumes no knowledge of R.</p>
+
+  <p>For a better-looking version of this post, see <a href="https://github.com/echen/ggplot2-tutorial">this Github repository</a>, which also contains some of the <a href="https://github.com/echen/ggplot2-tutorial/tree/master/data">example datasets</a> I use and a <a href="https://github.com/echen/ggplot2-tutorial/blob/master/ggplot2-tutorial.R">literate programming version</a> of this tutorial.</p>
+
+  <h1>Preview</h1>
+
+  <p>Let&#8217;s start with a preview of what ggplot2 can do.</p>
+
+  <p>Given Fisher&#8217;s <a href="http://en.wikipedia.org/wiki/Iris_flower_data_set">iris</a> data set and one simple command&#8230;</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>&#8230;we can produce this plot of sepal length vs. petal length, colored by species.</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-specied.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-specied.png" alt="Sepal vs. Petal, Colored by Species" /></a></p>
+
+  <h1>Installation</h1>
+
+  <p>You can download R <a href="http://cran.opensourceresources.org/">here</a>. After installation, you can launch R in interactive mode by either typing <code>R</code> on the command line or opening the standard GUI (which should have been included in the download).</p>
+
+  <h1>R Basics</h1>
+
+  <h2>Vectors</h2>
+
+  <p>Vectors are a core data structure in R, and are created with <code>c()</code>. Elements in a vector must be of the same type.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">numbers <span class="o">=</span> c<span class="p">(</span><span class="m">23</span><span class="p">,</span> <span class="m">13</span><span class="p">,</span> <span class="m">5</span><span class="p">,</span> <span class="m">7</span><span class="p">,</span> <span class="m">31</span><span class="p">)</span>
+  </span><span class="line">names <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;edwin&quot;</span><span class="p">,</span> <span class="s">&quot;alice&quot;</span><span class="p">,</span> <span class="s">&quot;bob&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Elements are indexed starting at 1, and are accessed with <code>[]</code> notation.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">numbers<span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="c1"># 23</span>
+  </span><span class="line">names<span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="c1"># edwin</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>Data frames</h2>
+
+  <p><a href="http://www.r-tutor.com/r-introduction/data-frame">Data frames</a> are like matrices, but with named columns of different types (similar to <a href="http://code.google.com/p/sqldf/">database tables</a>).</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">books <span class="o">=</span> data.frame<span class="p">(</span>
+  </span><span class="line">  title <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;harry potter&quot;</span><span class="p">,</span> <span class="s">&quot;war and peace&quot;</span><span class="p">,</span> <span class="s">&quot;lord of the rings&quot;</span><span class="p">),</span> <span class="c1"># column named &quot;title&quot;</span>
+  </span><span class="line">  author <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;rowling&quot;</span><span class="p">,</span> <span class="s">&quot;tolstoy&quot;</span><span class="p">,</span> <span class="s">&quot;tolkien&quot;</span><span class="p">),</span>
+  </span><span class="line">  num_pages <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;350&quot;</span><span class="p">,</span> <span class="s">&quot;875&quot;</span><span class="p">,</span> <span class="s">&quot;500&quot;</span><span class="p">)</span>
+  </span><span class="line"><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>You can access columns of a data frame with <code>$</code>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">books<span class="p">$</span>title <span class="c1"># c(&quot;harry potter&quot;, &quot;war and peace&quot;, &quot;lord of the rings&quot;)</span>
+  </span><span class="line">books<span class="p">$</span>author<span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="c1"># &quot;rowling&quot;</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>You can also create new columns with <code>$</code>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">books<span class="p">$</span>num_bought_today <span class="o">=</span> c<span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">5</span><span class="p">,</span> <span class="m">8</span><span class="p">)</span>
+  </span><span class="line">books<span class="p">$</span>num_bought_yesterday <span class="o">=</span> c<span class="p">(</span><span class="m">18</span><span class="p">,</span> <span class="m">13</span><span class="p">,</span> <span class="m">20</span><span class="p">)</span>
+  </span><span class="line">  
+  </span><span class="line">books<span class="p">$</span>total\_num\_bought <span class="o">=</span> books<span class="p">$</span>num_bought_today <span class="o">+</span> books<span class="p">$</span>num_bought_yesterday
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>read.table</h2>
+
+  <p>Suppose you want to import a TSV file into R as a data frame.</p>
+
+  <h3>tsv file without header</h3>
+
+  <p>For example, consider the <a href="https://github.com/echen/r-tutorial/blob/master/data/students.tsv"><code>data/students.tsv</code></a> file (with columns describing each student&#8217;s age, test score, and name).</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="m">13</span>   <span class="m">100</span> alice
+  </span><span class="line"><span class="m">14</span>   <span class="m">95</span>  bob
+  </span><span class="line"><span class="m">13</span>   <span class="m">82</span>  eve
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>We can import this file into R using <a href="http://stat.ethz.ch/R-manual/R-devel/library/utils/html/read.table.html"><code>read.table()</code></a>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">students <span class="o">=</span> read.table<span class="p">(</span><span class="s">&quot;data/students.tsv&quot;</span><span class="p">,</span>
+  </span><span class="line">  header <span class="o">=</span> <span class="k-Variable">F</span><span class="p">,</span> <span class="c1"># file does not contain a header (`F` is short for `FALSE`), so we must manually specify column names                    </span>
+  </span><span class="line">  sep <span class="o">=</span> <span class="s">&quot;\t&quot;</span><span class="p">,</span> <span class="c1"># file is tab-delimited        </span>
+  </span><span class="line">  col.names <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;age&quot;</span><span class="p">,</span> <span class="s">&quot;score&quot;</span><span class="p">,</span> <span class="s">&quot;name&quot;</span><span class="p">)</span> <span class="c1"># column names</span>
+  </span><span class="line"><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>We can now access the different columns in the data frame with <code>students$age</code>, <code>students$score</code>, and <code>students$name</code>.</p>
+
+  <h3>csv file with header</h3>
+
+  <p>For an example of a file in a different format, look at the <a href="https://github.com/echen/r-tutorial/blob/master/data/studentsWithHeader.tsv"><code>data/studentsWithHeader.tsv</code></a> file.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">age<span class="p">,</span>score<span class="p">,</span>name
+  </span><span class="line"><span class="m">13</span><span class="p">,</span><span class="m">100</span><span class="p">,</span>alice
+  </span><span class="line"><span class="m">14</span><span class="p">,</span><span class="m">95</span><span class="p">,</span>bob
+  </span><span class="line"><span class="m">13</span><span class="p">,</span><span class="m">82</span><span class="p">,</span>eve
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Here we have the same data, but now the file is comma-delimited and contains a header. We can import this file with</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">students <span class="o">=</span> read.table<span class="p">(</span><span class="s">&quot;data/students.tsv&quot;</span><span class="p">,</span>
+  </span><span class="line">  sep <span class="o">=</span> <span class="s">&quot;,&quot;</span><span class="p">,</span>
+  </span><span class="line">  header <span class="o">=</span> <span class="k-Variable">T</span>  <span class="c1"># first line contains column names, so we can immediately call `students$age`        </span>
+  </span><span class="line"><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>(Note: there is also a <code>read.csv</code> function that uses <code>sep = ","</code> by default.)</p>
+
+  <h2>help</h2>
+
+  <p>There are many more options that <code>read.table</code> can take. For a list of these, just type <code>help(read.table)</code> (or <code>?read.table</code>) at the prompt to access documentation.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># These work for other functions as well.</span>
+  </span><span class="line">help<span class="p">(</span>read.table<span class="p">)</span>
+  </span><span class="line">?read.table
+  </span></code></pre></td></tr></table></div>
+
+
+  <h1>ggplot2</h1>
+
+  <p>With these R basics in place, let&#8217;s dive into the ggplot2 package.</p>
+
+  <h2>Installation</h2>
+
+  <p>One of R&#8217;s greatest strengths is its excellent set of <a href="http://cran.r-project.org/web/packages/available_packages_by_name.html">packages</a>. To install a package, you can use the <code>install.packages()</code> function.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">install.packages<span class="p">(</span><span class="s">&quot;ggplot2&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>To load a package into your current R session, use <code>library()</code>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">library<span class="p">(</span>ggplot2<span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>Scatterplots with qplot()</h2>
+
+  <p>Let&#8217;s look at how to create a scatterplot in ggplot2. We&#8217;ll use the <code>iris</code> data frame that&#8217;s automatically loaded into R.</p>
+
+  <p>What does the data frame contain? We can use the <code>head</code> function to look at the first few rows.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">head<span class="p">(</span>iris<span class="p">)</span> <span class="c1"># by default, head displays the first 6 rows. see `?head`</span>
+  </span><span class="line">head<span class="p">(</span>iris<span class="p">,</span> n <span class="o">=</span> <span class="m">10</span><span class="p">)</span> <span class="c1"># we can also explicitly set the number of rows to display</span>
+  </span><span class="line">
+  </span><span class="line">Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+  </span><span class="line">         <span class="m">5.1</span>         <span class="m">3.5</span>          <span class="m">1.4</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">4.9</span>         <span class="m">3.0</span>          <span class="m">1.4</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">4.7</span>         <span class="m">3.2</span>          <span class="m">1.3</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">4.6</span>         <span class="m">3.1</span>          <span class="m">1.5</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">5.0</span>         <span class="m">3.6</span>          <span class="m">1.4</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">5.4</span>         <span class="m">3.9</span>          <span class="m">1.7</span>         <span class="m">0.4</span>  setosa
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>(The data frame actually contains three types of species: setosa, versicolor, and virginica.)</p>
+
+  <p>Let&#8217;s plot <code>Sepal.Length</code> against <code>Petal.Length</code> using ggplot2&#8217;s <code>qplot()</code> function.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">)</span>
+  </span><span class="line"><span class="c1"># Plot Sepal.Length vs. Petal.Length, using data from the `iris` data frame.</span>
+  </span><span class="line"><span class="c1"># * First argument `Sepal.Length` goes on the x-axis.</span>
+  </span><span class="line"><span class="c1"># * Second argument `Petal.Length` goes on the y-axis.</span>
+  </span><span class="line"><span class="c1"># * `data = iris` means to look for this data in the `iris` data frame.    </span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal.png" alt="Sepal Length vs. Petal Length" /></a></p>
+
+  <p>To see where each species is located in this graph, we can color each point by adding a <code>color = Species</code> argument.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">)</span> <span class="c1"># dude!</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-specied.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-specied.png" alt="Sepal vs. Petal, Colored by Species" /></a></p>
+
+  <p>Similarly, we can let the size of each point denote sepal width, by adding a <code>size = Sepal.Width</code> argument.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">,</span> size <span class="o">=</span> Petal.Width<span class="p">)</span>
+  </span><span class="line"><span class="c1"># We see that Iris setosa flowers have the narrowest petals.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-sized.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-sized.png" alt="Sepal vs. Petal, Sized by Petal Width" /></a></p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">,</span> size <span class="o">=</span> Petal.Width<span class="p">,</span> alpha <span class="o">=</span> I<span class="p">(</span><span class="m">0.7</span><span class="p">))</span>
+  </span><span class="line"><span class="c1"># By setting the alpha of each point to 0.7, we reduce the effects of overplotting.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-alpha.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-alpha.png" alt="Sepal vs. Petal, with Transparency" /></a></p>
+
+  <p>Finally, let&#8217;s fix the axis labels and add a title to the plot.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">,</span>
+  </span><span class="line">  xlab <span class="o">=</span> <span class="s">&quot;Sepal Length&quot;</span><span class="p">,</span> ylab <span class="o">=</span> <span class="s">&quot;Petal Length&quot;</span><span class="p">,</span>
+  </span><span class="line">  main <span class="o">=</span> <span class="s">&quot;Sepal vs. Petal Length in Fisher&#39;s Iris data&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-titled.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-titled.png" alt="Sepal vs. Petal, Titled" /></a></p>
+
+  <h2>Other common geoms</h2>
+
+  <p>In the scatterplot examples above, we implicitly used a <em>point</em> <strong>geom</strong>, the default when you supply two arguments to <code>qplot()</code>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># These two invocations are equivalent.</span>
+  </span><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;point&quot;</span><span class="p">)</span>
+  </span><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>But we can also easily use other types of geoms to create more kinds of plots.</p>
+
+  <h3>Barcharts: geom = &#8220;bar&#8221;</h3>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">movies <span class="o">=</span> data.frame<span class="p">(</span>
+  </span><span class="line">  director <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;spielberg&quot;</span><span class="p">,</span> <span class="s">&quot;spielberg&quot;</span><span class="p">,</span> <span class="s">&quot;spielberg&quot;</span><span class="p">,</span> <span class="s">&quot;jackson&quot;</span><span class="p">,</span> <span class="s">&quot;jackson&quot;</span><span class="p">),</span>
+  </span><span class="line">  movie <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;jaws&quot;</span><span class="p">,</span> <span class="s">&quot;avatar&quot;</span><span class="p">,</span> <span class="s">&quot;schindler&#39;s list&quot;</span><span class="p">,</span> <span class="s">&quot;lotr&quot;</span><span class="p">,</span> <span class="s">&quot;king kong&quot;</span><span class="p">),</span>
+  </span><span class="line">  minutes <span class="o">=</span> c<span class="p">(</span><span class="m">124</span><span class="p">,</span> <span class="m">163</span><span class="p">,</span> <span class="m">195</span><span class="p">,</span> <span class="m">600</span><span class="p">,</span> <span class="m">187</span><span class="p">)</span>
+  </span><span class="line"><span class="p">)</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1"># Plot the number of movies each director has.</span>
+  </span><span class="line">qplot<span class="p">(</span>director<span class="p">,</span> data <span class="o">=</span> movies<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;bar&quot;</span><span class="p">,</span> ylab <span class="o">=</span> <span class="s">&quot;# movies&quot;</span><span class="p">)</span>
+  </span><span class="line"><span class="c1"># By default, the height of each bar is simply a count.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/num-movies.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/num-movies.png" alt="# Movies" /></a></p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># But we can also supply a different weight.</span>
+  </span><span class="line"><span class="c1"># Here the height of each bar is the total running time of the director&#39;s movies.</span>
+  </span><span class="line">qplot<span class="p">(</span>director<span class="p">,</span> weight <span class="o">=</span> minutes<span class="p">,</span> data <span class="o">=</span> movies<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;bar&quot;</span><span class="p">,</span> ylab <span class="o">=</span> <span class="s">&quot;total length (min.)&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/total-length.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/total-length.png" alt="Total Running Time" /></a></p>
+
+  <h3>Line charts: geom = &#8220;line&#8221;</h3>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;line&quot;</span><span class="p">,</span> color <span class="o">=</span> Species<span class="p">)</span>
+  </span><span class="line"><span class="c1"># Using a line geom doesn&#39;t really make sense here, but hey.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-lined.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-lined.png" alt="Sepal vs. Petal, Lined" /></a></p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># `Orange` is another built-in data frame that describes the growth of orange trees.</span>
+  </span><span class="line">qplot<span class="p">(</span>age<span class="p">,</span> circumference<span class="p">,</span> data <span class="o">=</span> Orange<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;line&quot;</span><span class="p">,</span>
+  </span><span class="line">  colour <span class="o">=</span> Tree<span class="p">,</span>
+  </span><span class="line">  main <span class="o">=</span> <span class="s">&quot;How does orange tree circumference vary with age?&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/orange-tree-growth.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/orange-tree-growth.png" alt="Orange Tree Growth" /></a></p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># We can also plot both points and lines.</span>
+  </span><span class="line">qplot<span class="p">(</span>age<span class="p">,</span> circumference<span class="p">,</span> data <span class="o">=</span> Orange<span class="p">,</span> geom <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;point&quot;</span><span class="p">,</span> <span class="s">&quot;line&quot;</span><span class="p">),</span> colour <span class="o">=</span> Tree<span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/orange-tree-pointed.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/orange-tree-pointed.png" alt="Orange Tree with Points" /></a></p>
+
+  <p>And that&#8217;s it with what I&#8217;ll cover.</p>
+
+  <h1>Next Steps</h1>
+
+  <p>I skipped over a lot of aspects of R and ggplot2 in this intro.</p>
+
+  <p>For example,</p>
+
+  <ul>
+  <li>There are many geoms (and other functionalities) in ggplot2 that I didn&#8217;t cover, e.g., <a href="http://had.co.nz/ggplot2/geom_boxplot.html">boxplots</a> and <a href="http://had.co.nz/ggplot2/geom_histogram.html">histograms</a>.</li>
+  <li>I didn&#8217;t talk about ggplot2&#8217;s layering system, or the <a href="http://www.amazon.com/Grammar-Graphics-Statistics-Computing/dp/0387245448">grammar of graphics</a> it&#8217;s based on.</li>
+  </ul>
+
+
+  <p>So I&#8217;ll end with some additional resources on R and ggplot2.</p>
+
+  <ul>
+  <li>I don&#8217;t use it myself, but <a href="http://rstudio.org/">RStudio</a> is a popular IDE for R.</li>
+  <li>The <a href="http://had.co.nz/ggplot2/">official ggplot2 documentation</a> is great and has lots of examples. There&#8217;s also an excellent <a href="http://www.amazon.com/ggplot2-Elegant-Graphics-Data-Analysis/dp/0387981403">book</a>.</li>
+  <li><a href="http://plyr.had.co.nz/">plyr</a> is another fantastic R package that&#8217;s also by Hadley Wickham (the author of ggplot2).</li>
+  <li>The <a href="http://cran.r-project.org/doc/manuals/R-intro.html">official R introduction</a> is okay, but definitely not great. I haven&#8217;t found any R tutorials I really like, but I&#8217;ve heard good things about <a href="http://www.amazon.com/Art-Programming-Statistical-Software-Design/dp/1593273843">The Art of R Programming</a>.</li>
+  </ul>
+
+  </div>  
+<script type= "text/javascript">
+    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+        var mathjaxscript = document.createElement('script');
+        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+        mathjaxscript.type = 'text/javascript';
+        mathjaxscript.src = 'https:' == document.location.protocol
+                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+            "MathJax.Hub.Config({" +
+            "    config: ['MMLorHTML.js']," +
+            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+            "    displayAlign: 'center'," +
+            "    displayIndent: '0em'," +
+            "    showMathMenu: true," +
+            "    tex2jax: { " +
+            "        inlineMath: [ ['$','$'] ], " +
+            "        displayMath: [ ['$$','$$'] ]," +
+            "        processEscapes: true," +
+            "        preview: 'TeX'," +
+            "    }, " +
+            "    'HTML-CSS': { " +
+            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
+            "    } " +
+            "}); ";
+        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+    }
+</script>
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2012-01-03T04:15:00">
+          on&nbsp;Tue 03 January 2012
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>Imagine you have a sequence of snapshots from a day in Justin Bieber&#8217;s life, and you want to label each image with the activity it represents (eating, sleeping, driving, etc.). How can you do this?</p>
+
+  <p>One way is to ignore the sequential nature of the snapshots, and build a <em>per-image</em> classifier. For example, given a month&#8217;s worth of labeled snapshots, you might learn that dark images taken at 6am tend to be about sleeping, images with lots of bright colors tend to be about dancing, images of cars are about driving, and so on.</p>
+
+  <p>By ignoring this sequential aspect, however, you lose a lot of information. For example, what happens if you see a close-up picture of a mouth &#8211; is it about singing or eating? If you know that the <em>previous</em> image is a picture of Justin Bieber eating or cooking, then it&#8217;s more likely this picture is about eating; if, however, the previous image contains Justin Bieber singing or dancing, then this one probably shows him singing as well.</p>
+
+  <p>Thus, to increase the accuracy of our labeler, we should incorporate the labels of nearby photos, and this is precisely what a <strong>conditional random field</strong> does.</p>
+
+  <h1>Part-of-Speech Tagging</h1>
+
+  <p>Let&#8217;s go into some more detail, using the more common example of <strong>part-of-speech tagging</strong>.</p>
+
+  <p>In POS tagging, the goal is to label a sentence (a sequence of words or tokens) with tags like ADJECTIVE, NOUN, PREPOSITION, VERB, ADVERB, ARTICLE.</p>
+
+  <p>For example, given the sentence &#8220;Bob drank coffee at Starbucks&#8221;, the labeling might be &#8220;Bob (NOUN) drank (VERB) coffee (NOUN) at (PREPOSITION) Starbucks (NOUN)&#8221;.</p>
+
+  <p>So let&#8217;s build a conditional random field to label sentences with their parts of speech. Just like any classifier, we&#8217;ll first need to decide on a set of feature functions $f_i$.</p>
+
+  <h2>Feature Functions in a CRF</h2>
+
+  <p>In a CRF, each <strong>feature function</strong> is a function that takes in as input:</p>
+
+  <ul>
+  <li>a sentence s</li>
+  <li>the position i of a word in the sentence</li>
+  <li>the label $l_i$ of the current word</li>
+  <li>the label $l_{i-1}$ of the previous word</li>
+  </ul>
+
+
+  <p>and outputs a real-valued number (though the numbers are often just either 0 or 1).</p>
+
+  <p>(Note: by restricting our features to depend on only the <em>current</em> and <em>previous</em> labels, rather than arbitrary labels throughout the sentence, I&#8217;m actually building the special case of a <strong>linear-chain CRF</strong>. For simplicity, I&#8217;m going to ignore general CRFs in this post.)</p>
+
+  <p>For example, one possible feature function could measure how much we suspect that the current word should be labeled as an adjective given that the previous word is &#8220;very&#8221;.</p>
+
+  <h2>Features to Probabilities</h2>
+
+  <p>Next, assign each feature function $f_j$ a <strong>weight</strong> $\lambda_j$ (I&#8217;ll talk below about how to learn these weights from the data). Given a sentence s, we can now score a labeling l of s by adding up the weighted features over all words in the sentence:</p>
+
+  <p>$score(l | s) = \sum_{j = 1}^m \sum_{i = 1}^n \lambda_j f_j(s, i, l_i, l_{i-1})$</p>
+
+  <p>(The first sum runs over each feature function $j$, and the inner sum runs over each position $i$ of the sentence.)</p>
+
+  <p>Finally, we can transform these scores into probabilities $p(l | s)$ between 0 and 1 by exponentiating and normalizing:</p>
+
+  <p>$p(l | s) = \frac{exp[score(l|s)]}{\sum_{l&#8217;} exp[score(l&#8217;|s)]} = \frac{exp[\sum_{j = 1}^m \sum_{i = 1}^n \lambda_j f_j(s, i, l_i, l_{i-1})]}{\sum_{l&#8217;} exp[\sum_{j = 1}^m \sum_{i = 1}^n \lambda_j f_j(s, i, l&#8217;_i, l&#8217;_{i-1})]}$</p>
+
+  <h2>Example Feature Functions</h2>
+
+  <p>So what do these feature functions look like? Examples of POS tagging features could include:</p>
+
+  <ul>
+  <li>$f_1(s, i, l_i, l_{i-1}) = 1$ if $l_i =$ ADVERB and the ith word ends in &#8220;-ly&#8221;; 0 otherwise.
+
+  <ul>
+  <li>If the weight $\lambda_1$ associated with this feature is large and positive, then this feature is essentially saying that we prefer labelings where words ending in -ly get labeled as ADVERB.</li>
+  </ul>
+  </li>
+  <li>$f_2(s, i, l_i, l_{i-1}) = 1$ if $i = 1$, $l_i =$ VERB, and the sentence ends in a question mark; 0 otherwise.
+
+  <ul>
+  <li>Again, if the weight $\lambda_2$ associated with this feature is large and positive, then labelings that assign VERB to the first word in a question (e.g., &#8220;Is this a sentence beginning with a verb?&#8221;) are preferred.</li>
+  </ul>
+  </li>
+  <li>$f_3(s, i, l_i, l_{i-1}) = 1$ if $l_{i-1} =$ ADJECTIVE and $l_i =$ NOUN; 0 otherwise.
+
+  <ul>
+  <li>Again, a positive weight for this feature means that adjectives tend to be followed by nouns.</li>
+  </ul>
+  </li>
+  <li>$f_4(s, i, l_i, l_{i-1}) = 1$ if $l_{i-1} =$ PREPOSITION and $l_i =$ PREPOSITION.
+
+  <ul>
+  <li>A <em>negative</em> weight $\lambda_4$ for this function would mean that prepositions don&#8217;t tend to follow prepositions, so we should avoid labelings where this happens.</li>
+  </ul>
+  </li>
+  </ul>
+
+
+  <p>And that&#8217;s it! To sum up: to build a conditional random field, you just define a bunch of feature functions (which can depend on the entire sentence, a current position, and nearby labels), assign them weights, and add them all together, transforming at the end to a probability if necessary.</p>
+
+  <p>Now let&#8217;s step back and compare CRFs to some other common machine learning techniques.</p>
+
+  <h1>Smells like Logistic Regression&#8230;</h1>
+
+  <p>The form of the CRF probabilities
+  $p(l | s) = \frac{exp[\sum_{j = 1}^m \sum_{i = 1}^n f_j(s, i, l_i, l_{i-1})]}{\sum_{l&#8217;} exp[\sum_{j = 1}^m \sum_{i = 1}^n f_j(s, i, l&#8217;_i, l&#8217;_{i-1})]}$
+  might look <a href="http://en.wikipedia.org/wiki/Logistic_regression">familiar</a>.</p>
+
+  <p>That&#8217;s because CRFs are indeed basically the sequential version of <strong>logistic regression</strong>: whereas logistic regression is a log-linear model for <em>classification</em>, CRFs are a log-linear model for <em>sequential labels</em>.</p>
+
+  <h1>Looks like HMMs&#8230;</h1>
+
+  <p>Recall that <strong><a href="http://en.wikipedia.org/wiki/Hidden_Markov_model">Hidden Markov Models</a></strong> are another model for part-of-speech tagging (and sequential labeling in general). Whereas CRFs throw any bunch of functions together to get a label score, HMMs take a <em>generative</em> approach to labeling, defining</p>
+
+  <p>$p(l,s) = p(l_1) \prod_i p(l_i | l_{i-1}) p(w_i | l_i)$</p>
+
+  <p>where</p>
+
+  <ul>
+  <li>$p(l_i | l_{i-1})$ are <strong>transition</strong> probabilities (e.g., the probability that a preposition is followed by a noun);</li>
+  <li>$p(w_i | l_i)$ are <strong>emission</strong> probabilities (e.g., the probability that a noun emits the word &#8220;dad&#8221;).</li>
+  </ul>
+
+
+  <p>So how do HMMs compare to CRFs? CRFs are more powerful &#8211; they can model everything HMMs can and more. One way of seeing this is as follows.</p>
+
+  <p>Note that the log of the HMM probability is $\log p(l,s) = \log p(l_0) + \sum_i \log p(l_i | l_{i-1}) + \sum_i \log p(w_i | l_i)$. This has exactly the log-linear form of a CRF if we consider these log-probabilities to be the weights associated to binary transition and emission indicator features.</p>
+
+  <p>That is, we can build a CRF equivalent to any HMM by&#8230;</p>
+
+  <ul>
+  <li>For each HMM <em>transition</em> probability $ p(l_i = y | l_{i-1} = x) $, define a set of CRF transition features of the form $f_{x,y}(s, i, l_i, l_{i-1}) = 1$ if $l_i = y$ and $l_{i-1} = x$. Give each feature a weight of $w_{x,y} = \log p(l_i = y | l_{i-1} = x)$.</li>
+  <li>Similarly, for each HMM <em>emission</em> probability $p(w_i = z | l_{i} = x)$, define a set of CRF emission features of the form $g_{x,y}(s, i, l_i, l_{i-1}) = 1$ if $w_i = z$ and $l_i = x$. Give each feature a weight of $w_{x,z} = \log p(w_i = z | l_i = x)$.</li>
+  </ul>
+
+
+  <p>Thus, the score $p(l|s)$ computed by a CRF using these feature functions is precisely proportional to the score computed by the associated HMM, and so every HMM is equivalent to some CRF.</p>
+
+  <p>However, CRFs can model a much richer set of label distributions as well, for two main reasons:</p>
+
+  <ul>
+  <li><strong>CRFs can define a much larger set of features.</strong> Whereas HMMs are necessarily <em>local</em> in nature (because they&#8217;re constrained to binary transition and emission feature functions, which force each word to depend only on the current label and each label to depend only on the previous label), CRFs can use more <em>global</em> features. For example, one of the features in our POS tagger above increased the probability of labelings that tagged the <em>first</em> word of a sentence as a VERB if the <em>end</em> of the sentence contained a question mark.</li>
+  <li><strong>CRFs can have arbitrary weights.</strong> Whereas the probabilities of an HMM must satisfy certain constraints (e.g., $0 &lt;= p(w_i | l_i) &lt;= 1, \sum_w p(w_i = w | l_1) = 1)$, the weights of a CRF are unrestricted (e.g., $\log p(w_i | l_i)$ can be anything it wants).</li>
+  </ul>
+
+
+  <h1>Learning Weights</h1>
+
+  <p>Let&#8217;s go back to the question of how to learn the feature weights in a CRF. One way is (surprise) to use <strong>gradient ascent</strong>.</p>
+
+  <p>Assume we have a bunch of training examples (sentences and associated part-of-speech labels). Randomly initialize the weights of our CRF model.
+  To shift these randomly initialized weights to the correct ones, for each training example&#8230;</p>
+
+  <ul>
+  <li>Go through each feature function $f_i$, and calculate the gradient of the log probability of the training example with respect to $\lambda_i$: $\frac{\partial}{\partial w_j} \log p(l | s) = \sum_{j = 1}^m f_i(s, j, l_j, l_{j-1}) - \sum_{l&#8217;} p(l&#8217; | s) \sum_{j = 1}^m f_i(s, j, l&#8217;_j, l&#8217;_{j-1})$</li>
+  <li>Note that the first term in the gradient is the contribution of feature $f_i$ under the <em>true</em> label, and the second term in the gradient is the <em>expected</em> contribution of feature $f_i$ under the current model. This is exactly the form you&#8217;d expect gradient ascent to take.</li>
+  <li>Move $\lambda_i$ in the direction of the gradient: $\lambda_i = \lambda_i + \alpha [\sum_{j = 1}^m f_i(s, j, l_j, l_{j-1}) - \sum_{l&#8217;} p(l&#8217; | s) \sum_{j = 1}^m f_i(s, j, l&#8217;_j, l&#8217;_{j-1})]$ where $\alpha$ is some learning rate.</li>
+  <li>Repeat the previous steps until some stopping condition is reached (e.g., the updates fall below some threshold).</li>
+  </ul>
+
+
+  <p>In other words, every step takes the difference between what we want the model to learn and the model&#8217;s current state, and moves $\lambda_i$ in the direction of this difference.</p>
+
+  <h1>Finding the Optimal Labeling</h1>
+
+  <p>Suppose we&#8217;ve trained our CRF model, and now a new sentence comes in. How do we do label it?</p>
+
+  <p>The naive way is to calculate $p(l | s)$ for every possible labeling l, and then choose the label that maximizes this probability. However, since there are $k^m$ possible labels for a tag set of size k and a sentence of length m, this approach would have to check an exponential number of labels.</p>
+
+  <p>A better way is to realize that (linear-chain) CRFs satisfy an <a href="http://en.wikipedia.org/wiki/Optimal_substructure">optimal substructure</a> property that allows us to use a (polynomial-time) dynamic programming algorithm to find the optimal label, similar to the <a href="http://en.wikipedia.org/wiki/Viterbi_algorithm">Viterbi algorithm</a> for HMMs.</p>
+
+  <h1>A More Interesting Application</h1>
+
+  <p>Okay, so part-of-speech tagging is kind of boring, and there are plenty of existing POS taggers out there. When might you use a CRF in real life?</p>
+
+  <p>Suppose you want to mine Twitter for the types of presents people received for Christmas:</p>
+
+  <blockquote class="twitter-tweet"><p>What people on Twitter wanted for Christmas, and what they got: <a href="http://t.co/EGeKTBgF" title="http://twitter.com/edchedch/status/153683967315419136/photo/1">twitter.com/edchedch/statu…</a></p>— Edwin Chen (@edchedch) <a href="https://twitter.com/edchedch/status/153683967315419136" data-datetime="2012-01-02T03:48:10+00:00">January 2, 2012</a></blockquote>
+
+
+  <script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+  <p>(Yes, I just embedded a tweet. BOOM.)</p>
+
+  <p>How can you figure out which words refer to gifts?</p>
+
+  <p>To gather data for the graphs above, I simply looked for phrases of the form &#8220;I want XXX for Christmas&#8221; and &#8220;I got XXX for Christmas&#8221;. However, a more sophisticated CRF variant could use a GIFT part-of-speech-like tag (even adding other tags like GIFT-GIVER and GIFT-RECEIVER, to get even more information on who got what from whom) and treat this like a POS tagging problem. Features could be based around things like &#8220;this word is a GIFT if the previous word was a GIFT-RECEIVER and the word before that was &#8216;gave&#8217;&#8221; or &#8220;this word is a GIFT if the next two words are &#8216;for Christmas&#8217;&#8221;.</p>
+
+  <h1>Fin</h1>
+
+  <p>I&#8217;ll end with some more random thoughts:</p>
+
+  <ul>
+  <li>I explicitly skipped over the graphical models framework that conditional random fields sit in, because I don&#8217;t think they add much to an initial understanding of CRFs. But if you&#8217;re interested in learning more, Daphne Koller is teaching a free, online course on <a href="http://www.pgm-class.org/">graphical models</a> starting in January.</li>
+  <li>Or, if you&#8217;re more interested in the many NLP applications of CRFs (like part-of-speech tagging or <a href="http://en.wikipedia.org/wiki/Named-entity_recognition">named entity extraction</a>), Manning and Jurafsky are teaching an <a href="http://www.nlp-class.org/">NLP class</a> in the same spirit.</li>
+  <li>I also glossed a bit over the analogy between CRFs:HMMs and Logistic Regression:Naive Bayes. This image (from <a href="http://arxiv.org/pdf/1011.4088v1">Sutton and McCallum&#8217;s introduction to conditional random fields</a>) sums it up, and shows the graphical model nature of CRFs as well:</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/crfs/crf-diagram.png"><img src="http://dl.dropbox.com/u/10506/blog/crfs/crf-diagram.png" alt="CRF Diagram" /></a></p></div>
+  
+<script type= "text/javascript">
+    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+        var mathjaxscript = document.createElement('script');
+        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+        mathjaxscript.type = 'text/javascript';
+        mathjaxscript.src = 'https:' == document.location.protocol
+                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+            "MathJax.Hub.Config({" +
+            "    config: ['MMLorHTML.js']," +
+            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+            "    displayAlign: 'center'," +
+            "    displayIndent: '0em'," +
+            "    showMathMenu: true," +
+            "    tex2jax: { " +
+            "        inlineMath: [ ['$','$'] ], " +
+            "        displayMath: [ ['$$','$$'] ]," +
+            "        processEscapes: true," +
+            "        preview: 'TeX'," +
+            "    }, " +
+            "    'HTML-CSS': { " +
+            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
+            "    } " +
+            "}); ";
+        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+    }
+</script>
+
+                    </article>
+ 
+<div class="paginator">
+            <div class="navButton"> <a href="/index.html" >Prev</a></div>
+    <div class="navButton">Page 2 / 7</div>
+        <div class="navButton"><a href="/index3.html" >Next</a></div>
+</div>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+  
+	      <div class="LaunchyardDetail">
+	        <p>
+	          <a class="title" href="/">Edwin Chen</a>
+	          <br/>
+	          Hanging. MIT, Microsoft Research, Clarium, Twitter, Google, Dropbox.
+	          <br /><br />
+            <a href="mailto:hello[at]echen.me">Email</a><br />
+            <a href="https://twitter.com/#!/echen">Twitter</a><br/>
+            <a href="https://github.com/echen">Github</a><br/>
+            <a href="https://plus.google.com/113804726252165471503/">Google+</a><br/>
+            <a href="http://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
+            <a href="http://quora.com/edwin-chen-1">Quora</a>
+          </p>
+          <br />
+          <div id="recent_posts">
+              <h3>Recent Posts</h3>
+                <a href="/2014/08/15/propensity-modeling-causal-inference-and-sparkers-of-growth/">Propensity Modeling, Causal Inference, and Sparkers of Growth  </a><br /><br />
+                <a href="/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
+                <a href="/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
+                <a href="/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
+                <a href="/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Making the Most of Mechanical Turk: Tips and Best Practices  </a><br /><br />
+                <a href="/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
+                <a href="/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
+                <a href="/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
+                <a href="/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a href="/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
+            
+          </div>
+        </div>
+
+
+        <section id="extras" >
+       
+        
+        </section><!-- /#extras -->
+	
+        <footer id="contentinfo" >
+                <address id="about" class="vcard ">
+                Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
+                great advantage of <a href="http://python.org" target="_blank">Python</a>.
+		
+                </address><!-- /#about -->
+		
+
+                
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>Edwin Chen's Blog - Edwin Chen</title>
+        <meta charset="utf-8" />
+	      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/theme/css/main.css" type="text/css" />
+
+        <!--[if IE]>
+                <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+        <!--[if lte IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie.css"/>
+                <script src="/js/IE8.js" type="text/javascript"></script><![endif]-->
+
+        <!--[if lt IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie6.css"/><![endif]-->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js" type="text/javascript"></script>
+
+
+</head>
+
+<body id="index" class="home">
+	
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="/2011/02/15/item-to-item-collaborative-filtering-with-amazons-recommendation-system/">Item-to-Item Collaborative Filtering with Amazon's Recommendation System</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2011-02-15T04:15:00">
+          on&nbsp;Tue 15 February 2011
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  
+<div class="entry-content"><h1>Introduction</h1>
+
+<p>In making its product recommendations, Amazon makes heavy use of an item-to-item collaborative filtering approach. This essentially means that for each item X, Amazon builds a neighborhood of related items S(X); whenever you buy/look at an item, Amazon then recommends you items from that item&#8217;s neighborhood. That&#8217;s why when you sign in to Amazon and look at the front page, your recommendations are mostly of the form &#8220;You viewed&#8230; Customers who viewed this also viewed&#8230;&#8221;.</p>
+
+<h1>Other approaches.</h1>
+
+<p>The item-to-item approach can be contrasted to:</p>
+
+<ul>
+<li><strong>A user-to-user collaborative filtering approach</strong>. This finds users similar to you (e.g., it could find users who bought a lot of items in common with you), and suggest items that they&#8217;ve bought but you haven&#8217;t.</li>
+<li><strong>A global, latent factorization approach</strong>. Rather than looking at individual items in isolation (in the item-to-item approach, if you and I both buy a book X, Amazon will make essentially the same recommendations based on X, regardless of what we&#8217;ve bought in the past), a global approach would look at all the items you&#8217;ve bought, and try to detect properties that characterize what you like. For example, if you buy a lot of science fiction books and also a lot of romance books, a global-approach algorithm might try to recommend you books with both science fiction and romance elements.</li>
+</ul>
+
+
+<h1>Pros/cons of the item-to-item approach:</h1>
+
+<ul>
+<li><strong>Pros over the user-to-user approach</strong>: Amazon (and most applications) has many more users than items, so it&#8217;s computationally simpler to find similar items than it is to find similar users. Finding similar users is also a difficult algorithmic task, since individual users often have a very wide range of tastes, but individual items usually belong to relatively few genres.</li>
+<li><strong>Pros over the factorization approach</strong>: Simpler to implement. Faster to update recommendations: as soon as you buy a new book, Amazon can make a new recommendation in the item-to-item approach, whereas a factorization approach would have to wait until the factorization has been recomputed. The item-to-item approach can also be more easily leveraged in several areas, not only in the recommendations made to you, but also in the &#8220;similar items/other customers also bought&#8221; section when you look at a particular item.</li>
+<li><strong>Cons of the item-to-item approach</strong>: You don&#8217;t get very much diversity or surprise in item-to-item recommendations, so recommendations tend to be kind of &#8220;obvious&#8221; and boring.</li>
+</ul>
+
+
+<h1>How to find similar items</h1>
+
+<p>Since the item-to-item approach makes crucial use of similar items, here&#8217;s a high-level view of how to do it. First, associate each item with the set of users who have bought/looked at it. The similarity between any two items could then be a normalized measure of the number of users they have in common (i.e., the Jaccard index) or the cosine distance between the two items (imagine each item as a vector, with a 1 in the ith element if user i has bought it, and 0 otherwise).</p>
+</div>
+
+                    </article>
+ 
+<div class="paginator">
+            <div class="navButton"><a href="/author/edwin-chen6.html">Prev</a></div>
+    <div class="navButton">Page 7 / 7</div>
+</div>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+  
+	      <div class="LaunchyardDetail">
+	        <p>
+	          <a class="title" href="/">Edwin Chen</a>
+	          <br/>
+	          Hanging. MIT, Microsoft Research, Clarium, Twitter, Google, Dropbox.
+	          <br /><br />
+            <a href="mailto:hello[at]echen.me">Email</a><br />
+            <a href="https://twitter.com/#!/echen">Twitter</a><br/>
+            <a href="https://github.com/echen">Github</a><br/>
+            <a href="https://plus.google.com/113804726252165471503/">Google+</a><br/>
+            <a href="http://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
+            <a href="http://quora.com/edwin-chen-1">Quora</a>
+          </p>
+          <br />
+          <div id="recent_posts">
+              <h3>Recent Posts</h3>
+                <a href="/2014/08/15/propensity-modeling-causal-inference-and-sparkers-of-growth/">Propensity Modeling, Causal Inference, and Sparkers of Growth  </a><br /><br />
+                <a href="/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
+                <a href="/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
+                <a href="/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
+                <a href="/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Making the Most of Mechanical Turk: Tips and Best Practices  </a><br /><br />
+                <a href="/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
+                <a href="/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
+                <a href="/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
+                <a href="/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a href="/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
+            
+          </div>
+        </div>
+
+
+        <section id="extras" >
+       
+        
+        </section><!-- /#extras -->
+	
+        <footer id="contentinfo" >
+                <address id="about" class="vcard ">
+                Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
+                great advantage of <a href="http://python.org" target="_blank">Python</a>.
+		
+                </address><!-- /#about -->
+		
+
+                
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>
