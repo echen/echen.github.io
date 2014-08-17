@@ -29,286 +29,6 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="/2011/07/18/introduction-to-restricted-boltzmann-machines/">Introduction to Restricted Boltzmann Machines</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-07-18T04:15:00">
-          on&nbsp;Mon 18 July 2011
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p>Suppose you ask a bunch of users to rate a set of movies on a 0-100 scale. In classical <a href="http://en.wikipedia.org/wiki/Factor_analysis">factor analysis</a>, you could then try to explain each movie and user in terms of a set of latent <em>factors</em>. For example, movies like Star Wars and Lord of the Rings might have strong associations with a latent science fiction and fantasy factor, and users who like Wall-E and Toy Story might have strong associations with a latent Pixar factor.</p>
-
-
-
-
-  <p>Restricted Boltzmann Machines essentially perform a <em>binary</em> version of factor analysis. (This is one way of thinking about RBMs; there are, of course, others, and lots of different ways to use RBMs, but I&#8217;ll adopt this approach for this post.) Instead of users rating a set of movies on a continuous scale, they simply tell you whether they like a movie or not, and the RBM will try to discover latent factors that can explain the activation of these movie choices.</p>
-
-
-
-
-  <p>More technically, a Restricted Boltzmann Machine is a <strong>stochastic neural network</strong> (<em>neural network</em> meaning we have neuron-like units whose binary activations depend on the neighbors they&#8217;re connected to; <em>stochastic</em> meaning these activations have a probabilistic element) consisting of:</p>
-
-
-
-
-  <ul>
-  <li>One layer of <strong>visible units</strong> (users&#8217; movie preferences whose states we know and set);</li>
-  <li>One layer of <strong>hidden units</strong> (the latent factors we try to learn); and</li>
-  <li>A bias unit (whose state is always on, and is a way of adjusting for the different inherent popularities of each movie).</li>
-  </ul>
-
-
-
-
-  <p>Furthermore, each visible unit is connected to all the hidden units (this connection is undirected, so each hidden unit is also connected to all the visible units), and the bias unit is connected to all the visible units and all the hidden units. To make learning easier, we restrict the network so that no visible unit is connected to any other visible unit and no hidden unit is connected to any other hidden unit.</p>
-
-
-
-
-  <p>For example, suppose we have a set of six movies (Harry Potter, Avatar, LOTR 3, Gladiator, Titanic, and Glitter) and we ask users to tell us which ones they want to watch. If we want to learn two latent units underlying movie preferences &#8211; for example, two natural groups in our set of six movies appear to be SF/fantasy (containing Harry Potter, Avatar, and LOTR 3) and Oscar winners (containing LOTR 3, Gladiator, and Titanic), so we might hope that our latent units will correspond to these categories &#8211; then our RBM would look like the following:</p>
-
-
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/rbms/rbm-example.png"><img src="http://dl.dropbox.com/u/10506/blog/rbms/rbm-example.png" alt="RBM Example" /></a></p>
-
-
-
-
-  <p>(Note the resemblance to a factor analysis graphical model.)</p>
-
-
-
-
-  <h1>State Activation</h1>
-
-
-
-
-  <p>Restricted Boltzmann Machines, and neural networks in general, work by updating the states of some neurons given the states of others, so let&#8217;s talk about how the states of individual units change. Assuming we know the connection weights in our RBM (we&#8217;ll explain how to learn these below), to update the state of unit $i$:</p>
-
-
-
-
-  <ul>
-  <li>Compute the <strong>activation energy</strong> $a\_i = &#92;sum\_j w\_{ij} x\_j$ of unit $i$, where the sum runs over all units $j$ that unit $i$ is connected to, $w\_{ij}$ is the weight of the connection between $i$ and $j$, and $x\_j$ is the 0 or 1 state of unit $j$. In other words, all of unit $i$&#8217;s neighbors send it a message, and we compute the sum of all these messages.</li>
-  <li>Let $p\_i = &#92;sigma(a\_i)$, where $&#92;sigma(x) = 1/(1 + exp(-x))$ is the logistic function. Note that $p\_i$ is close to 1 for large positive activation energies, and $p\_i$ is close to 0 for negative activation energies.</li>
-  <li>We then turn unit $i$ on with probability $p\_i$, and turn it off with probability $1 - p\_i$.</li>
-  <li>(In layman&#8217;s terms, units that are positively connected to each other try to get each other to share the same state (i.e., be both on or off), while units that are negatively connected to each other are enemies that prefer to be in different states.)</li>
-  </ul>
-
-
-
-
-  <p>For example, let&#8217;s suppose our two hidden units really do correspond to SF/fantasy and Oscar winners.</p>
-
-
-
-
-  <ul>
-  <li>If Alice has told us her six binary preferences on our set of movies, we could then ask our RBM which of the hidden units her preferences activate (i.e., ask the RBM to explain her preferences in terms of latent factors). So the six movies send messages to the hidden units, telling them to update themselves. (Note that even if Alice has declared she wants to watch Harry Potter, Avatar, and LOTR 3, this doesn&#8217;t guarantee that the SF/fantasy hidden unit will turn on, but only that it will turn on with high <em>probability</em>. This makes a bit of sense: in the real world, Alice wanting to watch all three of those movies makes us highly suspect she likes SF/fantasy in general, but there&#8217;s a small chance she wants to watch them for other reasons. Thus, the RBM allows us to <em>generate</em> models of people in the messy, real world.)</li>
-  <li>Conversely, if we know that one person likes SF/fantasy (so that the SF/fantasy unit is on), we can then ask the RBM which of the movie units that hidden unit turns on (i.e., ask the RBM to generate a set of movie recommendations). So the hidden units send messages to the movie units, telling them to update their states. (Again, note that the SF/fantasy unit being on doesn&#8217;t guarantee that we&#8217;ll always recommend all three of Harry Potter, Avatar, and LOTR 3 because, hey, not everyone who likes science fiction liked Avatar.)</li>
-  </ul>
-
-
-
-
-  <h1>Learning Weights</h1>
-
-
-
-
-  <p>So how do we learn the connection weights in our network? Suppose we have a bunch of training examples, where each training example is a binary vector with six elements corresponding to a user&#8217;s movie preferences. Then for each epoch, do the following:</p>
-
-
-
-
-  <ul>
-  <li>Take a training example (a set of six movie preferences). Set the states of the visible units to these preferences.</li>
-  <li>Next, update the states of the hidden units using the logistic activation rule described above: for the $j$th hidden unit, compute its activation energy $a\_j = &#92;sum\_i w\_{ij} x\_i$, and set $x\_j$ to 1 with probability $&#92;sigma(a\_j)$ and to 0 with probability $1 - &#92;sigma(a\_j)$. Then for each edge $e\_{ij}$, compute $Positive(e\_{ij}) = x\_i \* x\_j$ (i.e., for each pair of units, measure whether they&#8217;re both on).</li>
-  <li>Now <strong>reconstruct</strong> the visible units in a similar manner: for each visible unit, compute its activation energy $a\_i$, and update its state. (Note that this <em>reconstruction</em> may not match the original preferences.) Then update the hidden units again, and compute $Negative(e\_{ij}) = x\_i \* x\_j$ for each edge.</li>
-  <li>Update the weight of each edge $e\_{ij}$ by setting $w\_{ij} = w\_{ij} + L \* (Positive(e\_{ij}) - Negative(e\_{ij}))$, where $L$ is a learning rate.</li>
-  <li>Repeat over all training examples.</li>
-  </ul>
-
-
-
-
-  <p>Continue until the network converges (i.e., the error between the training examples and their reconstructions falls below some threshold) or we reach some maximum number of epochs.</p>
-
-
-
-
-  <p>Why does this update rule make sense? Note that</p>
-
-
-
-
-  <ul>
-  <li>In the first phase, $Positive(e\_{ij})$ measures the association between the $i$th and $j$th unit that we <em>want</em> the network to learn from our training examples;</li>
-  <li>In the &#8220;reconstruction&#8221; phase, where the RBM generates the states of visible units based on its hypotheses about the hidden units alone, $Negative(e\_{ij})$ measures the association that the network <em>itself</em> generates (or &#8220;daydreams&#8221; about) when no units are fixed to training data.</li>
-  </ul>
-
-
-
-
-  <p>So by adding $Positive(e\_{ij}) - Negative(e\_{ij})$ to each edge weight, we&#8217;re helping the network&#8217;s daydreams better match the reality of our training examples.</p>
-
-
-
-
-  <p>(You may hear this update rule called <strong>contrastive divergence</strong>, which is basically a funky term for &#8220;approximate gradient descent&#8221;.)</p>
-
-
-
-
-  <h1>Examples</h1>
-
-
-
-
-  <p>I wrote <a href="https://github.com/echen/restricted-boltzmann-machines">a simple RBM implementation</a> in Python (the code is heavily commented, so take a look if you&#8217;re still a little fuzzy on how everything works), so let&#8217;s use it to walk through some examples.</p>
-
-
-
-
-  <p>First, I trained the RBM using some fake data.</p>
-
-
-
-
-  <ul>
-  <li>Alice: (Harry Potter = 1, Avatar = 1, LOTR 3 = 1, Gladiator = 0, Titanic = 0, Glitter = 0). Big SF/fantasy fan.</li>
-  <li>Bob: (Harry Potter = 1, Avatar = 0, LOTR 3 = 1, Gladiator = 0, Titanic = 0, Glitter = 0). SF/fantasy fan, but doesn&#8217;t like Avatar.</li>
-  <li>Carol: (Harry Potter = 1, Avatar = 1, LOTR 3 = 1, Gladiator = 0, Titanic = 0, Glitter = 0). Big SF/fantasy fan.</li>
-  <li>David: (Harry Potter = 0, Avatar = 0, LOTR 3 = 1, Gladiator = 1, Titanic = 1, Glitter = 0). Big Oscar winners fan.</li>
-  <li>Eric:  (Harry Potter = 0, Avatar = 0, LOTR 3 = 1, Gladiator = 1, Titanic = 1, Glitter = 0). Oscar winners fan, except for Titanic.</li>
-  <li>Fred: (Harry Potter = 0, Avatar = 0, LOTR 3 = 1, Gladiator = 1, Titanic = 1, Glitter = 0). Big Oscar winners fan.</li>
-  </ul>
-
-
-
-
-  <p>The network learned the following weights:</p>
-
-
-
-
-  <pre><code>                 Bias Unit       Hidden 1        Hidden 2
-  Bias Unit       -0.08257658     -0.19041546      1.57007782
-  Harry Potter    -0.82602559     -7.08986885      4.96606654
-  Avatar          -1.84023877     -5.18354129      2.27197472
-  LOTR 3           3.92321075      2.51720193      4.11061383
-  Gladiator        0.10316995      6.74833901     -4.00505343
-  Titanic         -0.97646029      3.25474524     -5.59606865
-  Glitter         -4.44685751     -2.81563804     -2.91540988
-  </code></pre>
-
-
-
-
-  <p>Note that the first hidden unit seems to correspond to the Oscar winners, and the second hidden unit seems to correspond to the SF/fantasy movies, just as we were hoping.</p>
-
-
-
-
-  <p>What happens if we give the RBM a new user, George, who has (Harry Potter = 0, Avatar = 0, LOTR 3 = 0, Gladiator = 1, Titanic = 1, Glitter = 0) as his preferences? It turns the Oscar winners unit on (but not the SF/fantasy unit), correctly guessing that George probably likes movies that are Oscar winners.</p>
-
-
-
-
-  <p>What happens if we activate only the SF/fantasy unit, and run the RBM a bunch of different times? In my trials, it turned on Harry Potter, Avatar, and LOTR 3 three times; it turned on Avatar and LOTR 3, but not Harry Potter, once; and it turned on Harry Potter and LOTR 3, but not Avatar, twice. Note that, based on our training examples, these generated preferences do indeed match what we might expect real SF/fantasy fans want to watch.</p>
-
-
-
-
-  <h1>Modifications</h1>
-
-
-
-
-  <p>I tried to keep the connection-learning algorithm I described above pretty simple, so here are some modifications that often appear in practice:</p>
-
-
-
-
-  <ul>
-  <li>Above, $Negative(e\_{ij})$ was determined by taking the product of the $i$th and $j$th units after reconstructing the visible units <em>once</em> and then updating the hidden units again. We could also take the product after some larger number of reconstructions (i.e., repeat updating the visible units, then the hidden units, then the visible units again, and so on); this is slower, but describes the network&#8217;s daydreams more accurately.</li>
-  <li>Instead of using $Positive(e\_{ij})=x\_i \* x\_j$, where $x\_i$ and $x\_j$ are binary 0 or 1 <em>states</em>, we could also let $x\_i$ and/or $x\_j$ be activation <em>probabilities</em>. Similarly for $Negative(e\_{ij})$.</li>
-  <li>We could penalize larger edge weights, in order to get a sparser or more regularized model.</li>
-  <li>When updating edge weights, we could use a momentum factor: we would add to each edge a weighted sum of the current step as described above (i.e., $L \* (Positive(e\_{ij}) - Negative(e\_{ij})$) and the step previously taken.</li>
-  <li>Instead of using only one training example in each epoch, we could use <em>batches</em> of examples in each epoch, and only update the network&#8217;s weights after passing through all the examples in the batch. This can speed up the learning by taking advantage of fast matrix-multiplication algorithms.</li>
-  </ul>
-
-
-
-
-  <h1>Further</h1>
-
-
-
-
-  <p>If you&#8217;re interested in learning more about Restricted Boltzmann Machines, here are some good links.</p>
-
-
-
-
-  <ul>
-  <li><a href="http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf">A Practical guide to training restricted Boltzmann machines</a>, by Geoffrey Hinton.</li>
-  <li>A talk by Andrew Ng on <a href="http://www.youtube.com/watch?v=ZmNOAtZIgIk">Unsupervised Feature Learning and Deep Learning</a>.</li>
-  <li><a href="http://www.machinelearning.org/proceedings/icml2007/papers/407.pdf">Restricted Boltzmann Machines for Collaborative Filtering</a>. I found this paper hard to read, but it&#8217;s an interesting application to the Netflix Prize.</li>
-  <li><a href="http://arxiv.org/abs/0908.4425">Geometry of the Restricted Boltzmann Machine</a>. A very readable introduction to RBMs, &#8220;starting with the observation that its Zariski closure is a Hadamard power of the first secant variety of the Segre variety of projective lines&#8221;. (I kid, I kid.)</li>
-  </ul>
-
-  </div>  
-<script type= "text/javascript">
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-</script>
-
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
                         <h1 class="entry-title"><a href="/2011/06/27/topic-modeling-the-sarah-palin-emails/">Topic Modeling the Sarah Palin Emails</a></h1>
 <div class="post-info">
 	<ul>
@@ -644,10 +364,104 @@
   </div>
 
                     </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="/2011/04/21/a-mathematical-introduction-to-least-angle-regression/">A Mathematical Introduction to Least Angle Regression</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2011-04-21T04:15:00">
+          on&nbsp;Thu 21 April 2011
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>(For a layman&#8217;s introduction, see <a href="http://blog.echen.me/2011/03/14/least-angle-regression-for-the-hungry-layman/">here</a>.)</p>
+
+  <p>Least Angle Regression (aka LARS) is a <strong>model selection method</strong> for linear regression (when you&#8217;re worried about overfitting or want your model to be easily interpretable). To motivate it, let&#8217;s consider some other model selection methods:</p>
+
+  <ul>
+  <li><strong>Forward selection</strong> starts with no variables in the model, and at each step it adds to the model the variable with the most explanatory power, stopping if the explanatory power falls below some threshold. This is a fast and simple method, but it can also be too greedy: we fully add variables at each step, so correlated predictors don&#8217;t get much of a chance to be included in the model. (For example, suppose we want to build a model for the deliciousness of a PB&amp;J sandwich, and two of our variables are the amount of peanut butter and the amount of jelly. We&#8217;d like both variables to appear in our model, but since amount of peanut butter is (let&#8217;s assume) strongly correlated with the amount of jelly, once we fully add peanut butter to our model, jelly doesn&#8217;t add much explanatory power anymore, and so it&#8217;s unlikely to be added.)</li>
+  <li><strong>Forward stagewise regression</strong> tries to remedy the greediness of forward selection by only partially adding variables. Whereas forward selection finds the variable with the most explanatory power and goes all out in adding it to the model, forward stagewise finds the variable with the most explanatory power and updates its weight by only epsilon in the correct direction. (So we might first increase the weight of peanut butter a little bit, then increase the weight of peanut butter again, then increase the weight of jelly, then increase the weight of bread, and then increase the weight of peanut butter once more.) The problem now is that we have to make a ton of updates, so forward stagewise can be very inefficient.</li>
+  </ul>
+
+
+  <p>LARS, then, is essentially forward stagewise made fast. Instead of making tiny hops in the direction of one variable at a time, LARS makes optimally-sized leaps in optimal directions. These directions are chosen to make equal angles (equal correlations) with each of the variables currently in our model. (We like peanut butter best, so we start eating it first; as we eat more, we get a little sick of it, so jelly starts looking equally appetizing, and we start eating peanut butter and jelly simultaneously; later, we add bread to the mix, etc.)</p>
+
+  <p>In more detail, LARS works as follows:</p>
+
+  <ul>
+  <li>Assume for simplicity that we&#8217;ve standardized our explanatory variables to have zero mean and unit variance, and that our response variable also has zero mean.</li>
+  <li>Start with no variables in your model.</li>
+  <li>Find the variable $ x_1 $ most correlated with the residual. (Note that the variable most correlated with the residual is equivalently the one that makes the least angle with the residual, whence the name.)</li>
+  <li>Move in the direction of this variable until some other variable $ x_2 $ is just as correlated.</li>
+  <li>At this point, start moving in a direction such that the residual stays equally correlated with $ x_1 $ and $ x_2 $ (i.e., so that the residual makes equal angles with both variables), and keep moving until some variable $ x_3 $ becomes equally correlated with our residual.</li>
+  <li>And so on, stopping when we&#8217;ve decided our model is big enough.</li>
+  </ul>
+
+
+  <p>For example, consider the following image (slightly simplified from the <a href="http://www.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf">original LARS paper</a>; $x_1, x_2$ are our variables, and $y$ is our response):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/lars/lars-example.png"><img src="http://dl.dropbox.com/u/10506/blog/lars/lars-example.png" alt="LARS Example" /></a></p>
+
+  <p>Our model starts at $ \hat{\mu_0} $.</p>
+
+  <ul>
+  <li>The residual (the green line) makes a smaller angle with $ x_1 $ than with $ x_2 $, so we start moving in the direction of $ x_1 $.
+  At $ \hat{\mu_1} $, the residual now makes equal angles with $ x_1, x_2 $, and so we start moving in a new direction that preserves this equiangularity/equicorrelation.</li>
+  <li>If there were more variables, we&#8217;d change directions again once a new variable made equal angles with our residual, and so on.</li>
+  </ul>
+
+
+  <p>So when should you use LARS, as opposed to some other regularization method like lasso? There&#8217;s not really a clear-cut answer, but LARS tends to give very similar results as both lasso and forward stagewise (in fact, slight modifications to LARS give you lasso and forward stagewise), so I tend to just use lasso when I do these kinds of things, since the justifications for lasso make a little more sense to me. In fact, I don&#8217;t usually even think of LARS as a model selection method in its own right, but rather as a way to efficiently implement lasso (especially if you want to compute the full regularization path).</p>
+  </div>
+<script type= "text/javascript">
+    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+        var mathjaxscript = document.createElement('script');
+        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+        mathjaxscript.type = 'text/javascript';
+        mathjaxscript.src = 'https:' == document.location.protocol
+                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+            "MathJax.Hub.Config({" +
+            "    config: ['MMLorHTML.js']," +
+            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+            "    displayAlign: 'center'," +
+            "    displayIndent: '0em'," +
+            "    showMathMenu: true," +
+            "    tex2jax: { " +
+            "        inlineMath: [ ['$','$'] ], " +
+            "        displayMath: [ ['$$','$$'] ]," +
+            "        processEscapes: true," +
+            "        preview: 'TeX'," +
+            "    }, " +
+            "    'HTML-CSS': { " +
+            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
+            "    } " +
+            "}); ";
+        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+    }
+</script>
+
+                    </article>
  
 <div class="paginator">
             <div class="navButton"><a href="/category/misc3.html">Prev</a></div>
-    <div class="navButton">Page 4 / 7</div>
+    <div class="navButton">Page 4 / 6</div>
         <div class="navButton"><a href="/category/misc5.html" >Next</a></div>
 </div>
                 </div>
@@ -671,7 +485,6 @@
           <br />
           <div id="recent_posts">
               <h3>Recent Posts</h3>
-                <a href="/2014/08/15/propensity-modeling-causal-inference-and-sparkers-of-growth/">Propensity Modeling, Causal Inference, and Sparkers of Growth  </a><br /><br />
                 <a href="/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
                 <a href="/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
                 <a href="/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
@@ -681,6 +494,7 @@
                 <a href="/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
                 <a href="/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
                 <a href="/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
+                <a href="/2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
             
           </div>
         </div>
