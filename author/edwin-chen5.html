@@ -29,6 +29,100 @@
             <aside id="featured">
                 <div class="body">
                     <article>
+                        <h1 class="entry-title"><a href="/2011/04/21/a-mathematical-introduction-to-least-angle-regression/">A Mathematical Introduction to Least Angle Regression</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2011-04-21T04:15:00">
+          on&nbsp;Thu 21 April 2011
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>(For a layman&#8217;s introduction, see <a href="http://blog.echen.me/2011/03/14/least-angle-regression-for-the-hungry-layman/">here</a>.)</p>
+
+  <p>Least Angle Regression (aka LARS) is a <strong>model selection method</strong> for linear regression (when you&#8217;re worried about overfitting or want your model to be easily interpretable). To motivate it, let&#8217;s consider some other model selection methods:</p>
+
+  <ul>
+  <li><strong>Forward selection</strong> starts with no variables in the model, and at each step it adds to the model the variable with the most explanatory power, stopping if the explanatory power falls below some threshold. This is a fast and simple method, but it can also be too greedy: we fully add variables at each step, so correlated predictors don&#8217;t get much of a chance to be included in the model. (For example, suppose we want to build a model for the deliciousness of a PB&amp;J sandwich, and two of our variables are the amount of peanut butter and the amount of jelly. We&#8217;d like both variables to appear in our model, but since amount of peanut butter is (let&#8217;s assume) strongly correlated with the amount of jelly, once we fully add peanut butter to our model, jelly doesn&#8217;t add much explanatory power anymore, and so it&#8217;s unlikely to be added.)</li>
+  <li><strong>Forward stagewise regression</strong> tries to remedy the greediness of forward selection by only partially adding variables. Whereas forward selection finds the variable with the most explanatory power and goes all out in adding it to the model, forward stagewise finds the variable with the most explanatory power and updates its weight by only epsilon in the correct direction. (So we might first increase the weight of peanut butter a little bit, then increase the weight of peanut butter again, then increase the weight of jelly, then increase the weight of bread, and then increase the weight of peanut butter once more.) The problem now is that we have to make a ton of updates, so forward stagewise can be very inefficient.</li>
+  </ul>
+
+
+  <p>LARS, then, is essentially forward stagewise made fast. Instead of making tiny hops in the direction of one variable at a time, LARS makes optimally-sized leaps in optimal directions. These directions are chosen to make equal angles (equal correlations) with each of the variables currently in our model. (We like peanut butter best, so we start eating it first; as we eat more, we get a little sick of it, so jelly starts looking equally appetizing, and we start eating peanut butter and jelly simultaneously; later, we add bread to the mix, etc.)</p>
+
+  <p>In more detail, LARS works as follows:</p>
+
+  <ul>
+  <li>Assume for simplicity that we&#8217;ve standardized our explanatory variables to have zero mean and unit variance, and that our response variable also has zero mean.</li>
+  <li>Start with no variables in your model.</li>
+  <li>Find the variable $ x_1 $ most correlated with the residual. (Note that the variable most correlated with the residual is equivalently the one that makes the least angle with the residual, whence the name.)</li>
+  <li>Move in the direction of this variable until some other variable $ x_2 $ is just as correlated.</li>
+  <li>At this point, start moving in a direction such that the residual stays equally correlated with $ x_1 $ and $ x_2 $ (i.e., so that the residual makes equal angles with both variables), and keep moving until some variable $ x_3 $ becomes equally correlated with our residual.</li>
+  <li>And so on, stopping when we&#8217;ve decided our model is big enough.</li>
+  </ul>
+
+
+  <p>For example, consider the following image (slightly simplified from the <a href="http://www.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf">original LARS paper</a>; $x_1, x_2$ are our variables, and $y$ is our response):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/lars/lars-example.png"><img src="http://dl.dropbox.com/u/10506/blog/lars/lars-example.png" alt="LARS Example" /></a></p>
+
+  <p>Our model starts at $ \hat{\mu_0} $.</p>
+
+  <ul>
+  <li>The residual (the green line) makes a smaller angle with $ x_1 $ than with $ x_2 $, so we start moving in the direction of $ x_1 $.
+  At $ \hat{\mu_1} $, the residual now makes equal angles with $ x_1, x_2 $, and so we start moving in a new direction that preserves this equiangularity/equicorrelation.</li>
+  <li>If there were more variables, we&#8217;d change directions again once a new variable made equal angles with our residual, and so on.</li>
+  </ul>
+
+
+  <p>So when should you use LARS, as opposed to some other regularization method like lasso? There&#8217;s not really a clear-cut answer, but LARS tends to give very similar results as both lasso and forward stagewise (in fact, slight modifications to LARS give you lasso and forward stagewise), so I tend to just use lasso when I do these kinds of things, since the justifications for lasso make a little more sense to me. In fact, I don&#8217;t usually even think of LARS as a model selection method in its own right, but rather as a way to efficiently implement lasso (especially if you want to compute the full regularization path).</p>
+  </div>
+<script type= "text/javascript">
+    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+        var mathjaxscript = document.createElement('script');
+        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+        mathjaxscript.type = 'text/javascript';
+        mathjaxscript.src = 'https:' == document.location.protocol
+                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+            "MathJax.Hub.Config({" +
+            "    config: ['MMLorHTML.js']," +
+            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+            "    displayAlign: 'center'," +
+            "    displayIndent: '0em'," +
+            "    showMathMenu: true," +
+            "    tex2jax: { " +
+            "        inlineMath: [ ['$','$'] ], " +
+            "        displayMath: [ ['$$','$$'] ]," +
+            "        processEscapes: true," +
+            "        preview: 'TeX'," +
+            "    }, " +
+            "    'HTML-CSS': { " +
+            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
+            "    } " +
+            "}); ";
+        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+    }
+</script>
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
                         <h1 class="entry-title"><a href="/2011/04/16/introduction-to-cointegration-and-pairs-trading/">Introduction to Cointegration and Pairs Trading</a></h1>
 <div class="post-info">
 	<ul>
@@ -458,50 +552,10 @@
   </div>
 
                     </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="/2011/03/14/laymans-introduction-to-random-forests/">Layman's Introduction to Random Forests</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-03-14T04:15:00">
-          on&nbsp;Mon 14 March 2011
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  
-  <div class="entry-content"><p>Suppose you&#8217;re very indecisive, so whenever you want to watch a movie, you ask your friend Willow if she thinks you&#8217;ll like it. In order to answer, Willow first needs to figure out what movies you like, so you give her a bunch of movies and tell her whether you liked each one or not (i.e., you give her a labeled training set). Then, when you ask her if she thinks you&#8217;ll like movie X or not, she plays a 20 questions-like game with IMDB, asking questions like &#8220;Is X a romantic movie?&#8221;, &#8220;Does Johnny Depp star in X?&#8221;, and so on. She asks more informative questions first (i.e., she maximizes the information gain of each question), and gives you a yes/no answer at the end.</p>
-
-  <p>Thus, <strong>Willow is a decision tree for your movie preferences</strong>.</p>
-
-  <p>But Willow is only human, so she doesn&#8217;t always generalize your preferences very well (i.e., she overfits). In order to get more accurate recommendations, you&#8217;d like to ask a bunch of your friends, and watch movie X if most of them say they think you&#8217;ll like it. That is, instead of asking only Willow, you want to ask Woody, Apple, and Cartman as well, and they vote on whether you&#8217;ll like a movie (i.e., <strong>you build an ensemble classifier</strong>, aka a forest in this case).</p>
-
-  <p>Now you don&#8217;t want each of your friends to do the same thing and give you the same answer, so you first give each of them slightly different data. After all, you&#8217;re not absolutely sure of your preferences yourself &#8211; you told Willow you loved Titanic, but maybe you were just happy that day because it was your birthday, so maybe some of your friends shouldn&#8217;t use the fact that you liked Titanic in making their recommendations. Or maybe you told her you loved Cinderella, but actually you <em>really really</em> loved it, so some of your friends should give Cinderella more weight. So instead of giving your friends the same data you gave Willow, you give them slightly perturbed versions. You don&#8217;t change your love/hate decisions, you just say you love/hate some movies a little more or less (formally, <strong>you give each of your friends a bootstrapped version of your original training data</strong>). For example, whereas you told Willow that you liked Black Swan and Harry Potter and disliked Avatar, you tell Woody that you liked Black Swan so much you watched it twice, you disliked Avatar, and don&#8217;t mention Harry Potter at all.</p>
-
-  <p>By using this ensemble, you hope that while each of your friends gives somewhat idiosyncratic recommendations (Willow thinks you like vampire movies more than you do, Woody thinks you like Pixar movies, and Cartman thinks you just hate everything), the errors get canceled out in the majority. Thus, <strong>your friends now form a bagged (bootstrap aggregated) forest of your movie preferences</strong>.</p>
-
-  <p>There&#8217;s still one problem with your data, however. While you loved both Titanic and Inception, it wasn&#8217;t because you like movies that star Leonardio DiCaprio. Maybe you liked both movies for other reasons. Thus, you don&#8217;t want your friends to all base their recommendations on whether Leo is in a movie or not. So when each friend asks IMDB a question, only a random subset of the possible questions is allowed (i.e., <strong>when you&#8217;re building a decision tree, at each node you use some randomness in selecting the attribute to split on</strong>, say by randomly selecting an attribute or by selecting an attribute from a random subset). This means your friends aren&#8217;t allowed to ask whether Leonardo DiCaprio is in the movie whenever they want. So whereas previously you injected randomness at the data level, by perturbing your movie preferences slightly, now you&#8217;re injecting randomness at the model level, by making your friends ask different questions at different times.</p>
-
-  <p>And so <strong>your friends now form a random forest</strong>.</p>
-  </div>
-
-                    </article>
  
 <div class="paginator">
             <div class="navButton"><a href="/author/edwin-chen4.html">Prev</a></div>
-    <div class="navButton">Page 5 / 6</div>
+    <div class="navButton">Page 5 / 7</div>
         <div class="navButton"><a href="/author/edwin-chen6.html" >Next</a></div>
 </div>
                 </div>
@@ -525,6 +579,7 @@
           <br />
           <div id="recent_posts">
               <h3>Recent Posts</h3>
+                <a href="/2014/08/15/propensity-modeling-causal-inference-and-sparkers-of-growth/">Propensity Modeling, Causal Inference, and Sparkers of Growth  </a><br /><br />
                 <a href="/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
                 <a href="/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
                 <a href="/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
@@ -534,7 +589,6 @@
                 <a href="/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
                 <a href="/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
                 <a href="/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
-                <a href="/2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
             
           </div>
         </div>
