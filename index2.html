@@ -5,6 +5,8 @@
         <meta charset="utf-8" />
 	      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="stylesheet" href="/theme/css/main.css" type="text/css" />
+        <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Edwin Chen's Blog Atom Feed" />
+        <link href="/feeds/all.rss.xml" type="application/rss+xml" rel="alternate" title="Edwin Chen's Blog RSS Feed" />
 
         <!--[if IE]>
                 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
@@ -22,6 +24,309 @@
 
 <body id="index" class="home">
 	
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Making the Most of Mechanical Turk: Tips and Best Practices</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2012-04-25T04:15:00">
+          on&nbsp;Wed 25 April 2012
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>(Update: we recently open-sourced <a href="https://github.com/twitter/clockworkraven">Clockwork Raven</a>, one of the human evaluation tools on top of Mechanical Turk that we built at Twitter.)</p>
+
+  <p>Big data&#8217;s all the rage, but sometimes a couple thousand <em>human</em>-generated labels can be pretty effective as well. And since I&#8217;ve been using Amazon&#8217;s Mechanical Turk system a lot recently, I figured I&#8217;d share some of the things I&#8217;ve learned.</p>
+
+  <h1>What is MTurk?</h1>
+
+  <p><a href="https://www.mturk.com/mturk/welcome">Mechanical Turk</a> is a crowdsourcing system developed by Amazon that connects you to a relatively cheap source of human labor on the fly.</p>
+
+  <p>For example, suppose you have 10,000 websites that you want to classify as spam or not. To get these classifications, you (the <em>Requester</em>):</p>
+
+  <ol>
+  <li>Create a CSV file containing the links and any other information.</li>
+  <li>Log onto MTurk and create a <em>HIT</em> (Human Intelligence Task) describing the job (possibly by using Amazon&#8217;s WYSIWYG editor or writing your own HTML, which can refer to columns in your CSV). [There&#8217;s also an MTurk API, if you don&#8217;t want to use the terrible UI.]</li>
+  <li>Within hours of starting the task, your judgments will be completed by <em>Turkers</em> around the world for pennies each.</li>
+  </ol>
+
+
+  <h1>More Example Tasks</h1>
+
+  <p>So what can you use MTurk for? Here are three of my favorite uses:</p>
+
+  <ul>
+  <li><a href="http://boingboing.net/2011/02/18/straight-line-traced.html">A Sequence of Lines Consecutively Traced by Five Hundred Individuals</a></li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/lines.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/lines.png" alt="Lines Mutation" /></a></p>
+
+  <ul>
+  <li><a href="http://www.thesheepmarket.com/">The Sheep Market</a>: asking Turkers to draw sheep</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/sheep.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/sheep.png" alt="Sheep" /></a></p>
+
+  <ul>
+  <li><a href="http://groups.csail.mit.edu/uid/deneme/?p=329">Blurry Text Transcription</a> (Seriously! How is this possible?!)</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/blurry.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/blurry.png" alt="Blurry Text" /></a></p>
+
+  <p>And here are some more practical tasks, from HITs running right now:</p>
+
+  <ul>
+  <li>Categorize the sentiment of a tweet towards Panera Bread</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/panera.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/panera.png" alt="Panera" /></a></p>
+
+  <ul>
+  <li>Copy text from a business card</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/business-card.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/business-card.png" alt="Business Card" /></a></p>
+
+  <ul>
+  <li>Judge entity relatedness</li>
+  </ul>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/entity.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/entity.png" alt="Angelina Jolie" /></a></p>
+
+  <h1>Increasing the quality of your judgments</h1>
+
+  <p>So what will the quality of your judgments look like?</p>
+
+  <p>If you don&#8217;t do anything special, then your output will contain a lot of garbage. I&#8217;ve thrown out entire tasks because of scammers who spend less than 5 seconds on each judgment (Amazon records the time each worker spends) and submit random clicks as output (e.g., labeling Nike as a food category).</p>
+
+  <p>Luckily, Amazon provides a few worker filters:</p>
+
+  <ul>
+  <li>You can require that only Turkers who have received at least (say) <strong>99% approval rate on at least 10,000 judgments in the past</strong> are allowed to work on your judgment. (If you see bad judgments from a worker, you can reject them and get your money back.)</li>
+  <li>About a year ago, Amazon launched a <strong>&#8220;categorization masters&#8221; and &#8220;photo masters&#8221;</strong> program, which allows only masters to work on your HITs. According to a chat with a member of the MTurk team, Amazon assigns these master badges by creating special tasks (anonymously, and for which Amazon already knows the answer) and measuring the quality of each worker&#8217;s response to these tasks.</li>
+  <li>You can also create a custom filter and <strong>handpick who gets allowed to work for you</strong>, or set up a <strong>qualification test</strong> that workers are required to take before working on your tasks.</li>
+  </ul>
+
+
+  <p>I&#8217;ve used different combinations of the first two filters, and gotten excellent results &#8211; compared to in-house judges I&#8217;ve worked with in person and paid \$20-30 an hour, the judgments on Mechanical Turk have been just as good and sometimes even better. (I often ask my judges to explain their judgments, which makes it easy to detect high quality workers.) For example, here are some typical response I&#8217;ve received when asking judges to determine which of two products a given Twitter user might be more interested in:</p>
+
+  <blockquote><p>The user is a female obsessed with Twilight Movies and Rob Pattinson. She tweets and follows both subjects. Movie tickets would be interesting to her.</p></blockquote>
+
+
+
+
+  <blockquote><p>He doesn&#8217;t seem to play video games, and he doesn&#8217;t seem technical enough to care about running Windows on a Mac. Neither of these products are a good fit for him.</p></blockquote>
+
+
+  <p>In fact, I&#8217;ll frequently also get emails from Turkers giving me suggestions on how to improve my tasks or asking how they can do them better. (Amazon allows workers to email you. The only way for the requester to initiate a conversation, though, is by paying the worker a small bonus for excellent work, and including a message with the bonus.) Here are excerpts from some emails I&#8217;ve received:</p>
+
+  <blockquote><p>I just wanted to check in to be sure that once I figured things out that I was doing your hits the way you intended them to be done. I want to be sure that you are getting the data that you need from the work. Please do not hesitate to let me know if there is anything that I can do to improve the way I am working your HITs. This is my full time job while I stay at home with my kids, so I like to check with the requesters to be sure that I am putting out the work that they are looking for. Any suggestion is welcome.</p></blockquote>
+
+
+
+
+  <blockquote><p>Frankly, lingerie, makeup, and feminine hygiene are the only male-exclusionary topics I can think of, and it feels knee-jerk sexist to mark any sports-related site for men. That said, should I hew more closely to gender stereotypes or be politically correct? (from a HIT where I was gathering gender classification data)</p></blockquote>
+
+
+
+
+  <blockquote><p>I do think a few more categories are needed but keeping the number down overall is good - 50 or 60 to choose from can be overwhelming and not worth the time. I may have mentioned I never used the Photography one (and I did a lot of those) so that is a good candidate for elimination.</p></blockquote>
+
+
+  <p>That said, despite the approval rate filters and masters badges, I do occasionally get a couple scammers in the mix (or even just judges who don&#8217;t produce as excellent work). So one suggestion is to run an initial task with these filters applied, find the workers with the best quality, and from then on use a custom pool containing these Turkers alone.</p>
+
+  <h1>How much to pay</h1>
+
+  <p>So how much should you pay your workers?</p>
+
+  <p>New Turkers and Turkers who don&#8217;t meet the strict filters can be paid less, but most of my high-quality workers expect to make about \$8-14 an hour. (You can only specify how much you pay per judgment, but Amazon will tell you how long each item ends up taking on average.) For example, here&#8217;s what several Turkers said what I asked them directly how much they make:</p>
+
+  <blockquote><p>Most of the work I do is either writing or editing.  When editing work is available, I make \$15-20 per hour.  I&#8217;m a slower writer than an editor, so I average \$10-12 per hour with writing.  I also judge sentiments of messages and average about \$8 per hour with that type of work. I would like to average a minimum of no less than \$8 per hour.</p><p>A big factor in deciding to do a task or not comes from the time investment involved. The two big time sinks are either googling/searching/having to go to another site, or having to write something as part of your reply. If I remember correctly, a) your tasks did require looking at another page but either the link was right there OR, better yet, you had that page embedded in the HIT itself so clicking out of the window wasn&#8217;t necessary (turkers get very excited about this), and b) the quality of the pay rate was such that it easily outweighed the time it took to leave an explanatory comment. </p><p>For me at least, those things can&#8217;t be underestimated. Sure, your tasks may be a little time-consuming, but I figure a good task is one I can make 10 to 12 cents a minute on. Your task might take longer but I&#8217;m definitely still coming out ahead.</p><p>From my own experience, I work hardest and best for a requester that pays well and doesn&#8217;t reject (or at least seems to have a reason for a rejection when it happens). If a requester is going to accept the majority of my work, I as a worker feel that obligates me to provide them with the best quality possible. Similarly, although I&#8217;m conscientious with all tasks, I&#8217;m especially so with a high-paying one: it would be easy to take advantage of a high-pay, low-reject requester - which would ultimately lead them to either lower the pay or change the acceptance criteria. I don&#8217;t want that!! That&#8217;s the kind of requester I want around. I&#8217;m grateful for high pay and fair policies and that kind of requester gets an above-and-beyond effort from me.</p></blockquote>
+
+
+
+
+  <blockquote><p>For the pay, I have worked on master&#8217;s hits that have ranged from \$6-\$16 per hour. Averaging them out works out to around \$9, which isn&#8217;t a bad wage. I have two requesters that I work for that don&#8217;t use the master qualification but instead have closed qualifications that they&#8217;ve assigned to their best workers. Those tasks pay between \$12 and \$15 per hour, so no matter what I&#8217;m working on I will stop what I&#8217;m doing to work on them. The best paying hits are always done very quickly, so most of the time if you check out mturk and look at the tasks available you won&#8217;t get a very good idea of average pay because the terrible paying hits will sit on the board until they expire.</p></blockquote>
+
+
+  <p>Obviously, this is self-reported, so there&#8217;s a strong possibility that the Turkers are artificially inflating their numbers. But this does match what I&#8217;ve been told by a manager on the MTurk team, as well as what Turkers self-report on <a href="http://turkernation.com/">TurkerNation</a>.</p>
+
+  <p>A good suggestion regarding pay is to start at the lower end of the scale, around \$6-8 per hour, and increase that until you get both the quality and speed you want.</p>
+
+  <h1>Other design tips</h1>
+
+  <p>Interestingly, according to what Turkers (see the excerpts above) and my Amazon contact say, as well as other research I&#8217;ve seen (e.g., <a href="http://groups.csail.mit.edu/uid/deneme/?p=680">this paper</a>), pay is <em>not</em> at the absolute forefront of Turkers&#8217; minds when they decide what to work on. Instead, they focus more on requesters they&#8217;ve already established a good relationship with, HITs with many items (so they can quickly settle into a rhythm), HITs they know they&#8217;ll be paid for (so they&#8217;re not worried about rejections), and HITs that they generally enjoy doing more.</p>
+
+  <p>So here are a couple suggestions:</p>
+
+  <ul>
+  <li>If your task is hard and there&#8217;s no clearly correct answer, even good Turkers might be worried that you&#8217;ll reject their judgments (and so they might skip over your HIT). So make it clear in your instructions that you won&#8217;t reject any judgments, or that you won&#8217;t reject any judgments with an honest effort.</li>
+  <li>Make your instructions collapsible, or link to them in a separate site. Scrolling is kind of annoying on Mechanical Turk (I know &#8211; I&#8217;ve tried working on HITs myself), so you should minimize the amount workers have to scroll. Ideally, everything fits on a single screen. Plus, the less workers have to scroll, the faster your HITs will get done. For example, here are excerpts from emails I received from two different Turkers when I first started out:</li>
+  </ul>
+
+
+  <blockquote><p>I have a suggestion that would really make things go a little quicker. Is there anyway you could script the twitter link to automatically open in a new tab? It amazes me how much it can slow you down to have to right click and open it manually in another tab, and when you forget, you have to take a few more steps to get back to where you were.</p></blockquote>
+
+
+
+
+  <blockquote><p>It would be amazing if the Twitter account could be on the same page instead of having to click to get to another screen - the work would go *exponentially* faster! Overall, I&#8217;m enjoying them - and I&#8217;m not the only one. Despite your stringent requirements these are disappearing pretty quickly.</p></blockquote>
+
+
+  <ul>
+  <li>Introduce yourself on <a href="http://turkernation.com/">TurkerNation</a>, a forum where Turkers and Requesters go to talk about Mechanical Turk. This helps establish your reputation as a good requester who listens to feedback, which will make good Turkers want to work for you. (More on this below.)</li>
+  <li>Approve judgments quickly: Turkers want <a href="http://en.wikipedia.org/wiki/Hyperbolic_discounting">money now instead of money later</a>. For example, one worker told me:</li>
+  </ul>
+
+
+  <blockquote><p>Quick approval is important, too. Watching that money pile up is a serious motivator; I&#8217;ll sometimes choose a lower-paying task that approves in close to real time over a higher-paying one that won&#8217;t pay out for several days.</p></blockquote>
+
+
+  <p>When using my trusted set of workers, I let Amazon auto-approve all judgments within a couple hours.</p>
+
+  <h1>Reputation</h1>
+
+  <p>Reputation is pretty important. Turkers love requesters who take the time to respond to emails and incorporate suggestions. Excerpts from emails I&#8217;ve received:</p>
+
+  <blockquote><p>I LOVE it when requesters care enough to ask the opinion of us lowly turkers and am more than willing to take a few minutes to help them with anything. I look forward to seeing what you cook up!</p></blockquote>
+
+
+
+
+  <blockquote><p>Thanks for taking the time to try to make your hits better in both pay and design. It&#8217;s great to see a requester that actually cares, when most don&#8217;t. If you have any other questions for me, feel free to ask. I hope to work for you again soon.</p></blockquote>
+
+
+
+
+  <blockquote><p>From my own experience, I work hardest and best for a requester that pays well and doesn&#8217;t reject (or at least seems to have a reason for a rejection when it happens). If a requester is going to accept the majority of my work, I as a worker feel that obligates me to provide them with the best quality possible. Similarly, although I&#8217;m conscientious with all tasks, I&#8217;m especially so with a high-paying one: it would be easy to take advantage of a high-pay, low-reject requester - which would ultimately lead them to either lower the pay or change the acceptance criteria. I don&#8217;t want that!! That&#8217;s the kind of requester I want around. I&#8217;m grateful for high pay and fair policies and that kind of requester gets an above-and-beyond effort from me.</p></blockquote>
+
+
+  <p>I&#8217;ve gotten great suggestions from a lot of Turkers (sometimes, when launching a new type of experiment, I&#8217;ll do a quick trial run in order to get some fast feedback before spending more time on the HIT design), and I suspect it&#8217;s partly because I&#8217;ve taken the time to connect with my workers.</p>
+
+  <p>So, as suggested above, one way of quickly garnering some goodwill when you&#8217;re first getting started is to make a post introducing yourself on TurkerNation. (There&#8217;s a <a href="http://turkernation.com/forumdisplay.php?23-Requester-Introductions">sub-forum</a> devoted to this exact purpose, in fact.)</p>
+
+  <p>This is useful because workers will often start new threads recommending particular requesters and encouraging other Turkers to work for them. In the amusing thread praising me, for example, one worker mentioned that she&#8217;d been hesitant to work on my HITs until she saw the post confirming I was a good requester.</p>
+
+  <p>Also, many Turkers mention that they always refer to <a href="http://turkopticon.differenceengines.com/">Turkopticon</a>, a Firefox extension that displays ratings of requesters by other Turkers, before accepting work from a requester they haven&#8217;t worked for before.</p>
+
+  <p>This is what TurkOpticon looks like:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/jimyoung.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/jimyoung.png" alt="Jim Young" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/productrnr.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/productrnr.png" alt="ProductRNR" /></a></p>
+
+  <p>Here are some comments about TurkOpticon on TurkerNation:</p>
+
+  <blockquote><p>I think that it is well worth taking the time to check reputation of requesters via TurkOpticon and/or in this forum. Checking first substantially minimizes your risk of rejection, of being blocked, and of being paid sub-human wages.</p></blockquote>
+
+
+
+
+  <blockquote><p>Blindly doing hits for requesters that were never heard of before got me with a pretty bad approval rate when I first started turking. After that, I rigorously inspect every requester that doesn&#8217;t have any ratings on Turkopticon. Actually, because of that little add-on I&#8217;ve been able to maintain a steady 98-99% approval rate ever since I began using it.</p></blockquote>
+
+
+  <h1>Waiting Time</h1>
+
+  <p>So how long does it take to get judgments? I&#8217;ve restricted the available worker pool pretty strongly to ensure high quality, and it&#8217;s still only taken a few hours to get a thousand judgments.</p>
+
+  <p>That&#8217;s pretty awesome. I&#8217;ve worked a lot with human evaluation systems before, but always using a small in-house set of judges &#8211; and what with constraints on when those judges were available, how much they were able to work each week, and other tasks taking higher priority, it&#8217;d invariably take at least a few days before I&#8217;d receive any useful data back.</p>
+
+  <p>Getting thousands of judgments in a couple hours means I can launch an MTurk task when I leave for work in the morning and have it done before lunch, which makes experimenting with a lot of different ideas much faster and easier.</p>
+
+  <h1>Scale</h1>
+
+  <p>So how many judgments can you actually get before you run out of workers? I&#8217;m still a small fish in the MTurk system, but I&#8217;m told by my MTurk contact at Amazon that there are companies getting over a million judgments each month.</p>
+
+  <p>I also asked my pool of workers how much they&#8217;re available to work, in case I would need to scale up to more judgments later on, and here are some samples from what they said:</p>
+
+  <blockquote><p>Typically, I work a total of 20-25 hours per week for a small select group of requesters.  I could put in at least 20 hours per week for you alone if you were to make a custom qualification for me.  If I know that I can continue to do exemplary work beyond 20 hours, I would be willing to put forth more hours of work.  I want to make sure that you are getting the quality of work that you need.</p></blockquote>
+
+
+
+
+  <blockquote><p>On a day when I don&#8217;t have those other assignments, I&#8217;d guess I&#8217;m turking 5 to 7 hours a day  (including weekends). I like to look for a large batch of HITs (preferably in the thousands) so that I can settle into a groove of being able to do them fairly quickly and once I find something like that I can happily settle in for several hours at a time.</p></blockquote>
+
+
+
+
+  <blockquote><p>I spend more time than the average person on mturk. I log on at about 5:30 AM and am constantly checking for work throughout the day. If the work is available, I will spend until 9PM working. Granted, I do have to take some breaks throughout the day to take care of my 3 year old, but for the most part, I am doing my best to earn while the hits are posted. If I take any time off, it is on the weekend (if I reach my earning goals for the week).</p></blockquote>
+
+
+
+
+  <blockquote><p>Of course, how much I can work varies. My main source of income is transcription for a market research company and mturk fills in my downtime. If I have an audio file from them, that gets my attention. If not, I&#8217;m on mturk. As a single mother working from home, I love the flexibility.</p></blockquote>
+
+
+  <h1>End</h1>
+
+  <p>I&#8217;ll end with a couple other notes.</p>
+
+  <ul>
+  <li>How do other companies use human evaluation systems? Google and Bing use human judgments in their search metrics, though I think they use an in-house set of judges rather than Mechanical Turk. I&#8217;ve heard Aardvark and Quora used Mechanical Turk to seed answers when they first launched their sites. There&#8217;s also a nice set of case studies <a href="http://aws.amazon.com/solutions/case-studies/">here</a> (search for the &#8220;On-Demand Workforce&#8221; section); in particular, Knewton&#8217;s use of <a href="http://aws.amazon.com/solutions/case-studies/knewton/">MTurk for performance and QA testing</a> is pretty interesting.</li>
+  <li>I&#8217;ve described one way of finding good workers, namely, using the filters Amazon provides. Another way could be to build a reputation system yourself, perhaps using an EM-style algorithm to determine judge quality.</li>
+  <li><a href="http://crowdflower.com/">Crowdflower</a> is another crowdsourcing system. There are a couple differences with MTurk:
+
+  <ul>
+  <li>Crowdflower&#8217;s worker pool consists of about 20 different sources, including Mechanical Turk, as well as sources like TrialPay (people can opt to complete a MTurk task to receive some kind of TrialPay deal).</li>
+  <li>Crowdflower offers both a self-serve platform (like MTurk), as well as a more enterprise-centric solution (where you work directly with a Crowdflower employee). The enterprise offering is pretty nice, since that means Crowdflower will take care of the lower-level details for you (like actually designing and creating the job), and they can offer suggestions for designing the HIT based on their experience.</li>
+  <li>Crowdflower provides the option of adding gold standard judgments to your task (items where you provide a golden answer, which are then randomly shown to workers; these are then used to monitor judges) and they try to automatically determine judge quality and item accuracy for you (e.g., by having each item judged by three different workers).</li>
+  </ul>
+  </li>
+  <li>An excellent crowdsourcing resource is <a href="http://crowdscope.org/index.php?title=Main_Page">CrowdScope</a>. I also like the <a href="http://groups.csail.mit.edu/uid/deneme/">Deneme</a> blog (though it hasn&#8217;t been updated in a while) for a lot of fun experiments. Panos Ipeirotis&#8217; <a href="http://www.behind-the-enemy-lines.com/">blog</a> has good information as well.</li>
+  </ul>
+
+  </div>  
+<script type= "text/javascript">
+    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+        var mathjaxscript = document.createElement('script');
+        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+        mathjaxscript.type = 'text/javascript';
+        mathjaxscript.src = 'https:' == document.location.protocol
+                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+            "MathJax.Hub.Config({" +
+            "    config: ['MMLorHTML.js']," +
+            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+            "    displayAlign: 'center'," +
+            "    displayIndent: '0em'," +
+            "    showMathMenu: true," +
+            "    tex2jax: { " +
+            "        inlineMath: [ ['$','$'] ], " +
+            "        displayMath: [ ['$$','$$'] ]," +
+            "        processEscapes: true," +
+            "        preview: 'TeX'," +
+            "    }, " +
+            "    'HTML-CSS': { " +
+            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
+            "    } " +
+            "}); ";
+        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+    }
+</script>
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
         
         
 
@@ -2008,245 +2313,6 @@
 </script>
 
                     </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2012-01-03T04:15:00">
-          on&nbsp;Tue 03 January 2012
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p>Imagine you have a sequence of snapshots from a day in Justin Bieber&#8217;s life, and you want to label each image with the activity it represents (eating, sleeping, driving, etc.). How can you do this?</p>
-
-  <p>One way is to ignore the sequential nature of the snapshots, and build a <em>per-image</em> classifier. For example, given a month&#8217;s worth of labeled snapshots, you might learn that dark images taken at 6am tend to be about sleeping, images with lots of bright colors tend to be about dancing, images of cars are about driving, and so on.</p>
-
-  <p>By ignoring this sequential aspect, however, you lose a lot of information. For example, what happens if you see a close-up picture of a mouth &#8211; is it about singing or eating? If you know that the <em>previous</em> image is a picture of Justin Bieber eating or cooking, then it&#8217;s more likely this picture is about eating; if, however, the previous image contains Justin Bieber singing or dancing, then this one probably shows him singing as well.</p>
-
-  <p>Thus, to increase the accuracy of our labeler, we should incorporate the labels of nearby photos, and this is precisely what a <strong>conditional random field</strong> does.</p>
-
-  <h1>Part-of-Speech Tagging</h1>
-
-  <p>Let&#8217;s go into some more detail, using the more common example of <strong>part-of-speech tagging</strong>.</p>
-
-  <p>In POS tagging, the goal is to label a sentence (a sequence of words or tokens) with tags like ADJECTIVE, NOUN, PREPOSITION, VERB, ADVERB, ARTICLE.</p>
-
-  <p>For example, given the sentence &#8220;Bob drank coffee at Starbucks&#8221;, the labeling might be &#8220;Bob (NOUN) drank (VERB) coffee (NOUN) at (PREPOSITION) Starbucks (NOUN)&#8221;.</p>
-
-  <p>So let&#8217;s build a conditional random field to label sentences with their parts of speech. Just like any classifier, we&#8217;ll first need to decide on a set of feature functions $f_i$.</p>
-
-  <h2>Feature Functions in a CRF</h2>
-
-  <p>In a CRF, each <strong>feature function</strong> is a function that takes in as input:</p>
-
-  <ul>
-  <li>a sentence s</li>
-  <li>the position i of a word in the sentence</li>
-  <li>the label $l_i$ of the current word</li>
-  <li>the label $l_{i-1}$ of the previous word</li>
-  </ul>
-
-
-  <p>and outputs a real-valued number (though the numbers are often just either 0 or 1).</p>
-
-  <p>(Note: by restricting our features to depend on only the <em>current</em> and <em>previous</em> labels, rather than arbitrary labels throughout the sentence, I&#8217;m actually building the special case of a <strong>linear-chain CRF</strong>. For simplicity, I&#8217;m going to ignore general CRFs in this post.)</p>
-
-  <p>For example, one possible feature function could measure how much we suspect that the current word should be labeled as an adjective given that the previous word is &#8220;very&#8221;.</p>
-
-  <h2>Features to Probabilities</h2>
-
-  <p>Next, assign each feature function $f_j$ a <strong>weight</strong> $\lambda_j$ (I&#8217;ll talk below about how to learn these weights from the data). Given a sentence s, we can now score a labeling l of s by adding up the weighted features over all words in the sentence:</p>
-
-  <p>$score(l | s) = \sum_{j = 1}^m \sum_{i = 1}^n \lambda_j f_j(s, i, l_i, l_{i-1})$</p>
-
-  <p>(The first sum runs over each feature function $j$, and the inner sum runs over each position $i$ of the sentence.)</p>
-
-  <p>Finally, we can transform these scores into probabilities $p(l | s)$ between 0 and 1 by exponentiating and normalizing:</p>
-
-  <p>$p(l | s) = \frac{exp[score(l|s)]}{\sum_{l&#8217;} exp[score(l&#8217;|s)]} = \frac{exp[\sum_{j = 1}^m \sum_{i = 1}^n \lambda_j f_j(s, i, l_i, l_{i-1})]}{\sum_{l&#8217;} exp[\sum_{j = 1}^m \sum_{i = 1}^n \lambda_j f_j(s, i, l&#8217;_i, l&#8217;_{i-1})]}$</p>
-
-  <h2>Example Feature Functions</h2>
-
-  <p>So what do these feature functions look like? Examples of POS tagging features could include:</p>
-
-  <ul>
-  <li>$f_1(s, i, l_i, l_{i-1}) = 1$ if $l_i =$ ADVERB and the ith word ends in &#8220;-ly&#8221;; 0 otherwise.
-
-  <ul>
-  <li>If the weight $\lambda_1$ associated with this feature is large and positive, then this feature is essentially saying that we prefer labelings where words ending in -ly get labeled as ADVERB.</li>
-  </ul>
-  </li>
-  <li>$f_2(s, i, l_i, l_{i-1}) = 1$ if $i = 1$, $l_i =$ VERB, and the sentence ends in a question mark; 0 otherwise.
-
-  <ul>
-  <li>Again, if the weight $\lambda_2$ associated with this feature is large and positive, then labelings that assign VERB to the first word in a question (e.g., &#8220;Is this a sentence beginning with a verb?&#8221;) are preferred.</li>
-  </ul>
-  </li>
-  <li>$f_3(s, i, l_i, l_{i-1}) = 1$ if $l_{i-1} =$ ADJECTIVE and $l_i =$ NOUN; 0 otherwise.
-
-  <ul>
-  <li>Again, a positive weight for this feature means that adjectives tend to be followed by nouns.</li>
-  </ul>
-  </li>
-  <li>$f_4(s, i, l_i, l_{i-1}) = 1$ if $l_{i-1} =$ PREPOSITION and $l_i =$ PREPOSITION.
-
-  <ul>
-  <li>A <em>negative</em> weight $\lambda_4$ for this function would mean that prepositions don&#8217;t tend to follow prepositions, so we should avoid labelings where this happens.</li>
-  </ul>
-  </li>
-  </ul>
-
-
-  <p>And that&#8217;s it! To sum up: to build a conditional random field, you just define a bunch of feature functions (which can depend on the entire sentence, a current position, and nearby labels), assign them weights, and add them all together, transforming at the end to a probability if necessary.</p>
-
-  <p>Now let&#8217;s step back and compare CRFs to some other common machine learning techniques.</p>
-
-  <h1>Smells like Logistic Regression&#8230;</h1>
-
-  <p>The form of the CRF probabilities
-  $p(l | s) = \frac{exp[\sum_{j = 1}^m \sum_{i = 1}^n f_j(s, i, l_i, l_{i-1})]}{\sum_{l&#8217;} exp[\sum_{j = 1}^m \sum_{i = 1}^n f_j(s, i, l&#8217;_i, l&#8217;_{i-1})]}$
-  might look <a href="http://en.wikipedia.org/wiki/Logistic_regression">familiar</a>.</p>
-
-  <p>That&#8217;s because CRFs are indeed basically the sequential version of <strong>logistic regression</strong>: whereas logistic regression is a log-linear model for <em>classification</em>, CRFs are a log-linear model for <em>sequential labels</em>.</p>
-
-  <h1>Looks like HMMs&#8230;</h1>
-
-  <p>Recall that <strong><a href="http://en.wikipedia.org/wiki/Hidden_Markov_model">Hidden Markov Models</a></strong> are another model for part-of-speech tagging (and sequential labeling in general). Whereas CRFs throw any bunch of functions together to get a label score, HMMs take a <em>generative</em> approach to labeling, defining</p>
-
-  <p>$p(l,s) = p(l_1) \prod_i p(l_i | l_{i-1}) p(w_i | l_i)$</p>
-
-  <p>where</p>
-
-  <ul>
-  <li>$p(l_i | l_{i-1})$ are <strong>transition</strong> probabilities (e.g., the probability that a preposition is followed by a noun);</li>
-  <li>$p(w_i | l_i)$ are <strong>emission</strong> probabilities (e.g., the probability that a noun emits the word &#8220;dad&#8221;).</li>
-  </ul>
-
-
-  <p>So how do HMMs compare to CRFs? CRFs are more powerful &#8211; they can model everything HMMs can and more. One way of seeing this is as follows.</p>
-
-  <p>Note that the log of the HMM probability is $\log p(l,s) = \log p(l_0) + \sum_i \log p(l_i | l_{i-1}) + \sum_i \log p(w_i | l_i)$. This has exactly the log-linear form of a CRF if we consider these log-probabilities to be the weights associated to binary transition and emission indicator features.</p>
-
-  <p>That is, we can build a CRF equivalent to any HMM by&#8230;</p>
-
-  <ul>
-  <li>For each HMM <em>transition</em> probability $ p(l_i = y | l_{i-1} = x) $, define a set of CRF transition features of the form $f_{x,y}(s, i, l_i, l_{i-1}) = 1$ if $l_i = y$ and $l_{i-1} = x$. Give each feature a weight of $w_{x,y} = \log p(l_i = y | l_{i-1} = x)$.</li>
-  <li>Similarly, for each HMM <em>emission</em> probability $p(w_i = z | l_{i} = x)$, define a set of CRF emission features of the form $g_{x,y}(s, i, l_i, l_{i-1}) = 1$ if $w_i = z$ and $l_i = x$. Give each feature a weight of $w_{x,z} = \log p(w_i = z | l_i = x)$.</li>
-  </ul>
-
-
-  <p>Thus, the score $p(l|s)$ computed by a CRF using these feature functions is precisely proportional to the score computed by the associated HMM, and so every HMM is equivalent to some CRF.</p>
-
-  <p>However, CRFs can model a much richer set of label distributions as well, for two main reasons:</p>
-
-  <ul>
-  <li><strong>CRFs can define a much larger set of features.</strong> Whereas HMMs are necessarily <em>local</em> in nature (because they&#8217;re constrained to binary transition and emission feature functions, which force each word to depend only on the current label and each label to depend only on the previous label), CRFs can use more <em>global</em> features. For example, one of the features in our POS tagger above increased the probability of labelings that tagged the <em>first</em> word of a sentence as a VERB if the <em>end</em> of the sentence contained a question mark.</li>
-  <li><strong>CRFs can have arbitrary weights.</strong> Whereas the probabilities of an HMM must satisfy certain constraints (e.g., $0 &lt;= p(w_i | l_i) &lt;= 1, \sum_w p(w_i = w | l_1) = 1)$, the weights of a CRF are unrestricted (e.g., $\log p(w_i | l_i)$ can be anything it wants).</li>
-  </ul>
-
-
-  <h1>Learning Weights</h1>
-
-  <p>Let&#8217;s go back to the question of how to learn the feature weights in a CRF. One way is (surprise) to use <strong>gradient ascent</strong>.</p>
-
-  <p>Assume we have a bunch of training examples (sentences and associated part-of-speech labels). Randomly initialize the weights of our CRF model.
-  To shift these randomly initialized weights to the correct ones, for each training example&#8230;</p>
-
-  <ul>
-  <li>Go through each feature function $f_i$, and calculate the gradient of the log probability of the training example with respect to $\lambda_i$: $\frac{\partial}{\partial w_j} \log p(l | s) = \sum_{j = 1}^m f_i(s, j, l_j, l_{j-1}) - \sum_{l&#8217;} p(l&#8217; | s) \sum_{j = 1}^m f_i(s, j, l&#8217;_j, l&#8217;_{j-1})$</li>
-  <li>Note that the first term in the gradient is the contribution of feature $f_i$ under the <em>true</em> label, and the second term in the gradient is the <em>expected</em> contribution of feature $f_i$ under the current model. This is exactly the form you&#8217;d expect gradient ascent to take.</li>
-  <li>Move $\lambda_i$ in the direction of the gradient: $\lambda_i = \lambda_i + \alpha [\sum_{j = 1}^m f_i(s, j, l_j, l_{j-1}) - \sum_{l&#8217;} p(l&#8217; | s) \sum_{j = 1}^m f_i(s, j, l&#8217;_j, l&#8217;_{j-1})]$ where $\alpha$ is some learning rate.</li>
-  <li>Repeat the previous steps until some stopping condition is reached (e.g., the updates fall below some threshold).</li>
-  </ul>
-
-
-  <p>In other words, every step takes the difference between what we want the model to learn and the model&#8217;s current state, and moves $\lambda_i$ in the direction of this difference.</p>
-
-  <h1>Finding the Optimal Labeling</h1>
-
-  <p>Suppose we&#8217;ve trained our CRF model, and now a new sentence comes in. How do we do label it?</p>
-
-  <p>The naive way is to calculate $p(l | s)$ for every possible labeling l, and then choose the label that maximizes this probability. However, since there are $k^m$ possible labels for a tag set of size k and a sentence of length m, this approach would have to check an exponential number of labels.</p>
-
-  <p>A better way is to realize that (linear-chain) CRFs satisfy an <a href="http://en.wikipedia.org/wiki/Optimal_substructure">optimal substructure</a> property that allows us to use a (polynomial-time) dynamic programming algorithm to find the optimal label, similar to the <a href="http://en.wikipedia.org/wiki/Viterbi_algorithm">Viterbi algorithm</a> for HMMs.</p>
-
-  <h1>A More Interesting Application</h1>
-
-  <p>Okay, so part-of-speech tagging is kind of boring, and there are plenty of existing POS taggers out there. When might you use a CRF in real life?</p>
-
-  <p>Suppose you want to mine Twitter for the types of presents people received for Christmas:</p>
-
-  <blockquote class="twitter-tweet"><p>What people on Twitter wanted for Christmas, and what they got: <a href="http://t.co/EGeKTBgF" title="http://twitter.com/edchedch/status/153683967315419136/photo/1">twitter.com/edchedch/statu…</a></p>— Edwin Chen (@edchedch) <a href="https://twitter.com/edchedch/status/153683967315419136" data-datetime="2012-01-02T03:48:10+00:00">January 2, 2012</a></blockquote>
-
-
-  <script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-
-
-  <p>(Yes, I just embedded a tweet. BOOM.)</p>
-
-  <p>How can you figure out which words refer to gifts?</p>
-
-  <p>To gather data for the graphs above, I simply looked for phrases of the form &#8220;I want XXX for Christmas&#8221; and &#8220;I got XXX for Christmas&#8221;. However, a more sophisticated CRF variant could use a GIFT part-of-speech-like tag (even adding other tags like GIFT-GIVER and GIFT-RECEIVER, to get even more information on who got what from whom) and treat this like a POS tagging problem. Features could be based around things like &#8220;this word is a GIFT if the previous word was a GIFT-RECEIVER and the word before that was &#8216;gave&#8217;&#8221; or &#8220;this word is a GIFT if the next two words are &#8216;for Christmas&#8217;&#8221;.</p>
-
-  <h1>Fin</h1>
-
-  <p>I&#8217;ll end with some more random thoughts:</p>
-
-  <ul>
-  <li>I explicitly skipped over the graphical models framework that conditional random fields sit in, because I don&#8217;t think they add much to an initial understanding of CRFs. But if you&#8217;re interested in learning more, Daphne Koller is teaching a free, online course on <a href="http://www.pgm-class.org/">graphical models</a> starting in January.</li>
-  <li>Or, if you&#8217;re more interested in the many NLP applications of CRFs (like part-of-speech tagging or <a href="http://en.wikipedia.org/wiki/Named-entity_recognition">named entity extraction</a>), Manning and Jurafsky are teaching an <a href="http://www.nlp-class.org/">NLP class</a> in the same spirit.</li>
-  <li>I also glossed a bit over the analogy between CRFs:HMMs and Logistic Regression:Naive Bayes. This image (from <a href="http://arxiv.org/pdf/1011.4088v1">Sutton and McCallum&#8217;s introduction to conditional random fields</a>) sums it up, and shows the graphical model nature of CRFs as well:</li>
-  </ul>
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/crfs/crf-diagram.png"><img src="http://dl.dropbox.com/u/10506/blog/crfs/crf-diagram.png" alt="CRF Diagram" /></a></p></div>
-  
-<script type= "text/javascript">
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-</script>
-
-                    </article>
  
 <div class="paginator">
             <div class="navButton"> <a href="/index.html" >Prev</a></div>
@@ -2262,7 +2328,7 @@
 	        <p>
 	          <a class="title" href="/">Edwin Chen</a>
 	          <br/>
-	          Hanging. MIT, Microsoft Research, Clarium, Twitter, Google.
+	          Hanging. MIT, MSR, Clarium, Twitter, Google, Dropbox.
 	          <br /><br />
             <a href="mailto:hello[at]echen.me">Email</a><br />
             <a href="https://twitter.com/#!/echen">Twitter</a><br/>
@@ -2274,6 +2340,7 @@
           <br />
           <div id="recent_posts">
               <h3>Recent Posts</h3>
+                <a href="/2014/10/07/human-powered-algorithm-evaluation/">Human-Powered Algorithm Evaluation  </a><br /><br />
                 <a href="/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
                 <a href="/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
                 <a href="/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
@@ -2283,7 +2350,6 @@
                 <a href="/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
                 <a href="/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
                 <a href="/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
-                <a href="/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
             
           </div>
         </div>
