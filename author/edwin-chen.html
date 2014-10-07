@@ -31,7 +31,7 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="/2014/10/07/human-powered-discovery-evaluation/">Human-Powered Discovery Evaluation</a></h1>
+                        <h1 class="entry-title"><a href="/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation</a></h1>
 <div class="post-info">
 	<ul>
         <li class="vcard author">
@@ -46,14 +46,14 @@
 </div><!-- /.post-info --><p>Item-item similarities are a cornerstone of many online sites. How often have YouTube's related videos drawn you into a sinkhole of funny cats? How many books have you purchased through Amazon's <a href="http://www.quora.com/How-does-Amazons-collaborative-filtering-recommendation-engine-work/answer/Edwin-Chen-1"><em>Customers Who Bought This Item Also Bought</em> </a> feature?</p>
 <p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/amazon-related-books.png"><img alt="Amazon Related Books" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/amazon-related-books.png" /></a>
 <br /></p>
-<p>So how can we measure their performance, and understand where they could be improved?</p>
-<p>I'm a big fan of <a href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/"><em>man-in-the-machine</em> techniques</a>, so I'm going to talk about a <strong>human evaluation</strong> approach to measuring the quality of <em>Do This Next</em> algorithms and other discovery products.</p>
+<p>So how can we measure the quality of our algorithms, and understand where they could be improved?</p>
+<p>I'm a big fan of <a href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/"><em>man-in-the-machine</em> techniques</a>, so I'm going to talk about a <strong>human evaluation</strong> approach to measuring the performance of <em>Do This Next</em> recommendations and other discovery products.</p>
 <h1>Beyond Log-Based Metrics</h1>
 <p>Let's first motivate why log-based metrics aren't always sufficient for measuring quality.</p>
-<p>Take Amazon's related books feature. To measure its effectiveness, the standard approach is to run a live experiment and measure the change in metrics like overall revenue or CTR.</p>
+<p>Take Amazon's related books feature. To measure its effectiveness, the standard approach is to run a live experiment and measure the change in metrics like revenue or CTR.</p>
 <p>But imagine we suddenly replace all of Amazon's book suggestions with pornography. What's going to happen? <a href="http://www.lazygamer.net/general-news/a-history-of-evony-ads-the-insanity-continues/"><em>CTR's likely to shoot through the roof!</em></a></p>
 <p>Or suppose that we replace all of Amazon's related books with shinier, more expensive items. Again, CTR and revenue are likely to increase, as the flashier content draws eyeballs. But is this anything but a short-term boost? Perhaps the change decreases total sales in the long run, as customers start to find Amazon too expensive for their tastes and move to other marketplaces.</p>
-<p>Scenarios like these are the machine learning analogue of replacing ads with blinking marquees. How can we avoid them, and ensure that the quality of our suggestions remains consistently high? Well, this is a <em>related</em> books algorithm after all. So why, by sticking to a live experiment and metrics like CTR, are we nowhere measuring the relatedness of our recommendations?</p>
+<p>Scenarios like these are the machine learning analogue of turning ads into blinking marquees. How can we avoid them, and ensure that the quality of our suggestions remains consistently high? Well, this is a <em>related</em> books algorithm after all. <strong>So why, by sticking to a live experiment and metrics like CTR, are we nowhere measuring the relatedness of our recommendations?</strong></p>
 <h1>Human Evaluation</h1>
 <p>Solution: let's inject humans into the process.</p>
 <p>In the example below, I asked a worker on <a href="http://blog.echen.me/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Mechanical Turk</a> to rate the first three <em>Customers Who Bought This Also Bought</em> suggestions for a book on <a href="http://www.barnesandnoble.com/">barnesandnoble.com</a>.</p>
@@ -67,12 +67,12 @@
 </ul>
 <p>The recommendations are decent, but already we see a couple ways to improve them:</p>
 <ul>
-<li>First, two of the recommendations (<em>The Broken Eye</em> and <em>Tower Lord</em>) are each part of a series, but not Book #1. So one improvement would be to ensure that non-first-in-series books don't get displayed unless they're followups to the main book.</li>
+<li>First, two of the recommendations (<em>The Broken Eye</em> and <em>Tower Lord</em>) are each part of a series, but not Book #1. So one improvement would be to ensure that only series introductions get displayed unless they're followups to the main book.</li>
 <li>Book covers matter! Indeed, the second suggestion looks more like a fantasy romance novel than the kind of fantasy that Robin Hobb tends to write. (So perhaps B&amp;N should invest in some deep learning...)</li>
 </ul>
 <p>CTR and revenue certainly wouldn't give us this level of information, and it's not clear that they could even tell us our algorithms are producing irrelevant suggestions in the first place:</p>
 <ul>
-<li>Nowhere does the related scroll panel make it clear that the two of the books are part of a series, so the CTR on those two books would be just as high as if they were indeed the series introductions.</li>
+<li>Nowhere does the related scroll panel make it clear that two of the books are part of a series, so the CTR on those two books would be just as high as if they were indeed the series introductions.</li>
 <li>If revenue is low, it's not clear whether it's because the suggestions are bad or because, separately, our pricing algorithms need improvement.</li>
 </ul>
 <p>In general, then, here's one way to understand the quality of a <em>Do This Next</em> algorithm:</p>
@@ -96,7 +96,7 @@
 <p>So how good are Amazon's recommendations? Quite good, in fact: 47% of raters said they'd definitely buy the first related book, another 29% said it was good enough that they might buy it, and only 24% of raters disliked the suggestion.</p>
 <p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/a1-ratings.png"><img alt="A1 Ratings" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/a1-ratings.png" /></a></p>
 <p>The second and third book suggestions, while a bit worse, seem to perform pretty well too: around 65% of raters rated them positive.</p>
-<p>What can we learn from the bad ratings? I ran a follow-up task that asked workers to categorize the bad related books.</p>
+<p>What can we learn from the bad ratings? I ran a follow-up task that asked workers to categorize the bad related books, and here's the breakdown.</p>
 <p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/bad-categories.png"><img alt="Bad Suggestions Breakdown" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/bad-categories.png" /></a></p>
 <ul>
 <li><strong>Related but different-subtopic.</strong> These were book suggestions that were generally related to the original book, but that were in a different sub-topic that the rater wasn't interested in. For example, the first related book for Sun Tzu's <em>The Art of War</em> (a book nominally about war, but which nowadays has become more of a life hack book) was <a href="http://www.amazon.com/On-War-Carl-von-Clausewitz/dp/1469947021"><em>On War</em></a> (a war treatise), but the rater wasn't actually interested in the military aspects: <em>"I would not buy this book, because it only focuses on military war. I am not interested in that. I am interested in mental tactics that will help me prosper in life."</em></li>
@@ -121,7 +121,7 @@
 <p>Why are the Play Store's suggestions so bad? Let's look at a couple examples.</p>
 <p>Here's the Play Store page for John Green's <em>The Fault in Our Stars</em>, a critics-loved-it book about cancer and romance (and now also a movie).</p>
 <p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/fault-in-our-stars.png"><img alt="Fault in Our Stars" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/fault-in-our-stars.png" /></a></p>
-<p>Two of the suggestions are completely random: a poorly-rated Excel manual and a poorly-reviewed textbook on sexual health. The other are in completely unrelated cowboy genres, by a different John Green.</p>
+<p>Two of the suggestions are completely random: a poorly-rated Excel manual and a poorly-reviewed textbook on sexual health. The others are completely unrelated cowboy books, by a different John Green.</p>
 <p>Here's the page for <em>The Strain</em>. In this case, all the suggestions are in a different language! And there are only four of them.</p>
 <p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/the-strain.png"><img alt="The Strain" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/the-strain.png" /></a></p>
 <p>Once again asking raters to categorize all of the Play Store's bad recommendations...</p>
@@ -158,8 +158,8 @@
 <p>Let's review what I've discussed so far.</p>
 <ol>
 <li>Online, log-based metrics like CTR and revenue aren't necessarily the best measures of a discovery algorithm's quality. Items with high CTR, for example, may simply be racy and flashy, not the most relevant.</li>
-<li>So instead of relying on these proxies, let's directly measure the relevance of our algorithms by asking a pool of human raters.</li>
-<li>There are a couple different approaches for sending items to these raters to be judged. We can let the raters choose the items (an approach which is often necessary for personalized algorithms), or we can generate the items ourselves (often useful for more objective tasks like search; this also has the benefit of making it easier to derive popularity-weighted or uniformly-weighted metrics of relevance). We can also take an absolute judgment approach, or use side-by-sides.</li>
+<li>So instead of relying on these proxies, let's directly measure the relevance of our recommendations by asking a pool of human raters.</li>
+<li>There are a couple different approaches for sending which items to be judged. We can let the raters choose the items (an approach which is often necessary for personalized algorithms), or we can generate the items ourselves (often useful for more objective tasks like search; this also has the benefit of making it easier to derive popularity-weighted or uniformly-weighted metrics of relevance). We can also take an absolute judgment approach, or use side-by-sides.</li>
 <li>By analyzing the data from our evaluations, we can make better launch decisions, discover examples where our algorithms do very well or very poorly, and find patterns for improvement.</li>
 </ol>
 <p>What are some of the benefits and applications?  </p>
@@ -171,11 +171,11 @@
 </ol>
 <p>In the spirit of item-item similarities, here are some other posts readers of this post might also want to read.</p>
 <ul>
-<li><a href="http://www.quora.com/How-does-Amazons-collaborative-filtering-recommendation-engine-work/answer/Edwin-Chen-1">How algorithms like Amazon's related books feature work</a></li>
+<li><a href="http://www.quora.com/How-does-Amazons-collaborative-filtering-recommendation-engine-work/answer/Edwin-Chen-1">How Amazon's related books feature works</a></li>
 <li><a href="http://blog.echen.me/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Best practices on Mechanical Turk</a></li>
 <li><a href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Real-time human computation at Twitter</a></li>
 </ul>
-<p>And finally, I'll end with a call for information. <strong>Do you run any evaluations, or use crowdsourcing platforms like Mechanical Turk or Crowdflower (whether for evaluation purposes or not)? Or do you want to?</strong> I'd love to talk to you to learn more about what you're doing, so please feel free to <a href="mailto:hello[at]echen.me">send me an email</a> and give me a shout!</p>
+<p>And finally, I'll end with a call for information. <strong>Do you run any evaluations, or use crowdsourcing platforms like Mechanical Turk or Crowdflower (whether for evaluation purposes or not)? Or do you want to?</strong> I'd love to talk to you to learn more about what you're doing, so please feel free to <a href="mailto:hello[at]echen.me">send me an email</a> and hit me up!</p>
                     </article>
                 </div>
             </aside><!-- /#featured -->
@@ -1622,7 +1622,7 @@
           <br />
           <div id="recent_posts">
               <h3>Recent Posts</h3>
-                <a href="/2014/10/07/human-powered-discovery-evaluation/">Human-Powered Discovery Evaluation  </a><br /><br />
+                <a href="/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
                 <a href="/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
                 <a href="/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
                 <a href="/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
