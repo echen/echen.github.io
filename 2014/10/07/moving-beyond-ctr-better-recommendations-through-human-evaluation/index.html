@@ -47,15 +47,15 @@
 	</ul>
 
 </div><!-- /.post-info -->          <p>Imagine you're building a search and discovery algorithm for your new online site. How do you measure its quality, to make sure that it's sending users relevant and personalized content? Click-through rate may be your initial hope…but after a bit of thought, it's not clear that it's the best metric after all.</p>
-<p><strong>Take Google's search engine, for example.</strong> In many cases, improving the quality of search results will actually decrease CTR! For example, the ideal scenario for queries like <a href="https://www.google.com/search?q=when%20was%20barack%20obama%20born">When was Barack Obama born?</a> is that users never have to click anywhere in the first place, as the question will be answered on the page itself (either via a special answer box, or in the snippets for each search result link.)</p>
-<p><strong>Or take Twitter, who one day might want to recommend you interesting tweets.</strong> Metrics like CTR, or even the number of favorites and retweets a tweet gets, will probably optimize for showing you quick one-liners and pictures of funny cats. But is a Reddit-like site what Twitter really wants to be? Twitter, for many people, started out as a <em>news</em> site after all, so users may prefer seeing links to deeper and more interesting content, even if they're less likely to click on each individual suggestion overall.</p>
+<p><strong>Take Google's search engine, for example.</strong> In many cases, improving the quality of search results will actually decrease CTR! For example, the ideal scenario for queries like <a href="https://www.google.com/search?q=when%20was%20barack%20obama%20born">When was Barack Obama born?</a> is that users never have to click, since the question should be answered on the page itself.</p>
+<p><strong>Or take Twitter, who one day might want to recommend you interesting tweets.</strong> Metrics like CTR, or even number of favorites and retweets, will probably optimize for showing quick one-liners and pictures of funny cats. But is a Reddit-like site what Twitter really wants to be? Twitter, for many people, started out as a <em>news</em> site, so users may prefer seeing links to deeper and more interesting content, even if they're less likely to click on each individual suggestion overall.</p>
 <p><strong>Or take eBay, who wants to help you find the products you want to buy.</strong> Is CTR a good measure? Perhaps not: more clicks may  be an indication that you're having trouble finding what you're looking for. What about revenue? That might not be ideal either: from the user perspective, you want to make your purchases at the lowest possible price, and by optimizing for revenue, eBay may be turning you towards more expensive products that make you a less frequent customer in the long run.</p>
 <p><strong>And so on.</strong></p>
 <p>So on many online sites, it's unclear how to measure the quality of personalization and recommendations using metrics like CTR, or revenue, or dwell time, or whatever. What's an engineer to do?</p>
-<p>Well, consider the fact that many of these are <em>relevance</em> algorithms! Google wants to show you relevant search results. Twitter wants to show you relevant tweets and ads. eBay wants to find you relevant products. So why do we so often ignore measuring the relevance of our models?</p>
-<p>I'm a big fan of <a href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/"><em>man-in-the-machine</em> techniques</a>, so to get around this problem, I'm going to talk about a <strong>human evaluation</strong> approach to measuring the performance of personalized and discovery-based products. In particular, I'll use the example of related book suggestions on Amazon and other online bookstores while I walk through the rest of this post.</p>
+<p>Well, consider the fact that many of these are <em>relevance</em> algorithms! Google wants to show you relevant search results. Twitter wants to show you relevant tweets and ads. eBay wants to find you relevant products. So why, so often, do we never try to measure the relevance of our models?</p>
+<p>I'm a big fan of <a href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/"><em>man-in-the-machine</em> techniques</a>, so to get around this problem, I'm going to talk about a <strong>human evaluation</strong> approach to measuring the performance of personalization and discovery products. In particular, I'll use the example of related book suggestions on Amazon as I walk through the rest of this post.</p>
 <h1>Amazon, and Moving Beyond Log-Based Metrics</h1>
-<p>(This is an important, but difficult-to-understand point, so let's continue motivating a bit more why log-based metrics are often imperfect measures of relevance and quality.)</p>
+<p>(Let's continue motivating a bit why log-based metrics are often imperfect measures of relevance and quality, as this is an important but difficult-to-understand point.)</p>
 <p>So take Amazon's <em>Customers Who Bought This Item Also Bought</em> feature, which tries to show you related books.</p>
 <p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/amazon-related-books.png"><img alt="Amazon Related Books" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/amazon-related-books.png" /></a></p>
 <p>To measure its effectiveness, the standard approach is to run a live experiment and measure the change in metrics like revenue or CTR.</p>
@@ -63,8 +63,8 @@
 <p>Or suppose that we replace all of Amazon's related books with shinier, more expensive items. Again, CTR and revenue are likely to increase, as the flashier content draws eyeballs. But is this anything but a short-term boost? Perhaps the change decreases total sales in the long run, as customers start to find Amazon too expensive for their tastes and move to other marketplaces.</p>
 <p>Scenarios like these are the machine learning analogue of turning ads into blinking marquees. While they might increase clicks and views initially, they're probably not optimizing user happiness or site quality for the future. So how can we avoid them, and ensure that the quality of our suggestions remains consistently high? <strong>This is a <em>related</em> books algorithm, after all – so why, by sticking to a live experiment and metrics like CTR, are we nowhere inspecting the relatedness of our recommendations?</strong></p>
 <h1>Human Evaluation</h1>
-<p>Solution: let's inject humans into the process.</p>
-<p>In the screenshot below, for example, I asked a worker on <a href="http://blog.echen.me/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Mechanical Turk</a> to rate the first three <em>Customers Who Bought This Also Bought</em> suggestions for a book on <a href="http://www.barnesandnoble.com/">barnesandnoble.com</a>.</p>
+<p>Solution: let's inject humans into the process. Computers can't measure relatedness (if they could, we'd be done), but people of course can.</p>
+<p>For example, in the screenshot below, I asked a worker on <a href="http://blog.echen.me/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Mechanical Turk</a> to rate the first three <em>Customers Who Bought This Also Bought</em> suggestions for a book on <a href="http://www.barnesandnoble.com/">barnesandnoble.com</a>.</p>
 <p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/fools-assassin-rating.png"><img alt="Fool's Assassin" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/fools-assassin-rating.png" /></a></p>
 <p>(Copying the text from the screenshot:</p>
 <ul>
@@ -78,19 +78,15 @@
 <li>First, two of the recommendations (<em>The Broken Eye</em> and <em>Tower Lord</em>) are each part of a series, but not Book #1. So one improvement would be to ensure that only series introductions get displayed unless they're followups to the main book.</li>
 <li>Book covers matter! Indeed, the second suggestion looks more like a fantasy romance novel than the kind of fantasy that Robin Hobb tends to write. (So perhaps B&amp;N should invest in some deep learning...)</li>
 </ul>
-<p>CTR and revenue certainly wouldn't give us this level of information, and it's not clear that they could even tell us our algorithms are producing irrelevant suggestions in the first place:</p>
-<ul>
-<li>Nowhere does the related scroll panel make it clear that two of the books are part of a series, so the CTR on those two books would be just as high as if they were indeed the series introductions.</li>
-<li>If revenue is low, it's not clear whether it's because the suggestions are bad or because, separately, our pricing algorithms need improvement.</li>
-</ul>
-<p>In general, then, here's one way to understand the quality of a <em>Do This Next</em> algorithm:</p>
+<p>CTR and revenue certainly wouldn't give us this level of information, and it's not clear that they could even tell us our algorithms are producing irrelevant suggestions in the first place. Nowhere does the related scroll panel make it clear that two of the books are part of a series, so the CTR on those two books would be just as high as if they were indeed the series introductions. And if revenue is low, it's not clear whether it's because the suggestions are bad or because, separately, our pricing algorithms need improvement.</p>
+<p>So in general, here's one way to understand the quality of a <em>Do This Next</em> algorithm:</p>
 <ol>
 <li>Take a bunch of items (e.g., books if we're Amazon or Barnes &amp; Noble), and generate their related brethren.</li>
 <li>Send these <item, related items> pairs off to a bunch of judges (say, by using a crowdsourcing platform like Mechanical Turk), and ask them to rate their relevance.</li>
 <li>Analyze the data that comes back.</li>
 </ol>
 <h1>Algorithmic Relevance on Amazon, Barnes &amp; Noble, and Google</h1>
-<p>Let's make this concrete. Pretend I'm a newly minted VP of What Customers Also Buy at Amazon, and I want to understand the product's flaws and stars.</p>
+<p>Let's make this process concrete. Pretend I'm a newly minted VP of What Customers Also Buy at Amazon, and I want to understand the product's flaws and stars.</p>
 <p>I started by going to Mechanical Turk and asking a couple hundred workers to take a book they enjoyed in the past year, and to find it on Amazon. They'd then take the first three related book suggestions from a different author, rate them on the following scale, and explain their ratings.</p>
 <ul>
 <li><strong>Great suggestion.</strong> I'd definitely buy it. (Very positive)</li>
@@ -118,7 +114,7 @@
 </ul>
 <p>So to improve their recommendations, Amazon could try improving its topic models, add age-based features to its books, distinguish between textbooks and novels, and invest in series detectors. (Of course, for all I know, they do all this already.)</p>
 <h2>Competitive Analysis</h2>
-<p>Now that we have a general grasp of Amazon's related book suggestions, let's look at how it compares to other online booksellers like Barnes &amp; Noble and Google Play.</p>
+<p>We now have a general grasp of Amazon's related book suggestions and how they could be improved, and just like we could quote a metric like a CTR of 6.2% or whatnot, we can also now quote a <em>relevance score</em> of 0.62 (or whatever). So let's turn to the question of how Amazon compares to other online booksellers like Barnes &amp; Noble and Google Play.</p>
 <p>I took the same task I used above, but this time asked raters to review the related suggestions on those two sites as well.</p>
 <p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/amazon-bn-google.png"><img alt="Amazon vs. B&amp;N vs. Google" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/amazon-bn-google.png" /></a></p>
 <p>In short,</p>
@@ -148,6 +144,7 @@
 <li>Use a human-generated relevance score as a supplement to live experiment metrics when making launch decisions.</li>
 </ol>
 <p>For these kinds of tasks, what's preferable is often a <em>side-by-side</em> model, wherein judges are given two items and asked which one is better. After all, comparative judgments are often much easier to make than absolute ones, and we might want to detect differences at a finer level than what's available on an absolute scale.</p>
+<p>The idea is that we can assign a score to each rating (negative, say, if the rater prefers the control item; positive if the rater prefers the experiment), and we aggregate these to form an overall score for the side-by-side. Then in much the same way that drops in CTR may block an experiment launch, a negative human evaluation score should also give much cause for concern.</p>
 <p>Unfortunately, I don't have an easy way to generate data for a side-by-side (though I could perform a side-by-side on Amazon vs. Barnes &amp; Noble), so I'll omit an example, but the idea should be pretty clear.</p>
 <h1>Personalization</h1>
 <p>Here's another subtlety. In my examples above, I asked raters to pick a starting book themselves (one that they read and loved in the past year), and then rate whether they personally would want to read the related suggestions.</p>
