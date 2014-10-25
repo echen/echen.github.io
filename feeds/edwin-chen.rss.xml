@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Edwin Chen's Blog</title><link>/</link><description></description><atom:link href="/feeds/edwin-chen.rss.xml" rel="self"></atom:link><lastBuildDate>Tue, 07 Oct 2014 00:00:00 +0200</lastBuildDate><item><title>Moving Beyond CTR: Better Recommendations Through Human Evaluation</title><link>/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/</link><description>&lt;p&gt;Imagine you're building a recommendation algorithm for your new online site. How do you measure its quality, to make sure that it's sending users relevant and personalized content? Click-through rate may be your initial hope…but after a bit of thought, it's not clear that it's the best metric after all.&lt;/p&gt;
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Edwin Chen's Blog</title><link>http://blog.echen.me/</link><description></description><atom:link href="http://blog.echen.me/feeds/edwin-chen.rss.xml" rel="self"></atom:link><lastBuildDate>Tue, 07 Oct 2014 00:00:00 +0200</lastBuildDate><item><title>Moving Beyond CTR: Better Recommendations Through Human Evaluation</title><link>http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/</link><description>&lt;p&gt;Imagine you're building a recommendation algorithm for your new online site. How do you measure its quality, to make sure that it's sending users relevant and personalized content? Click-through rate may be your initial hope…but after a bit of thought, it's not clear that it's the best metric after all.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Take Google's search engine.&lt;/strong&gt; In many cases, improving the quality of search results will actually decrease CTR! For example, the ideal scenario for queries like &lt;a href="https://www.google.com/search?q=when%20was%20barack%20obama%20born"&gt;When was Barack Obama born?&lt;/a&gt; is that users never have to click, since the question should be answered on the page itself.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Or take Twitter, who one day might want to recommend you interesting tweets.&lt;/strong&gt; Metrics like CTR, or even number of favorites and retweets, will probably optimize for showing quick one-liners and pictures of funny cats. But is a Reddit-like site what Twitter really wants to be? Twitter, for many people, started out as a news site, so users may prefer seeing links to deeper and more interesting content, even if they're less likely to click on each individual suggestion overall.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Or take eBay, who wants to help you find the products you want to buy.&lt;/strong&gt; Is CTR a good measure? Perhaps not: more clicks may  be an indication that you're having trouble finding what you're looking for. What about revenue? That might not be ideal either: from the user perspective, you want to make your purchases at the lowest possible price, and by optimizing for revenue, eBay may be turning you towards more expensive products that make you a less frequent customer in the long run.&lt;/p&gt;
@@ -134,7 +134,7 @@
 &lt;li&gt;&lt;a href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/"&gt;Real-time human computation at Twitter&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/"&gt;Generating movie recommendations in Hadoop and Scalding&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;And finally, I'll end with a call for information. &lt;strong&gt;Do you run any evaluations, or use crowdsourcing platforms like Mechanical Turk or Crowdflower (whether for evaluation purposes or not)? Or do you want to?&lt;/strong&gt; I'd love to talk to you to learn more about what you're doing, so please feel free to &lt;a href="mailto:hello[at]echen.me"&gt;send me an email&lt;/a&gt; and hit me up!&lt;/p&gt;</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 07 Oct 2014 00:00:00 +0200</pubDate><guid>tag:,2014-10-07:2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/</guid></item><item><title>Propensity Modeling, Causal Inference, and Discovering Drivers of Growth</title><link>/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/</link><description>&lt;p&gt;Imagine you just started a job at a new company. You watched &lt;a href="http://youtu.be/AcNK7M2eCI4?t=1m5s"&gt;World War Z&lt;/a&gt; recently, so you're in a skeptical mood, and given that your last two startups failed from what you believe to be a lack of data, you're giving everything an extra critical eye.&lt;/p&gt;
+&lt;p&gt;And finally, I'll end with a call for information. &lt;strong&gt;Do you run any evaluations, or use crowdsourcing platforms like Mechanical Turk or Crowdflower (whether for evaluation purposes or not)? Or do you want to?&lt;/strong&gt; I'd love to talk to you to learn more about what you're doing, so please feel free to &lt;a href="mailto:hello[at]echen.me"&gt;send me an email&lt;/a&gt; and hit me up!&lt;/p&gt;</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 07 Oct 2014 00:00:00 +0200</pubDate><guid>tag:blog.echen.me,2014-10-07:2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/</guid></item><item><title>Propensity Modeling, Causal Inference, and Discovering Drivers of Growth</title><link>http://blog.echen.me/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/</link><description>&lt;p&gt;Imagine you just started a job at a new company. You watched &lt;a href="http://youtu.be/AcNK7M2eCI4?t=1m5s"&gt;World War Z&lt;/a&gt; recently, so you're in a skeptical mood, and given that your last two startups failed from what you believe to be a lack of data, you're giving everything an extra critical eye.&lt;/p&gt;
 &lt;p&gt;You start by thinking about the impact of the sales team. &lt;em&gt;How much extra revenue are they generating for the company?&lt;/em&gt; The sales folks you've met say that over 90% of the leads they've talked to end up buying the company's product – but, you wonder, how many of those leads would have converted anyways?&lt;/p&gt;
 &lt;p&gt;You take a look at the logs, and notice something interesting: last week was hack week, and half the salesforce took time off from making calls to make Marauder's Maps instead, yet the rate of converted leads remained the same...*&lt;/p&gt;
 &lt;p&gt;Suddenly, one of your teammates drops by your desk. He's making a batch of &lt;a href="http://www.nytimes.com/2014/05/29/technology/personaltech/the-soylent-revolution-will-not-be-pleasurable.html"&gt;Soylent&lt;/a&gt;, and he wants you to take a sip. It looks nasty, so you ask what the benefits are, and he responds that his friends who've been drinking it for the past few months just ran a marathon! &lt;em&gt;Oh, did they just start running?&lt;/em&gt; Nope, they ran the marathon last year too!...&lt;/p&gt;
@@ -215,7 +215,7 @@
 &lt;p&gt;To summarize: propensity modeling is a powerful technique for measuring causal effects in the absence of a randomized experiment. &lt;/p&gt;
 &lt;p&gt;Purely correlational analyses on top of observational studies can be very dangerous, after all. To take my favorite example: if we find that cities with more policemen tend to have more crime, does this mean that we should try to reduce the size of our police forces in order to reduce the nation's amount of crime?&lt;/p&gt;
 &lt;p&gt;For another example, &lt;a href="http://andrewgelman.com/2005/01/07/could_propensit/"&gt;here&lt;/a&gt;'s a post by Gelman on contradictory conclusions about hormone replacement therapy in the &lt;a href="http://andrewgelman.com/2005/01/07/could_propensit/"&gt;Harvard Nurses Study&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;That said, remember that (as always) a model is only as good as the data that you feed it. It's super difficult to account for all the hidden variables that might matter, and what you think might be a well-designed causal model might well in fact be missing many hidden factors. (I actually remember hearing that a propensity model on the nurses study generated a flawed conclusion, though I can't find any references to this at the moment.) So consider whether there are other approaches you can take, whether it's an easier-to-understand causal technique or even just asking your users, and even if a randomized experiment seems too difficult to run now, the effort may be well worth the trouble in the end.&lt;/p&gt;</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Fri, 15 Aug 2014 00:00:00 +0200</pubDate><guid>tag:,2014-08-15:2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/</guid></item><item><title>Improving Twitter Search with Real-Time Human Computation</title><link>/2013/01/08/improving-twitter-search-with-real-time-human-computation/</link><description>
+&lt;p&gt;That said, remember that (as always) a model is only as good as the data that you feed it. It's super difficult to account for all the hidden variables that might matter, and what you think might be a well-designed causal model might well in fact be missing many hidden factors. (I actually remember hearing that a propensity model on the nurses study generated a flawed conclusion, though I can't find any references to this at the moment.) So consider whether there are other approaches you can take, whether it's an easier-to-understand causal technique or even just asking your users, and even if a randomized experiment seems too difficult to run now, the effort may be well worth the trouble in the end.&lt;/p&gt;</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Fri, 15 Aug 2014 00:00:00 +0200</pubDate><guid>tag:blog.echen.me,2014-08-15:2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/</guid></item><item><title>Improving Twitter Search with Real-Time Human Computation</title><link>http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;&lt;em&gt;(This is a post from the &lt;a href="http://engineering.twitter.com/2013/01/improving-twitter-search-with-real-time.html"&gt;Twitter Engineering Blog&lt;/a&gt; that I wrote with &lt;a href="https://twitter.com/alpa"&gt;Alpa Jain&lt;/a&gt;.)&lt;/em&gt;&lt;/p&gt;
 
   &lt;p&gt;One of the magical things about Twitter is that it opens a window to the world in &lt;strong&gt;real-time&lt;/strong&gt;. An event happens, and just seconds later, it&amp;#8217;s shared for people across the planet to see.&lt;/p&gt;
@@ -368,7 +368,7 @@
 
   &lt;p&gt;Thanks to everyone on the Revenue and Storm teams, as well as our Turkers, for helping us launch this project.&lt;/p&gt;
   &lt;/div&gt;  
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 08 Jan 2013 04:15:00 +0100</pubDate><guid>tag:,2013-01-08:2013/01/08/improving-twitter-search-with-real-time-human-computation/</guid></item><item><title>Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle</title><link>/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 08 Jan 2013 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2013-01-08:2013/01/08/improving-twitter-search-with-real-time-human-computation/</guid></item><item><title>Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle</title><link>http://blog.echen.me/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;A couple weeks ago, Facebook launched a &lt;a href="http://www.kaggle.com/c/FacebookRecruiting/"&gt;link prediction contest&lt;/a&gt; on Kaggle, with the goal of recommending missing edges in a social graph. &lt;a href="http://blog.echen.me/2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/"&gt;I love investigating social networks&lt;/a&gt;, so I dug around a little, and since I did well enough to score one of the coveted prizes, I&amp;#8217;ll share my approach here.&lt;/p&gt;
 
   &lt;p&gt;(For some background, the contest provided a training dataset of edges, a test set of nodes, and contestants were asked to predict missing outbound edges on the test set, using mean average precision as the evaluation metric.)&lt;/p&gt;
@@ -1376,7 +1376,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 31 Jul 2012 04:15:00 +0200</pubDate><guid>tag:,2012-07-31:2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/</guid></item><item><title>Soda vs. Pop with Twitter</title><link>/2012/07/06/soda-vs-pop-with-twitter/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 31 Jul 2012 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2012-07-31:2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/</guid></item><item><title>Soda vs. Pop with Twitter</title><link>http://blog.echen.me/2012/07/06/soda-vs-pop-with-twitter/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;One of the great things about Twitter is that it&amp;#8217;s a global conversation anyone can join anytime. Eavesdropping on the world, what what!&lt;/p&gt;
 
   &lt;p&gt;Of course, it gets even better when you can &lt;em&gt;mine&lt;/em&gt; all this chatter to study the way humans live and interact.&lt;/p&gt;
@@ -1457,7 +1457,7 @@
 
   &lt;p&gt;&lt;a href="https://twitter.com/echen/status/265894918382305284/photo/1"&gt;&lt;img src="https://dl.dropbox.com/u/10506/twitter/electoral-map.png" alt="Electoral Map" /&gt;&lt;/a&gt;&lt;/p&gt;
   &lt;/div&gt;  
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Fri, 06 Jul 2012 04:15:00 +0200</pubDate><guid>tag:,2012-07-06:2012/07/06/soda-vs-pop-with-twitter/</guid></item><item><title>Making the Most of Mechanical Turk: Tips and Best Practices</title><link>/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Fri, 06 Jul 2012 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2012-07-06:2012/07/06/soda-vs-pop-with-twitter/</guid></item><item><title>Making the Most of Mechanical Turk: Tips and Best Practices</title><link>http://blog.echen.me/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;(Update: we recently open-sourced &lt;a href="https://github.com/twitter/clockworkraven"&gt;Clockwork Raven&lt;/a&gt;, one of the human evaluation tools on top of Mechanical Turk that we built at Twitter.)&lt;/p&gt;
 
   &lt;p&gt;Big data&amp;#8217;s all the rage, but sometimes a couple thousand &lt;em&gt;human&lt;/em&gt;-generated labels can be pretty effective as well. And since I&amp;#8217;ve been using Amazon&amp;#8217;s Mechanical Turk system a lot recently, I figured I&amp;#8217;d share some of the things I&amp;#8217;ve learned.&lt;/p&gt;
@@ -1736,7 +1736,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Wed, 25 Apr 2012 04:15:00 +0200</pubDate><guid>tag:,2012-04-25:2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/</guid></item><item><title>Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process</title><link>/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Wed, 25 Apr 2012 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2012-04-25:2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/</guid></item><item><title>Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process</title><link>http://blog.echen.me/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;Imagine you&amp;#8217;re a budding chef. A data-curious one, of course, so you start by taking a set of foods (pizza, salad, spaghetti, etc.) and ask 10 friends how much of each they ate in the past day.&lt;/p&gt;
 
   &lt;p&gt;Your goal: to find natural &lt;em&gt;groups&lt;/em&gt; of foodies, so that you can better cater to each cluster&amp;#8217;s tastes. For example, your fratboy friends might love &lt;a href="https://twitter.com/#!/edchedch/status/166343879547822080"&gt;wings and beer&lt;/a&gt;, your anime friends might love soba and sushi, your hipster friends probably dig tofu, and so on.&lt;/p&gt;
@@ -2468,7 +2468,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 20 Mar 2012 04:15:00 +0100</pubDate><guid>tag:,2012-03-20:2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/</guid></item><item><title>Instant Interactive Visualization with d3 + ggplot2</title><link>/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 20 Mar 2012 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2012-03-20:2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/</guid></item><item><title>Instant Interactive Visualization with d3 + ggplot2</title><link>http://blog.echen.me/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;It&amp;#8217;s often easier to understand a chart than a table. So why is it still so hard to make a simple data graphic, and why am I still bombarded by mind-numbing reams of raw &lt;em&gt;numbers&lt;/em&gt;?&lt;/p&gt;
 
   &lt;p&gt;(Yeah, I love &lt;a href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/"&gt;ggplot2&lt;/a&gt; to death. But sometimes I want a little more interaction, and sometimes all I want is to drag-and-drop and be done.)&lt;/p&gt;
@@ -2493,7 +2493,7 @@
 
   &lt;p&gt;I&amp;#8217;m thinking of adding more kinds of charts, support for categorical variables, more interactivity (sliders to interact with other dimensions?!), and making the UI even easier (e.g., simplify column naming). In the meantime, the code is &lt;a href="https://github.com/echen/minifolds"&gt;here&lt;/a&gt; on Github, and tips and suggestions are welcome!&lt;/p&gt;
   &lt;/div&gt;  
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 05 Mar 2012 04:15:00 +0100</pubDate><guid>tag:,2012-03-05:2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/</guid></item><item><title>Movie Recommendations and More via MapReduce and Scalding</title><link>/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 05 Mar 2012 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2012-03-05:2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/</guid></item><item><title>Movie Recommendations and More via MapReduce and Scalding</title><link>http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;&lt;em&gt;Scalding is an in-house MapReduce framework that Twitter recently open-sourced. Like &lt;a href="http://pig.apache.org/"&gt;Pig&lt;/a&gt;, it provides an abstraction on top of MapReduce that makes it easy to write big data jobs in a syntax that&amp;#8217;s simple and concise. Unlike Pig, Scalding is written in pure Scala &amp;#8211; which means all the power of Scala and the JVM is already built-in. No more UDFs, folks!&lt;/em&gt;&lt;/p&gt;
 
   &lt;p&gt;This is going to be an in-your-face introduction to &lt;a href="https://github.com/twitter/scalding"&gt;Scalding&lt;/a&gt;, Twitter&amp;#8217;s (Scala + Cascading) MapReduce framework.&lt;/p&gt;
@@ -3217,7 +3217,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Thu, 09 Feb 2012 04:15:00 +0100</pubDate><guid>tag:,2012-02-09:2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/</guid></item><item><title>Quick Introduction to ggplot2</title><link>/2012/01/17/quick-introduction-to-ggplot2/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Thu, 09 Feb 2012 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2012-02-09:2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/</guid></item><item><title>Quick Introduction to ggplot2</title><link>http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;This is a bare-bones introduction to &lt;a href="http://had.co.nz/ggplot2/"&gt;ggplot2&lt;/a&gt;, a visualization package in R. It assumes no knowledge of R.&lt;/p&gt;
 
   &lt;p&gt;For a better-looking version of this post, see &lt;a href="https://github.com/echen/ggplot2-tutorial"&gt;this Github repository&lt;/a&gt;, which also contains some of the &lt;a href="https://github.com/echen/ggplot2-tutorial/tree/master/data"&gt;example datasets&lt;/a&gt; I use and a &lt;a href="https://github.com/echen/ggplot2-tutorial/blob/master/ggplot2-tutorial.R"&gt;literate programming version&lt;/a&gt; of this tutorial.&lt;/p&gt;
@@ -3629,7 +3629,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 17 Jan 2012 04:15:00 +0100</pubDate><guid>tag:,2012-01-17:2012/01/17/quick-introduction-to-ggplot2/</guid></item><item><title>Introduction to Conditional Random Fields</title><link>/2012/01/03/introduction-to-conditional-random-fields/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 17 Jan 2012 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2012-01-17:2012/01/17/quick-introduction-to-ggplot2/</guid></item><item><title>Introduction to Conditional Random Fields</title><link>http://blog.echen.me/2012/01/03/introduction-to-conditional-random-fields/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;Imagine you have a sequence of snapshots from a day in Justin Bieber&amp;#8217;s life, and you want to label each image with the activity it represents (eating, sleeping, driving, etc.). How can you do this?&lt;/p&gt;
 
   &lt;p&gt;One way is to ignore the sequential nature of the snapshots, and build a &lt;em&gt;per-image&lt;/em&gt; classifier. For example, given a month&amp;#8217;s worth of labeled snapshots, you might learn that dark images taken at 6am tend to be about sleeping, images with lots of bright colors tend to be about dancing, images of cars are about driving, and so on.&lt;/p&gt;
@@ -3844,7 +3844,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 03 Jan 2012 04:15:00 +0100</pubDate><guid>tag:,2012-01-03:2012/01/03/introduction-to-conditional-random-fields/</guid></item><item><title>Winning the Netflix Prize: A Summary</title><link>/2011/10/24/winning-the-netflix-prize-a-summary/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 03 Jan 2012 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2012-01-03:2012/01/03/introduction-to-conditional-random-fields/</guid></item><item><title>Winning the Netflix Prize: A Summary</title><link>http://blog.echen.me/2011/10/24/winning-the-netflix-prize-a-summary/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;How was the &lt;a href="http://en.wikipedia.org/wiki/Netflix_Prize"&gt;Netflix Prize&lt;/a&gt; won? I went through a lot of the Netflix Prize papers a couple years ago, so I&amp;#8217;ll try to give an overview of the techniques that went into the winning solution here.&lt;/p&gt;
 
   &lt;h1&gt;Normalization of Global Effects&lt;/h1&gt;
@@ -4001,7 +4001,7 @@
   &lt;blockquote&gt;&lt;p&gt;However, we would like to stress that it is not necessary to have such a large number of models to do well. The plot below shows RMSE as a function of the number of methods used. One can achieve our winning score (RMSE=0.8712) with less than 50 methods, using the best 3 methods can yield RMSE &lt; 0.8800, which would land in the top 10. Even just using our single best method puts us on the leaderboard with an RMSE of 0.8890. The lesson here is that having lots of models is useful for the incremental results needed to win competitions, but practically, excellent systems can be built with just a few well-selected models.&lt;/p&gt;&lt;/blockquote&gt;
 
   &lt;/div&gt;  
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 24 Oct 2011 04:15:00 +0200</pubDate><guid>tag:,2011-10-24:2011/10/24/winning-the-netflix-prize-a-summary/</guid></item><item><title>Stuff Harvard People Like</title><link>/2011/09/29/stuff-harvard-people-like/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 24 Oct 2011 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2011-10-24:2011/10/24/winning-the-netflix-prize-a-summary/</guid></item><item><title>Stuff Harvard People Like</title><link>http://blog.echen.me/2011/09/29/stuff-harvard-people-like/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;What types of students go to which schools? There are, of course, the classic stereotypes:&lt;/p&gt;
 
   &lt;ul&gt;
@@ -4477,7 +4477,7 @@
 
   &lt;p&gt;*I pulled about 400 followers from each school, and added a couple filters, to try to ensure that followers were actual attendees of the schools rather than general people simply interested in them. Topics are sorted using a naive Bayes score and filtered to have at least 5 counts. Also, a word of warning: my dataset was fairly small and users on Quora are almost certainly not representative of their schools as a whole (though I tried to be rigorous with what I had).&lt;/p&gt;
   &lt;/div&gt;  
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Thu, 29 Sep 2011 04:15:00 +0200</pubDate><guid>tag:,2011-09-29:2011/09/29/stuff-harvard-people-like/</guid></item><item><title>Information Transmission in a Social Network: Dissecting the Spread of a Quora Post</title><link>/2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Thu, 29 Sep 2011 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2011-09-29:2011/09/29/stuff-harvard-people-like/</guid></item><item><title>Information Transmission in a Social Network: Dissecting the Spread of a Quora Post</title><link>http://blog.echen.me/2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;&lt;strong&gt;tl;dr&lt;/strong&gt; See &lt;a href="http://www.youtube.com/watch?v=cZ4Ntg4jQHw"&gt;this movie visualization&lt;/a&gt; for a case study on how a post propagates through Quora.&lt;/p&gt;
 
   &lt;p&gt;How does information spread through a network? Much of Quora&amp;#8217;s appeal, after all, lies in its social graph &amp;#8211; and when you&amp;#8217;ve got a network of users, all broadcasting their activities to their neighbors, information can cascade in multiple ways. How do these social designs affect which users see what?&lt;/p&gt;
@@ -4596,7 +4596,7 @@
 
   &lt;p&gt;So it looks like the social graph played quite a large part in the post&amp;#8217;s propagation, and I&amp;#8217;ll end with a big shoutout to Stormy Shippy, who provided an awesome set of scripts I used to collect a lot of this data.&lt;/p&gt;
   &lt;/div&gt;  
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Wed, 07 Sep 2011 04:15:00 +0200</pubDate><guid>tag:,2011-09-07:2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/</guid></item><item><title>Introduction to Latent Dirichlet Allocation</title><link>/2011/08/22/introduction-to-latent-dirichlet-allocation/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Wed, 07 Sep 2011 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2011-09-07:2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/</guid></item><item><title>Introduction to Latent Dirichlet Allocation</title><link>http://blog.echen.me/2011/08/22/introduction-to-latent-dirichlet-allocation/</link><description>
   &lt;div class="entry-content"&gt;&lt;h1&gt;Introduction&lt;/h1&gt;
 
   &lt;p&gt;Suppose you have the following set of sentences:&lt;/p&gt;
@@ -4732,7 +4732,7 @@
 
   &lt;p&gt;&lt;a href="http://dl.dropbox.com/u/10506/blog/palin-browser/wildlife-presidency-email.png"&gt;&lt;img src="http://dl.dropbox.com/u/10506/blog/palin-browser/wildlife-presidency-email.png" alt="Wildlife-Presidency Email" /&gt;&lt;/a&gt;&lt;/p&gt;
   &lt;/div&gt;  
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 22 Aug 2011 04:15:00 +0200</pubDate><guid>tag:,2011-08-22:2011/08/22/introduction-to-latent-dirichlet-allocation/</guid></item><item><title>Tweets vs. Likes: What gets shared on Twitter vs. Facebook?</title><link>/2011/07/28/tweets-vs-likes-what-gets-shared-on-twitter-vs-facebook/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 22 Aug 2011 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2011-08-22:2011/08/22/introduction-to-latent-dirichlet-allocation/</guid></item><item><title>Tweets vs. Likes: What gets shared on Twitter vs. Facebook?</title><link>http://blog.echen.me/2011/07/28/tweets-vs-likes-what-gets-shared-on-twitter-vs-facebook/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;It always strikes me as curious that some posts get a lot of love on Twitter, while others get many more shares on Facebook:&lt;/p&gt;
 
   &lt;p&gt;&lt;a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/twitter-beats-fb.png"&gt;&lt;img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/twitter-beats-fb.png" alt="Twitter Beats FB" /&gt;&lt;/a&gt;&lt;/p&gt;
@@ -5048,7 +5048,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Thu, 28 Jul 2011 04:15:00 +0200</pubDate><guid>tag:,2011-07-28:2011/07/28/tweets-vs-likes-what-gets-shared-on-twitter-vs-facebook/</guid></item><item><title>Introduction to Restricted Boltzmann Machines</title><link>/2011/07/18/introduction-to-restricted-boltzmann-machines/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Thu, 28 Jul 2011 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2011-07-28:2011/07/28/tweets-vs-likes-what-gets-shared-on-twitter-vs-facebook/</guid></item><item><title>Introduction to Restricted Boltzmann Machines</title><link>http://blog.echen.me/2011/07/18/introduction-to-restricted-boltzmann-machines/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;Suppose you ask a bunch of users to rate a set of movies on a 0-100 scale. In classical &lt;a href="http://en.wikipedia.org/wiki/Factor_analysis"&gt;factor analysis&lt;/a&gt;, you could then try to explain each movie and user in terms of a set of latent &lt;em&gt;factors&lt;/em&gt;. For example, movies like Star Wars and Lord of the Rings might have strong associations with a latent science fiction and fantasy factor, and users who like Wall-E and Toy Story might have strong associations with a latent Pixar factor.&lt;/p&gt;
 
 
@@ -5304,7 +5304,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 18 Jul 2011 04:15:00 +0200</pubDate><guid>tag:,2011-07-18:2011/07/18/introduction-to-restricted-boltzmann-machines/</guid></item><item><title>Topic Modeling the Sarah Palin Emails</title><link>/2011/06/27/topic-modeling-the-sarah-palin-emails/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 18 Jul 2011 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2011-07-18:2011/07/18/introduction-to-restricted-boltzmann-machines/</guid></item><item><title>Topic Modeling the Sarah Palin Emails</title><link>http://blog.echen.me/2011/06/27/topic-modeling-the-sarah-palin-emails/</link><description>
   &lt;div class="entry-content"&gt;&lt;h1&gt;LDA-based Email Browser&lt;/h1&gt;
 
   &lt;p&gt;Earlier this month, several thousand emails from Sarah Palin&amp;#8217;s time as governor of Alaska were &lt;a href="http://sunlightlabs.com/blog/2011/sarahs-inbox/"&gt;released&lt;/a&gt;. The emails weren&amp;#8217;t organized in any fashion, though, so to make them easier to browse, I&amp;#8217;ve been working on some topic modeling (in particular, using latent Dirichlet allocation) to separate the documents into different groups.&lt;/p&gt;
@@ -5347,7 +5347,7 @@
 
   &lt;p&gt;&lt;a href="http://dl.dropbox.com/u/10506/blog/palin-browser/trig-topic.png"&gt;&lt;img src="http://dl.dropbox.com/u/10506/blog/palin-browser/trig-topic.png" alt="Trig" /&gt;&lt;/a&gt;&lt;/p&gt;
   &lt;/div&gt;  
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 27 Jun 2011 04:15:00 +0200</pubDate><guid>tag:,2011-06-27:2011/06/27/topic-modeling-the-sarah-palin-emails/</guid></item><item><title>Filtering for English Tweets: Unsupervised Language Detection on Twitter</title><link>/2011/05/01/unsupervised-language-detection-algorithms/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 27 Jun 2011 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2011-06-27:2011/06/27/topic-modeling-the-sarah-palin-emails/</guid></item><item><title>Filtering for English Tweets: Unsupervised Language Detection on Twitter</title><link>http://blog.echen.me/2011/05/01/unsupervised-language-detection-algorithms/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;(See a demo &lt;a href="http://babel-fett.heroku.com/"&gt;here&lt;/a&gt;.)&lt;/p&gt;
 
   &lt;p&gt;While working on a Twitter sentiment analysis project, I ran into the problem of needing to filter out all non-English tweets. (Asking the Twitter API for English-only tweets doesn&amp;#8217;t seem to work, as it nonetheless returns tweets in Spanish, Portuguese, Dutch, Russian, and a couple other languages.)&lt;/p&gt;
@@ -5465,7 +5465,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Sun, 01 May 2011 04:15:00 +0200</pubDate><guid>tag:,2011-05-01:2011/05/01/unsupervised-language-detection-algorithms/</guid></item><item><title>Choosing a Machine Learning Classifier</title><link>/2011/04/27/choosing-a-machine-learning-classifier/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Sun, 01 May 2011 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2011-05-01:2011/05/01/unsupervised-language-detection-algorithms/</guid></item><item><title>Choosing a Machine Learning Classifier</title><link>http://blog.echen.me/2011/04/27/choosing-a-machine-learning-classifier/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;How do you know what machine learning algorithm to choose for your classification problem? Of course, if you really care about accuracy, your best bet is to test out a couple different ones (making sure to try different parameters within each algorithm as well), and select the best one by cross-validation. But if you&amp;#8217;re simply looking for a &amp;#8220;good enough&amp;#8221; algorithm for your problem, or a place to start, here are some general guidelines I&amp;#8217;ve found to work well over the years.&lt;/p&gt;
 
   &lt;h1&gt;How large is your training set?&lt;/h1&gt;
@@ -5490,7 +5490,7 @@
 
   &lt;p&gt;And to reiterate what I said above, if you really care about accuracy, you should definitely try a bunch of different classifiers and select the best one by cross-validation. Or, to take a lesson from the Netflix Prize (and Middle Earth), just use an ensemble method to choose them all.&lt;/p&gt;
   &lt;/div&gt;  
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Wed, 27 Apr 2011 04:15:00 +0200</pubDate><guid>tag:,2011-04-27:2011/04/27/choosing-a-machine-learning-classifier/</guid></item><item><title>Kickstarter Data Analysis: Success and Pricing</title><link>/2011/04/25/kickstarter-data-analysis-success-and-pricing/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Wed, 27 Apr 2011 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2011-04-27:2011/04/27/choosing-a-machine-learning-classifier/</guid></item><item><title>Kickstarter Data Analysis: Success and Pricing</title><link>http://blog.echen.me/2011/04/25/kickstarter-data-analysis-success-and-pricing/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;&lt;a href="http://www.kickstarter.com/"&gt;Kickstarter&lt;/a&gt; is an online crowdfunding platform for launching creative projects. When starting a new project, project owners specify a deadline and the minimum amount of money they need to raise. They receive the money (less a transaction fee) only if they reach or exceed that minimum; otherwise, no money changes hands.&lt;/p&gt;
 
   &lt;p&gt;What&amp;#8217;s particularly fun about Kickstarter is that in contrast to &lt;a href="http://www.kiva.org/"&gt;that other microfinance site&lt;/a&gt;, Kickstarter projects don&amp;#8217;t ask for loans; instead, patrons receive pre-specified rewards unique to each project. For example, someone donating money to help an artist record an album might receive a digital copy of the album if they donate 20 dollars, or a digital copy plus a signed physical cd if they donate 50 dollars.&lt;/p&gt;
@@ -5553,7 +5553,7 @@
 
   &lt;p&gt;Next, I&amp;#8217;m planning on digging a little deeper into pricing effects and what makes a project successful, so I&amp;#8217;ll hopefully have some more Kickstarter analysis in a future post. In the meantime, in case anyone else wants to take a look, I put the data onto &lt;a href="https://github.com/echen/kickstarter-data-analysis"&gt;my Github account&lt;/a&gt;.&lt;/p&gt;
   &lt;/div&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 25 Apr 2011 04:15:00 +0200</pubDate><guid>tag:,2011-04-25:2011/04/25/kickstarter-data-analysis-success-and-pricing/</guid></item><item><title>A Mathematical Introduction to Least Angle Regression</title><link>/2011/04/21/a-mathematical-introduction-to-least-angle-regression/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 25 Apr 2011 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2011-04-25:2011/04/25/kickstarter-data-analysis-success-and-pricing/</guid></item><item><title>A Mathematical Introduction to Least Angle Regression</title><link>http://blog.echen.me/2011/04/21/a-mathematical-introduction-to-least-angle-regression/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;(For a layman&amp;#8217;s introduction, see &lt;a href="http://blog.echen.me/2011/03/14/least-angle-regression-for-the-hungry-layman/"&gt;here&lt;/a&gt;.)&lt;/p&gt;
 
   &lt;p&gt;Least Angle Regression (aka LARS) is a &lt;strong&gt;model selection method&lt;/strong&gt; for linear regression (when you&amp;#8217;re worried about overfitting or want your model to be easily interpretable). To motivate it, let&amp;#8217;s consider some other model selection methods:&lt;/p&gt;
@@ -5623,7 +5623,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Thu, 21 Apr 2011 04:15:00 +0200</pubDate><guid>tag:,2011-04-21:2011/04/21/a-mathematical-introduction-to-least-angle-regression/</guid></item><item><title>Introduction to Cointegration and Pairs Trading</title><link>/2011/04/16/introduction-to-cointegration-and-pairs-trading/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Thu, 21 Apr 2011 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2011-04-21:2011/04/21/a-mathematical-introduction-to-least-angle-regression/</guid></item><item><title>Introduction to Cointegration and Pairs Trading</title><link>http://blog.echen.me/2011/04/16/introduction-to-cointegration-and-pairs-trading/</link><description>
   &lt;div class="entry-content"&gt;&lt;h1&gt;Introduction&lt;/h1&gt;
 
   &lt;p&gt;Suppose you see two drunks (i.e., two random walks) wandering around. The drunks don&amp;#8217;t know each other (they&amp;#8217;re independent), so there&amp;#8217;s no meaningful relationship between their paths.&lt;/p&gt;
@@ -5713,7 +5713,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Sat, 16 Apr 2011 04:15:00 +0200</pubDate><guid>tag:,2011-04-16:2011/04/16/introduction-to-cointegration-and-pairs-trading/</guid></item><item><title>Counting Clusters</title><link>/2011/03/14/counting-clusters/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Sat, 16 Apr 2011 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2011-04-16:2011/04/16/introduction-to-cointegration-and-pairs-trading/</guid></item><item><title>Counting Clusters</title><link>http://blog.echen.me/2011/03/14/counting-clusters/</link><description>
   
   &lt;div class="entry-content"&gt;&lt;p&gt;Given a set of datapoints, we often want to know how many clusters the datapoints form. The &lt;strong&gt;gap statistic&lt;/strong&gt; and the &lt;strong&gt;prediction strength&lt;/strong&gt; are two practical algorithms for choosing the number of clusters.&lt;/p&gt;
 
@@ -5859,7 +5859,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:,2011-03-14:2011/03/14/counting-clusters/</guid></item><item><title>Hacker News Analysis</title><link>/2011/03/14/hacker-news-analysis/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2011-03-14:2011/03/14/counting-clusters/</guid></item><item><title>Hacker News Analysis</title><link>http://blog.echen.me/2011/03/14/hacker-news-analysis/</link><description>
   
   &lt;div class="entry-content"&gt;&lt;p&gt;I was playing around with the &lt;a href="http://api.ihackernews.com/?db"&gt;Hacker News database&lt;/a&gt; &lt;a href="http://ronnieroller.com/"&gt;Ronnie Roller&lt;/a&gt; made (thanks!), so I thought I&amp;#8217;d post some of the things I looked at.&lt;/p&gt;
 
@@ -5941,7 +5941,7 @@
 
   &lt;p&gt;&lt;img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/all_trends2.png" alt="All Trends" /&gt;&lt;/p&gt;
   &lt;/div&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:,2011-03-14:2011/03/14/hacker-news-analysis/</guid></item><item><title>Layman's Introduction to Measure Theory</title><link>/2011/03/14/laymans-introduction-to-measure-theory/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2011-03-14:2011/03/14/hacker-news-analysis/</guid></item><item><title>Layman's Introduction to Measure Theory</title><link>http://blog.echen.me/2011/03/14/laymans-introduction-to-measure-theory/</link><description>
   
   &lt;div class="entry-content"&gt;&lt;p&gt;Measure theory studies ways of generalizing the notions of length/area/volume. Even in 2 dimensions, it might not be clear how to measure the area of the following fairly tame shape:&lt;/p&gt;
 
@@ -5966,7 +5966,7 @@
 
   &lt;p&gt;And once we&amp;#8217;ve defined a &amp;#8220;generalized area&amp;#8221; (our measure), we can try to generalize other mathematical concepts as well. For example, recall that the (Riemann) integral that you learn in calculus measures the area under a curve. What happens if we replace the &amp;#8220;area&amp;#8221; in the Riemann integral with our new, generalized measure (e.g., to get the Lebesgue integral)? Measure theory also helps make certain probability statements mathematically precise (e.g., we can say exactly what it means that a fair coin flipped infinitely often will &amp;#8220;almost never&amp;#8221; land heads more than 50% of the time).&lt;/p&gt;
   &lt;/div&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:,2011-03-14:2011/03/14/laymans-introduction-to-measure-theory/</guid></item><item><title>Layman's Introduction to Random Forests</title><link>/2011/03/14/laymans-introduction-to-random-forests/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2011-03-14:2011/03/14/laymans-introduction-to-measure-theory/</guid></item><item><title>Layman's Introduction to Random Forests</title><link>http://blog.echen.me/2011/03/14/laymans-introduction-to-random-forests/</link><description>
   
   &lt;div class="entry-content"&gt;&lt;p&gt;Suppose you&amp;#8217;re very indecisive, so whenever you want to watch a movie, you ask your friend Willow if she thinks you&amp;#8217;ll like it. In order to answer, Willow first needs to figure out what movies you like, so you give her a bunch of movies and tell her whether you liked each one or not (i.e., you give her a labeled training set). Then, when you ask her if she thinks you&amp;#8217;ll like movie X or not, she plays a 20 questions-like game with IMDB, asking questions like &amp;#8220;Is X a romantic movie?&amp;#8221;, &amp;#8220;Does Johnny Depp star in X?&amp;#8221;, and so on. She asks more informative questions first (i.e., she maximizes the information gain of each question), and gives you a yes/no answer at the end.&lt;/p&gt;
 
@@ -5982,7 +5982,7 @@
 
   &lt;p&gt;And so &lt;strong&gt;your friends now form a random forest&lt;/strong&gt;.&lt;/p&gt;
   &lt;/div&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:,2011-03-14:2011/03/14/laymans-introduction-to-random-forests/</guid></item><item><title>Netflix Prize Summary: Factorization Meets the Neighborhood</title><link>/2011/03/14/netflix-prize-summary-factorization-meets-the-neighborhood/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2011-03-14:2011/03/14/laymans-introduction-to-random-forests/</guid></item><item><title>Netflix Prize Summary: Factorization Meets the Neighborhood</title><link>http://blog.echen.me/2011/03/14/netflix-prize-summary-factorization-meets-the-neighborhood/</link><description>
   
   &lt;div class="entry-content"&gt;&lt;p&gt;(Way back when, I went through all the Netflix prize papers. I&amp;#8217;m now (very slowly) trying to clean up my notes and put them online. Eventually, I hope to have a more integrated tutorial, but here&amp;#8217;s a rough draft for now.)&lt;/p&gt;
 
@@ -6106,7 +6106,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:,2011-03-14:2011/03/14/netflix-prize-summary-factorization-meets-the-neighborhood/</guid></item><item><title>Netflix Prize Summary: Scalable Collaborative Filtering with Jointly Derived Neighborhood Interpolation Weights</title><link>/2011/03/14/netflix-prize-summary-scalable-collaborative-filtering-with-jointly-derived-neighborhood-interpolation-weights/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2011-03-14:2011/03/14/netflix-prize-summary-factorization-meets-the-neighborhood/</guid></item><item><title>Netflix Prize Summary: Scalable Collaborative Filtering with Jointly Derived Neighborhood Interpolation Weights</title><link>http://blog.echen.me/2011/03/14/netflix-prize-summary-scalable-collaborative-filtering-with-jointly-derived-neighborhood-interpolation-weights/</link><description>
   
   &lt;div class="entry-content"&gt;&lt;p&gt;(Way back when, I went through all the Netflix prize papers. I&amp;#8217;m now (very slowly) trying to clean up my notes and put them online. Eventually, I hope to have a more integrated tutorial, but here&amp;#8217;s a rough draft for now.)&lt;/p&gt;
 
@@ -6232,7 +6232,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:,2011-03-14:2011/03/14/netflix-prize-summary-scalable-collaborative-filtering-with-jointly-derived-neighborhood-interpolation-weights/</guid></item><item><title>Prime Numbers and the Riemann Zeta Function</title><link>/2011/03/14/prime-numbers-and-the-riemann-zeta-function/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2011-03-14:2011/03/14/netflix-prize-summary-scalable-collaborative-filtering-with-jointly-derived-neighborhood-interpolation-weights/</guid></item><item><title>Prime Numbers and the Riemann Zeta Function</title><link>http://blog.echen.me/2011/03/14/prime-numbers-and-the-riemann-zeta-function/</link><description>
   
   &lt;div class="entry-content"&gt;&lt;p&gt;Lots of people know that the &lt;a href="http://en.wikipedia.org/wiki/Riemann_hypothesis"&gt;Riemann Hypothesis&lt;/a&gt; has &lt;em&gt;something&lt;/em&gt; to do with prime numbers, but most introductions fail to say what or why. I&amp;#8217;ll try to give one angle of explanation.&lt;/p&gt;
 
@@ -6380,7 +6380,7 @@
         (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
     }
 &lt;/script&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:,2011-03-14:2011/03/14/prime-numbers-and-the-riemann-zeta-function/</guid></item><item><title>Topological Combinatorics and the Evasiveness Conjecture</title><link>/2011/03/14/topological-combinatorics-and-the-evasiveness-conjecture/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2011-03-14:2011/03/14/prime-numbers-and-the-riemann-zeta-function/</guid></item><item><title>Topological Combinatorics and the Evasiveness Conjecture</title><link>http://blog.echen.me/2011/03/14/topological-combinatorics-and-the-evasiveness-conjecture/</link><description>
   
   &lt;div class="entry-content"&gt;&lt;p&gt;The Kahn, Saks, and Sturtevant approach to the Evasiveness Conjecture (see the original paper &lt;a href="http://www.springerlink.com/index/R521072311641L41.pdf"&gt;here&lt;/a&gt;) is an epic application of pure mathematics to computer science. I&amp;#8217;ll give an overview of the approach here, and probably try to add some more information on the problem in other posts.&lt;/p&gt;
 
@@ -6395,7 +6395,7 @@
   &lt;p&gt;Thus, we can prove that a monotone graph property is evasive by finding a simplicial map that has no fixed point (which we can do by showing that no orbit of the map is a face of the complex). This approach has been used to prove things like the evasiveness of graph properties when the number of vertices is prime or a prime power, and the evasiveness of all bipartite graph properties.&lt;/p&gt;
   &lt;/div&gt;
   
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:,2011-03-14:2011/03/14/topological-combinatorics-and-the-evasiveness-conjecture/</guid></item><item><title>Item-to-Item Collaborative Filtering with Amazon's Recommendation System</title><link>/2011/02/15/item-to-item-collaborative-filtering-with-amazons-recommendation-system/</link><description>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Mon, 14 Mar 2011 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2011-03-14:2011/03/14/topological-combinatorics-and-the-evasiveness-conjecture/</guid></item><item><title>Item-to-Item Collaborative Filtering with Amazon's Recommendation System</title><link>http://blog.echen.me/2011/02/15/item-to-item-collaborative-filtering-with-amazons-recommendation-system/</link><description>
   
 &lt;div class="entry-content"&gt;&lt;h1&gt;Introduction&lt;/h1&gt;
 
@@ -6424,4 +6424,4 @@
 
 &lt;p&gt;Since the item-to-item approach makes crucial use of similar items, here&amp;#8217;s a high-level view of how to do it. First, associate each item with the set of users who have bought/looked at it. The similarity between any two items could then be a normalized measure of the number of users they have in common (i.e., the Jaccard index) or the cosine distance between the two items (imagine each item as a vector, with a 1 in the ith element if user i has bought it, and 0 otherwise).&lt;/p&gt;
 &lt;/div&gt;
-</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 15 Feb 2011 04:15:00 +0100</pubDate><guid>tag:,2011-02-15:2011/02/15/item-to-item-collaborative-filtering-with-amazons-recommendation-system/</guid></item></channel></rss>
+</description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Tue, 15 Feb 2011 04:15:00 +0100</pubDate><guid>tag:blog.echen.me,2011-02-15:2011/02/15/item-to-item-collaborative-filtering-with-amazons-recommendation-system/</guid></item></channel></rss>
