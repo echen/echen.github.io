@@ -31,6 +31,124 @@
             <aside id="featured">
                 <div class="body">
                     <article>
+                        <h1 class="entry-title"><a href="http://blog.echen.me/2015/07/05/product-insights-for-airbnb/">Product Insights for Airbnb</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2015-07-05T00:00:00+02:00">
+          on&nbsp;Sun 05 July 2015
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info --><p>I love marketplaces and marketplace data, so a couple months ago I grabbed some Airbnb data and made a <a href="https://speakerdeck.com/edwinchen/product-insights-for-airbnb">slide deck</a>. A few people have asked me about it, so here it is along with a short summary.</p>
+<script async class="speakerdeck-embed" data-id="228abf8d857a4a21b9e79b4b518f507d" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+
+<p><br /></p>
+<p>My goal was to gather data around potential product strategy, focusing on the following questions.</p>
+<ol>
+<li>You can't book a great place if you can't find one. <strong>How good is Airbnb's search ranking algorithm?</strong> What are its problems (are listings returned on the high end of the price filters? are too many poorly reviewed listings being shown?), and how can we fix them?</li>
+<li>A big chunk of Amazon purchases comes from its related book algorithms. <strong>How well does Airbnb's Similar Listings model perform?</strong> Does it showcase great related properties, or are its suggestions generally irrelevant?</li>
+<li>Airbnb probably wants (and needs) to evolve. <strong>Where do users find the booking experience difficult and confusing</strong>, and what kinds of new products would improve it?</li>
+<li>Different people use Airbnb differently. <strong>What are the archetypical patterns of travel</strong>, and is it worth improving their experience in different ways?</li>
+<li>Hotels are Airbnb's major competitor. <strong>When do users still prefer staying in a hotel and why?</strong></li>
+</ol>
+<p>I'll give an overview of what I found below, and check the slide deck for more detail.</p>
+<h1>Airbnb Search Quality</h1>
+<p>Let's start with Airbnb's Search. In order to understand the problems and benefits of their algorithm, I asked 100 Airbnb users (from a digital labor platform of my own that I created) to think about a trip they wanted to take in the next year, to search for a place to stay on Airbnb, and to rank the quality of the results.</p>
+<p>For example, here's one Airbnb user who described a trip she wanted to take with her husband and kids to Disneyland:</p>
+<p><em>“We love going to Disneyland and would like to go back sometime this year around the beginning of the summer. Ideally we would go for a week but it depends on price. I would want to go with my husband and kids because it's a really fun and special experience for all of us.”</em></p>
+<p>She then searched for places to stay on Airbnb:</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/anaheim.png"><img alt="Anaheim" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/anaheim.png" /></a></p>
+<p>And this is how she rated the first search result:</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/sr1.png"><img alt="Search result" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/sr1.png" /></a></p>
+<p><em>“<strong>Fairly bad result.</strong> It looks like a nice play to stay but I don't like that it's actually part of another house. I would want to feel like we have total privacy instead of sharing certain areas. <strong>There are also an awful lot of rules about when and what you can do. I understand to an extent but seeing it all written out comes across as kind of negative.  It's also not really that close to Disneyland.</strong>”</em></p>
+<p>Even from just this one example, we can see a few problems and potential improvements to the search algorithm:</p>
+<ol>
+<li><strong>Where exactly is Disneyland, and why are listings so far away from Anaheim shown?</strong> If we look at the map of search results, it's impossible to tell how close each listing is to Anaheim's main attraction. Given that most travel is around landmarks in new and unfamiliar locations, how much quicker would the search and booking process be if it was easy for users to figure out where attractions were located?</li>
+<li><strong>People like to use Airbnb as a home away from home, and strict rules detract from this experience.</strong> Is it worth adding features to the ranking algorithm that measure how home-like a listing may be?</li>
+<li><strong>Staying in an RV may be fairly private, but it's not the same as getting the place to yourself.</strong> Should RVs and other such listing types be penalized in searches for an entire property?</li>
+</ol>
+<p>Here's a numeric summary (and check out the deck for more user feedback). Around 2/3 of search results were judged good, while 1/3 were judged pretty bad:</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/search-summary.png"><img alt="Search summary" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/search-summary.png" /></a></p>
+<p>Search results lower on the page are indeed judged worse (so the ranker does seem to be pulling out a signal):</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/position-quality.png"><img alt="Position vs. quality" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/position-quality.png" /></a></p>
+<p>And these were the main problems users had:</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/search-problems.png"><img alt="Search issues" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/search-problems.png" /></a></p>
+<p>For example, the top three issues were:</p>
+<ol>
+<li><strong>Too expensive.</strong> Sometimes search results are on the high end of price range filters (though worth it), and other times they're simply overpriced for what you get. Airbnb already has a price prediction algorithm; would it be worth using it to differentiate between the two?</li>
+<li><strong>Unappealing style.</strong> Listings often don't have the style users are looking for. A listing, for example, might not be hip and modern enough, or a male user might encounter listings with pink wallpaper and flowery decorations.</li>
+<li><strong>Bad location.</strong> Results are often too far away from tourist attractions (e.g., listings 30 minutes away from the Las Vegas Strip), or in bad neighborhoods.</li>
+</ol>
+<p>(Note: this sample of raters is, of course, not necessarily representative of Airbnb's actual user base. But I think the problems they highlight are interesting and useful to understand anyways.)</p>
+<h1>Airbnb Similar Listings</h1>
+<p>I ran a similar study on Airbnb's Similar Listings algorithm. Overall numbers are close to those in Search: roughly 2/3 of Similar Listings are good results, and 1/3 are bad.</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/sl.png"><img alt="Similar listings" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/sl.png" /></a></p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/sl-issues.png"><img alt="Similar listings issues" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/sl-issues.png" /></a></p>
+<p>However, one big problem that showed up on Similar Listings was the problem of <strong>inconsistent listing types</strong>. For example, users often found great search results where they would get the entire home to themselves, but all the Similar Listings displayed would be for shared, communal properties, which they obviously wouldn't want to book)</p>
+<h1>Deterrents to Booking</h1>
+<p>What blockers prevented raters from wanting to book a place, and what information would have made the search and booking process much smoother?</p>
+<p>One blocker was <strong>neighborhood discovery</strong>. Travelers often don't know much about where they're traveling, so it's unclear which neighborhoods are convenient, or whether a great-looking listing is actually in a safe location.</p>
+<p>For example, here's what one rater traveling to Belfast wrote.</p>
+<p><em>“It looks great, and I'd definitely want to contact the host so long as I do some research and remain as enthusiastic. The price is reasonable and the apartment looks great. <strong>The main thing I would want to check is the area it's in, Lisburn.  I don't know how convenient that is compared to the rest of Belfast and the Titanic quarter. If it was convenient, I would probably go for this.</strong>”</em></p>
+<p>Could Airbnb provide more information about neighborhoods within their site, or better guide users to where they'd want to stay?</p>
+<p>Another feature that would have helped ease worries about listings, or which would have made listings look even better (or appropriately worse), was <strong>Helpful Reviews</strong>.</p>
+<p>Reviews on Airbnb are currently chronologically sorted, which means feedback like the following might be all you see on the first page.</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/bad-review.png"><img alt="Bad review" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/bad-review.png" /></a></p>
+<p><strong>But reviews are a key part of the decision-making process.</strong> Sites like Amazon and Yelp highlight their most helpful user reviews, and 80% of users say they like to read book reviews before making a purchase. (And since traveling is usually a much more expensive and extensively researched decision, reviews are probably even more important here.)</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/gcs.png"><img alt="Survey" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/gcs.png" /></a></p>
+<p>Uncensored user feedback is helpful for understanding location, host friendliness, cleanliness, and more. How much less worried would users be about booking a place, if they better understood what other travelers liked and disliked about it?</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/good-review.png"><img alt="Good review" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/good-review.png" /></a></p>
+<h1>A New Kind of Search</h1>
+<p>Let's look forward a bit. Google is continually evolving its search experience, from letting you search for images (and even reverse image search), to incorporating videos and news stories into search pages themselves, to improving the types of queries it understands.</p>
+<p>So what could the future of Airbnb search look like?</p>
+<p>One issue with its current state is that while it might be pretty good if you know exactly where you want to stay, it's less useful if you don't. (This ties back to the issue of neighborhood discovery.)</p>
+<p>For example, one of my raters wanted to book a skiing trip in Wisconsin with his wife.</p>
+<p><em>“Within the next 2 months, I'd like to go to the northern part of my state (WI) to a skiing resort.  I want to go for the weekend with my husband.  I want to do this because we need a getaway and it would be romantic and we would still have plenty to do.”</em></p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/skiing.png"><img alt="Skiing" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/skiing.png" /></a></p>
+<p>So he added a <em>skiing</em> keyword to his search...and received completely useless listings as a result.</p>
+<p>This, for instance, was the first listing:</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/skiing-sr.png"><img alt="Search result" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/skiing-sr.png" /></a></p>
+<p><em>“<strong>Horrible result.</strong> The room is not ideal, it’s not romantic at all.  The location is unappealing, it is near an urban area and <strong>there is no mention of skiing</strong>.  I'm looking for a place near a skiing area, I don't have a specific location, because I don't know where they are, just that we have them.  The price is okay, it's just not what I want at all.”</em></p>
+<p>The rest of the listings were similarly unrelated to skiing.</p>
+<p>If we inspect the results, we see that the reason they're returned is <strong>poor keyword matching</strong>: the word skiing appears in the description of the host (she likes to go skiing), but not in the description of the listing itself.</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/keyword.png"><img alt="Keyword matching" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/keyword.png" /></a></p>
+<p>This problem may be fixable (we can try to machine learn which keywords should be matched where), but the question is a more general one: is it worth designing a better experience around general activity and travel search, instead of the main context being mere location?</p>
+<p>After all, if Airbnb can make finding places to travel to easier, thereby encouraging more travel, or if it can convince users to spend their entire travel planning process on Airbnb, that could be another strong driver of growth.</p>
+<h1>Advantages of Hotels</h1>
+<p>Another path to more bookings is, of course, to increasingly convince travelers that Airbnb is a better option than staying in a hotel.</p>
+<p>So what are the main advantages of the hotel experience right now?</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/hotels.png"><img alt="Hotels" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/hotels.png" /></a></p>
+<ol>
+<li><strong>65% of users mentioned that Airbnb had quality control problems.</strong> Hotels are a trusted brand that provide a consistent and guaranteed level of service (you know what you're getting into), whereas the quality of Airbnb listings can be uncertain and erratic. Your host may be unfriendly or unresponsive, the listing may be dirtier than advertised, the pictures might not be representative (or there might not be enough), and so on. (Promoting helpful reviews might be one way to help solve this problem.)  </li>
+<li><strong>45% mentioned that booking listings on Airbnb can be a hassle, especially at the last minute.</strong> There's a long and annoying process where you have to interact with the host, your host might cancel on you at the last minute, you often have to contact multiple hosts in order to see who will respond, and it's not even clear that a listing will be available. In contrast, hotels are a one-click process. (While Airbnb does have an Instant Booking feature with select listings, many users didn't seem to understand it or realize it existed.)</li>
+<li><strong>30% mentioned the awkwardness of the forced human interaction.</strong> It can be stressful and tiring to wait for a host to let you in when you arrive, the communication process during booking is again an annoyance, and users also worry about disturbing owners too much with their asks and complaints. Companies like Uber grew in large part by removing the annoying part of human interaction (calling a taxi), and making the rest (chatting with your driver) optional. Should Airbnb do the same?</li>
+<li><strong>25% just liked the amenities of a hotel</strong> (free breakfasts, gyms, spas, room service, and so on).</li>
+</ol>
+<h1>Travel Patterns</h1>
+<p>Finally, let's take a look at typical patterns of travel.</p>
+<p>People travel for different reasons. Some vacations are centered around discovering new places, some are for romantic honeymoon getaways, and others are just to visit family during the holidays.</p>
+<p>People also travel in different kinds of groups. Families may enjoy Airbnb more because of the cooking options and the possibility of having rooms separate from their sleeping, early-to-bed children. Coworkers traveling together may enjoy it less because it's harder to stay near each other (and because of potential expense difficulties).</p>
+<p>So what are the clusters of traveler types, and how big are they? I ran a few Google Consumer Surveys, and here are the results.</p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/patterns-why.png"><img alt="Patterns" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/patterns-why.png" /></a></p>
+<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/patterns-who.png"><img alt="Patterns" src="https://dl.dropboxusercontent.com/u/10506/blog/airbnb/patterns-who.png" /></a></p>
+<p>Can Airbnb design different experiences around these groups, and see if they use the site in different ways?</p>
+<p>And that's it. For people interested in more details, there's more information in the deck <a href="https://speakerdeck.com/edwinchen/product-insights-for-airbnb">here</a>.</p>
+<script async class="speakerdeck-embed" data-id="228abf8d857a4a21b9e79b4b518f507d" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
                         <h1 class="entry-title"><a href="http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation</a></h1>
 <div class="post-info">
 	<ul>
@@ -61,7 +179,7 @@
 <p>Scenarios like these are the machine learning analogue of turning ads into blinking marquees. While they might increase clicks and views initially, they're probably not optimizing user happiness or site quality for the future. So how can we avoid them, and ensure that the quality of our suggestions remains consistently high? <strong>This is a <em>related</em> books algorithm, after all – so why, by sticking to a live experiment and metrics like CTR, are we nowhere inspecting the relatedness of our recommendations?</strong></p>
 <h1>Human Evaluation</h1>
 <p>Solution: let's inject humans into the process. Computers can't measure relatedness (if they could, we'd be done), but people of course can.</p>
-<p>For example, in the screenshot below, I asked a worker on <a href="http://blog.echen.me/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Mechanical Turk</a> to rate the first three <em>Customers Who Bought This Also Bought</em> suggestions for a book on <a href="http://www.barnesandnoble.com/">barnesandnoble.com</a>.</p>
+<p>For example, in the screenshot below, I asked a worker (on a crowdsourcing platform I've built on my own) to rate the first three <em>Customers Who Bought This Also Bought</em> suggestions for a book on <a href="http://www.barnesandnoble.com/">barnesandnoble.com</a>.</p>
 <p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/fools-assassin-rating.png"><img alt="Fool's Assassin" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/fools-assassin-rating.png" /></a></p>
 <p>(Copying the text from the screenshot:</p>
 <ul>
@@ -1494,111 +1612,6 @@
 </script>
 
                     </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2012-07-06T04:15:00+02:00">
-          on&nbsp;Fri 06 July 2012
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p>One of the great things about Twitter is that it&#8217;s a global conversation anyone can join anytime. Eavesdropping on the world, what what!</p>
-
-  <p>Of course, it gets even better when you can <em>mine</em> all this chatter to study the way humans live and interact.</p>
-
-  <p>For example, <a href="http://blog.echen.me/2011/04/18/twifferences-between-californians-and-new-yorkers/">how do people in New York City differ from those in Silicon Valley?</a> We tend to think they&#8217;re more financially driven and restless with the world &#8211; is this true, and if so, <a href="http://blog.echen.me/2011/04/18/twifferences-between-californians-and-new-yorkers/">how much more</a>?</p>
-
-  <p>Or how does language change as you travel to different regions? Recall the classic soda vs. pop. vs. coke question: some people use the word &#8220;soda&#8221; to describe their soft drinks, others use &#8220;pop&#8221;, and still others use &#8220;coke&#8221;. Who says what where?</p>
-
-  <p>Let&#8217;s take a look.</p>
-
-  <p><a href="https://dl.dropbox.com/u/10506/blog/sodapop/united-states.png"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/united-states.png" alt="United States" /></a></p>
-
-  <p>To make this map, I sampled geo-tagged tweets containing the words &#8220;soda&#8221;, &#8220;pop&#8221;, or &#8220;coke&#8221;, performed some state-of-the-art NLP technology to ensure the tweets were soft drink related (e.g., the tweets had to contain &#8220;drink soda&#8221; or &#8220;drink a pop&#8221;), and tried to filter out coke tweets that were specifically about the Coke brand (e.g., Coke Zero).</p>
-
-  <p>It&#8217;s a little cluttered, though, so let&#8217;s clean it up by aggregating nearby tweets.</p>
-
-  <p><a href="https://dl.dropbox.com/u/10506/blog/sodapop/united_states_binned.png"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/united_states_binned.png" alt="United States Binned" /></a></p>
-
-  <p>Here, I bucketed all tweets within a 0.333 latitude/longitude radius, calculated the term distribution within each bucket, and colored each bucket with the word furthest from its overall mean. I also sized each point according to the (log-transformed) number of tweets in the bucket.</p>
-
-  <p>We can see that:</p>
-
-  <ul>
-  <li>The South is pretty Coke-heavy.</li>
-  <li>Soda belongs to the Northeast and far West.</li>
-  <li>Pop gets the mid-West, except for some interesting spots of blue around Wisconsin and the Illinois-Missouri border.</li>
-  </ul>
-
-
-  <p>For comparison, here&#8217;s another map based on a survey at <a href="http://www.popvssoda.com/">popvssoda.com</a>.</p>
-
-  <p><a href="https://dl.dropbox.com/u/10506/blog/sodapop/popvssoda.png"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/popvssoda.png" alt="Pop vs. Soda Map" /></a></p>
-
-  <p>We can see similar patterns, though interestingly, our map has less Coke in the Southeast and less pop in the Northwest.</p>
-
-  <p>Finally, here&#8217;s a world map of the terms, bucketed again. Notice that &#8220;pop&#8221; seems to be prevalent only in parts of the United States and Canada.</p>
-
-  <p><a href="https://dl.dropbox.com/u/10506/blog/sodapop/world-map.png"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/world-map.png" alt="World" /></a></p>
-
-  <p>As some astute readers noted, though, the seeming dominance of coke is probably due to the difficulty in distinguishing the generic use of coke for soft drinks in general from the particular use of coke for referring to the Coca-Cola brand.</p>
-
-  <p>So let&#8217;s instead look at a world map of a couple other soft drink terms (&#8220;fizzy drink&#8221;, &#8220;mineral&#8221;, and &#8220;tonic&#8221;):</p>
-
-  <p><a href="https://dl.dropbox.com/u/10506/blog/sodapop/fizzy-mineral-tonic.png"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/fizzy-mineral-tonic.png" alt="Fizzy Drink vs. Mineral vs. Tonic" /></a></p>
-
-  <p>Notice that:</p>
-
-  <ul>
-  <li>&#8220;Fizzy drink&#8221; shows up for the UK, New Zealand, and Maine.</li>
-  <li>&#8220;Tonic&#8221; appears in Massachusetts.</li>
-  <li>While South Africa gets &#8220;fizzy drink&#8221;, Nigeria gets &#8220;mineral&#8221;.</li>
-  </ul>
-
-
-  <p>I&#8217;ve been getting a lot of questions lately about interesting things you can do with the Twitter API, so this was just one small project I&#8217;ve worked on to illustrate. <a href="http://www.cc.gatech.edu/~jeisenst/papers/emnlp2010.pdf">This paper</a> contains another awesome application of Twitter data to geographic language variation, and just for fun, here are a few other cute mini-projects:</p>
-
-  <p>What do people eat during the Super Bowl? (wings and beer, apparently)</p>
-
-  <p><a href="https://twitter.com/echen/status/166343879547822080"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/superbowl-snacks.png" alt="Superbowl Snacks" /></a></p>
-
-  <p>What do people want for Christmas, compared to what they actually get?</p>
-
-  <p><a href="https://twitter.com/echen/status/153683967315419136"><img src="https://dl.dropbox.com/u/10506/blog/sodapop/xmas.png" alt="Christmas" /></a></p>
-
-  <p>What do guys and girls <em>really</em> say?</p>
-
-  <p><a href="https://twitter.com/echen/status/261667822793551873/photo/1"><img src="https://dl.dropbox.com/u/10506/twitter/shitguysandgirlssay.png" alt="Shit Guys and Girls Say" /></a></p>
-
-  <p>When were people losing and gaining power during Hurricane Sandy? (<a href="http://blog.echen.me/hurricane-sandy-outages/">click</a> the image to interact)</p>
-
-  <p><a href="http://blog.echen.me/hurricane-sandy-outages/"><img src="https://dl.dropbox.com/u/10506/twitter/sandy-outages.png" alt="Sandy Power Outages" /></a></p>
-
-  <p>How does information of a <em>geographic</em>-specific nature spread? (<a href="http://hurricanesandy.herokuapp.com/">click</a> the image to see a dynamic visualization of when and where tweets related to surviving Hurricane Sandy were shared)</p>
-
-  <p><a href="http://hurricanesandy.herokuapp.com/"><img src="https://dl.dropbox.com/u/10506/twitter/sandy-spread.png" alt="Hurricane Sandy Retweets" /></a></p>
-
-  <p>Can we use Twitter to measure presidential votes? (yes!)</p>
-
-  <p><a href="https://twitter.com/echen/status/265894918382305284/photo/1"><img src="https://dl.dropbox.com/u/10506/twitter/electoral-map.png" alt="Electoral Map" /></a></p>
-  </div>  
-
-                    </article>
  
 <div class="paginator">
     <div class="navButton">Page 1 / 7</div>
@@ -1611,32 +1624,48 @@
   
 	      <div class="LaunchyardDetail">
 	        <p>
-	          <a class="title" href="http://blog.echen.me/">Edwin Chen</a>	          
+	          <a style="text-align: left" class="title" href="http://blog.echen.me/">Edwin Chen</a>	          
 	          <br/>
-	          Hanging. MIT, MSR, Clarium, Twitter, Google, Dropbox.
-	          <br /><br />
-            <a href="mailto:hello[at]echen.me">Email</a><br />
-            <a href="https://twitter.com/#!/echen">Twitter</a><br/>
-            <a href="https://github.com/echen">Github</a><br/>
-            <a href="https://plus.google.com/113804726252165471503/">Google+</a><br/>
-            <a href="http://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
-            <a href="http://quora.com/edwin-chen-1">Quora</a><br/>
-            <br />
-            <a href="http://blog.echen.me/feeds/all.atom.xml">Atom</a> / <a href="http://blog.echen.me/feeds/all.rss.xml">RSS</a>
-          </p>
-          <br />
+
+	        </p>
+	        
+	        <div id="about" style="text-align: left">
+	          I write about math, machine learning, and data science.<br/><br/>
+	          	          
+	          I used to work on:<br/>
+	          <ul>
+	            <li>Math, computer science, and linguistics at MIT</li>
+	            <li>Speech recognition at Microsoft</li>
+	            <li>Research and engineering at Clarium Capital</li>	            
+	            <li>Ads quality at Twitter</li>	            
+	            <li>Statistics and machine learning at Google</li>	            
+	            <li>Data science at Dropbox</li>	            
+	          </ul>
+
+	          <div style="text-align: center">
+              <a href="mailto:hello[at]echen.me">Email</a><br />
+              <a href="https://twitter.com/#!/echen">Twitter</a><br/>
+              <a href="https://github.com/echen">Github</a><br/>
+              <a href="https://plus.google.com/113804726252165471503/">Google+</a><br/>
+              <a href="http://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
+              <a href="http://quora.com/edwin-chen-1">Quora</a><br/>
+              <br />
+              <a href="http://blog.echen.me/feeds/all.atom.xml">Atom</a> / <a href="http://blog.echen.me/feeds/all.rss.xml">RSS</a>
+            </div>
+          </div>
+
           <div id="recent_posts">
               <h3>Recent Posts</h3>
-                <a href="http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
-                <a href="http://blog.echen.me/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
-                <a href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
-                <a href="http://blog.echen.me/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
-                <a href="http://blog.echen.me/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
-                <a href="http://blog.echen.me/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Making the Most of Mechanical Turk: Tips and Best Practices  </a><br /><br />
-                <a href="http://blog.echen.me/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
-                <a href="http://blog.echen.me/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
-                <a href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
-                <a href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2015/07/05/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Making the Most of Mechanical Turk: Tips and Best Practices  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
             
           </div>
         </div>
