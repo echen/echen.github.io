@@ -136,309 +136,6 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Making the Most of Mechanical Turk: Tips and Best Practices</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2012-04-25T04:15:00+02:00">
-          on&nbsp;Wed 25 April 2012
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p>(Update: we recently open-sourced <a href="https://github.com/twitter/clockworkraven">Clockwork Raven</a>, one of the human evaluation tools on top of Mechanical Turk that we built at Twitter.)</p>
-
-  <p>Big data&#8217;s all the rage, but sometimes a couple thousand <em>human</em>-generated labels can be pretty effective as well. And since I&#8217;ve been using Amazon&#8217;s Mechanical Turk system a lot recently, I figured I&#8217;d share some of the things I&#8217;ve learned.</p>
-
-  <h1>What is MTurk?</h1>
-
-  <p><a href="https://www.mturk.com/mturk/welcome">Mechanical Turk</a> is a crowdsourcing system developed by Amazon that connects you to a relatively cheap source of human labor on the fly.</p>
-
-  <p>For example, suppose you have 10,000 websites that you want to classify as spam or not. To get these classifications, you (the <em>Requester</em>):</p>
-
-  <ol>
-  <li>Create a CSV file containing the links and any other information.</li>
-  <li>Log onto MTurk and create a <em>HIT</em> (Human Intelligence Task) describing the job (possibly by using Amazon&#8217;s WYSIWYG editor or writing your own HTML, which can refer to columns in your CSV). [There&#8217;s also an MTurk API, if you don&#8217;t want to use the terrible UI.]</li>
-  <li>Within hours of starting the task, your judgments will be completed by <em>Turkers</em> around the world for pennies each.</li>
-  </ol>
-
-
-  <h1>More Example Tasks</h1>
-
-  <p>So what can you use MTurk for? Here are three of my favorite uses:</p>
-
-  <ul>
-  <li><a href="http://boingboing.net/2011/02/18/straight-line-traced.html">A Sequence of Lines Consecutively Traced by Five Hundred Individuals</a></li>
-  </ul>
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/lines.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/lines.png" alt="Lines Mutation" /></a></p>
-
-  <ul>
-  <li><a href="http://www.thesheepmarket.com/">The Sheep Market</a>: asking Turkers to draw sheep</li>
-  </ul>
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/sheep.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/sheep.png" alt="Sheep" /></a></p>
-
-  <ul>
-  <li><a href="http://groups.csail.mit.edu/uid/deneme/?p=329">Blurry Text Transcription</a> (Seriously! How is this possible?!)</li>
-  </ul>
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/blurry.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/blurry.png" alt="Blurry Text" /></a></p>
-
-  <p>And here are some more practical tasks, from HITs running right now:</p>
-
-  <ul>
-  <li>Categorize the sentiment of a tweet towards Panera Bread</li>
-  </ul>
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/panera.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/panera.png" alt="Panera" /></a></p>
-
-  <ul>
-  <li>Copy text from a business card</li>
-  </ul>
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/business-card.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/business-card.png" alt="Business Card" /></a></p>
-
-  <ul>
-  <li>Judge entity relatedness</li>
-  </ul>
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/entity.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/entity.png" alt="Angelina Jolie" /></a></p>
-
-  <h1>Increasing the quality of your judgments</h1>
-
-  <p>So what will the quality of your judgments look like?</p>
-
-  <p>If you don&#8217;t do anything special, then your output will contain a lot of garbage. I&#8217;ve thrown out entire tasks because of scammers who spend less than 5 seconds on each judgment (Amazon records the time each worker spends) and submit random clicks as output (e.g., labeling Nike as a food category).</p>
-
-  <p>Luckily, Amazon provides a few worker filters:</p>
-
-  <ul>
-  <li>You can require that only Turkers who have received at least (say) <strong>99% approval rate on at least 10,000 judgments in the past</strong> are allowed to work on your judgment. (If you see bad judgments from a worker, you can reject them and get your money back.)</li>
-  <li>About a year ago, Amazon launched a <strong>&#8220;categorization masters&#8221; and &#8220;photo masters&#8221;</strong> program, which allows only masters to work on your HITs. According to a chat with a member of the MTurk team, Amazon assigns these master badges by creating special tasks (anonymously, and for which Amazon already knows the answer) and measuring the quality of each worker&#8217;s response to these tasks.</li>
-  <li>You can also create a custom filter and <strong>handpick who gets allowed to work for you</strong>, or set up a <strong>qualification test</strong> that workers are required to take before working on your tasks.</li>
-  </ul>
-
-
-  <p>I&#8217;ve used different combinations of the first two filters, and gotten excellent results &#8211; compared to in-house judges I&#8217;ve worked with in person and paid \$20-30 an hour, the judgments on Mechanical Turk have been just as good and sometimes even better. (I often ask my judges to explain their judgments, which makes it easy to detect high quality workers.) For example, here are some typical response I&#8217;ve received when asking judges to determine which of two products a given Twitter user might be more interested in:</p>
-
-  <blockquote><p>The user is a female obsessed with Twilight Movies and Rob Pattinson. She tweets and follows both subjects. Movie tickets would be interesting to her.</p></blockquote>
-
-
-
-
-  <blockquote><p>He doesn&#8217;t seem to play video games, and he doesn&#8217;t seem technical enough to care about running Windows on a Mac. Neither of these products are a good fit for him.</p></blockquote>
-
-
-  <p>In fact, I&#8217;ll frequently also get emails from Turkers giving me suggestions on how to improve my tasks or asking how they can do them better. (Amazon allows workers to email you. The only way for the requester to initiate a conversation, though, is by paying the worker a small bonus for excellent work, and including a message with the bonus.) Here are excerpts from some emails I&#8217;ve received:</p>
-
-  <blockquote><p>I just wanted to check in to be sure that once I figured things out that I was doing your hits the way you intended them to be done. I want to be sure that you are getting the data that you need from the work. Please do not hesitate to let me know if there is anything that I can do to improve the way I am working your HITs. This is my full time job while I stay at home with my kids, so I like to check with the requesters to be sure that I am putting out the work that they are looking for. Any suggestion is welcome.</p></blockquote>
-
-
-
-
-  <blockquote><p>Frankly, lingerie, makeup, and feminine hygiene are the only male-exclusionary topics I can think of, and it feels knee-jerk sexist to mark any sports-related site for men. That said, should I hew more closely to gender stereotypes or be politically correct? (from a HIT where I was gathering gender classification data)</p></blockquote>
-
-
-
-
-  <blockquote><p>I do think a few more categories are needed but keeping the number down overall is good - 50 or 60 to choose from can be overwhelming and not worth the time. I may have mentioned I never used the Photography one (and I did a lot of those) so that is a good candidate for elimination.</p></blockquote>
-
-
-  <p>That said, despite the approval rate filters and masters badges, I do occasionally get a couple scammers in the mix (or even just judges who don&#8217;t produce as excellent work). So one suggestion is to run an initial task with these filters applied, find the workers with the best quality, and from then on use a custom pool containing these Turkers alone.</p>
-
-  <h1>How much to pay</h1>
-
-  <p>So how much should you pay your workers?</p>
-
-  <p>New Turkers and Turkers who don&#8217;t meet the strict filters can be paid less, but most of my high-quality workers expect to make about \$8-14 an hour. (You can only specify how much you pay per judgment, but Amazon will tell you how long each item ends up taking on average.) For example, here&#8217;s what several Turkers said what I asked them directly how much they make:</p>
-
-  <blockquote><p>Most of the work I do is either writing or editing.  When editing work is available, I make \$15-20 per hour.  I&#8217;m a slower writer than an editor, so I average \$10-12 per hour with writing.  I also judge sentiments of messages and average about \$8 per hour with that type of work. I would like to average a minimum of no less than \$8 per hour.</p><p>A big factor in deciding to do a task or not comes from the time investment involved. The two big time sinks are either googling/searching/having to go to another site, or having to write something as part of your reply. If I remember correctly, a) your tasks did require looking at another page but either the link was right there OR, better yet, you had that page embedded in the HIT itself so clicking out of the window wasn&#8217;t necessary (turkers get very excited about this), and b) the quality of the pay rate was such that it easily outweighed the time it took to leave an explanatory comment. </p><p>For me at least, those things can&#8217;t be underestimated. Sure, your tasks may be a little time-consuming, but I figure a good task is one I can make 10 to 12 cents a minute on. Your task might take longer but I&#8217;m definitely still coming out ahead.</p><p>From my own experience, I work hardest and best for a requester that pays well and doesn&#8217;t reject (or at least seems to have a reason for a rejection when it happens). If a requester is going to accept the majority of my work, I as a worker feel that obligates me to provide them with the best quality possible. Similarly, although I&#8217;m conscientious with all tasks, I&#8217;m especially so with a high-paying one: it would be easy to take advantage of a high-pay, low-reject requester - which would ultimately lead them to either lower the pay or change the acceptance criteria. I don&#8217;t want that!! That&#8217;s the kind of requester I want around. I&#8217;m grateful for high pay and fair policies and that kind of requester gets an above-and-beyond effort from me.</p></blockquote>
-
-
-
-
-  <blockquote><p>For the pay, I have worked on master&#8217;s hits that have ranged from \$6-\$16 per hour. Averaging them out works out to around \$9, which isn&#8217;t a bad wage. I have two requesters that I work for that don&#8217;t use the master qualification but instead have closed qualifications that they&#8217;ve assigned to their best workers. Those tasks pay between \$12 and \$15 per hour, so no matter what I&#8217;m working on I will stop what I&#8217;m doing to work on them. The best paying hits are always done very quickly, so most of the time if you check out mturk and look at the tasks available you won&#8217;t get a very good idea of average pay because the terrible paying hits will sit on the board until they expire.</p></blockquote>
-
-
-  <p>Obviously, this is self-reported, so there&#8217;s a strong possibility that the Turkers are artificially inflating their numbers. But this does match what I&#8217;ve been told by a manager on the MTurk team, as well as what Turkers self-report on <a href="http://turkernation.com/">TurkerNation</a>.</p>
-
-  <p>A good suggestion regarding pay is to start at the lower end of the scale, around \$6-8 per hour, and increase that until you get both the quality and speed you want.</p>
-
-  <h1>Other design tips</h1>
-
-  <p>Interestingly, according to what Turkers (see the excerpts above) and my Amazon contact say, as well as other research I&#8217;ve seen (e.g., <a href="http://groups.csail.mit.edu/uid/deneme/?p=680">this paper</a>), pay is <em>not</em> at the absolute forefront of Turkers&#8217; minds when they decide what to work on. Instead, they focus more on requesters they&#8217;ve already established a good relationship with, HITs with many items (so they can quickly settle into a rhythm), HITs they know they&#8217;ll be paid for (so they&#8217;re not worried about rejections), and HITs that they generally enjoy doing more.</p>
-
-  <p>So here are a couple suggestions:</p>
-
-  <ul>
-  <li>If your task is hard and there&#8217;s no clearly correct answer, even good Turkers might be worried that you&#8217;ll reject their judgments (and so they might skip over your HIT). So make it clear in your instructions that you won&#8217;t reject any judgments, or that you won&#8217;t reject any judgments with an honest effort.</li>
-  <li>Make your instructions collapsible, or link to them in a separate site. Scrolling is kind of annoying on Mechanical Turk (I know &#8211; I&#8217;ve tried working on HITs myself), so you should minimize the amount workers have to scroll. Ideally, everything fits on a single screen. Plus, the less workers have to scroll, the faster your HITs will get done. For example, here are excerpts from emails I received from two different Turkers when I first started out:</li>
-  </ul>
-
-
-  <blockquote><p>I have a suggestion that would really make things go a little quicker. Is there anyway you could script the twitter link to automatically open in a new tab? It amazes me how much it can slow you down to have to right click and open it manually in another tab, and when you forget, you have to take a few more steps to get back to where you were.</p></blockquote>
-
-
-
-
-  <blockquote><p>It would be amazing if the Twitter account could be on the same page instead of having to click to get to another screen - the work would go *exponentially* faster! Overall, I&#8217;m enjoying them - and I&#8217;m not the only one. Despite your stringent requirements these are disappearing pretty quickly.</p></blockquote>
-
-
-  <ul>
-  <li>Introduce yourself on <a href="http://turkernation.com/">TurkerNation</a>, a forum where Turkers and Requesters go to talk about Mechanical Turk. This helps establish your reputation as a good requester who listens to feedback, which will make good Turkers want to work for you. (More on this below.)</li>
-  <li>Approve judgments quickly: Turkers want <a href="http://en.wikipedia.org/wiki/Hyperbolic_discounting">money now instead of money later</a>. For example, one worker told me:</li>
-  </ul>
-
-
-  <blockquote><p>Quick approval is important, too. Watching that money pile up is a serious motivator; I&#8217;ll sometimes choose a lower-paying task that approves in close to real time over a higher-paying one that won&#8217;t pay out for several days.</p></blockquote>
-
-
-  <p>When using my trusted set of workers, I let Amazon auto-approve all judgments within a couple hours.</p>
-
-  <h1>Reputation</h1>
-
-  <p>Reputation is pretty important. Turkers love requesters who take the time to respond to emails and incorporate suggestions. Excerpts from emails I&#8217;ve received:</p>
-
-  <blockquote><p>I LOVE it when requesters care enough to ask the opinion of us lowly turkers and am more than willing to take a few minutes to help them with anything. I look forward to seeing what you cook up!</p></blockquote>
-
-
-
-
-  <blockquote><p>Thanks for taking the time to try to make your hits better in both pay and design. It&#8217;s great to see a requester that actually cares, when most don&#8217;t. If you have any other questions for me, feel free to ask. I hope to work for you again soon.</p></blockquote>
-
-
-
-
-  <blockquote><p>From my own experience, I work hardest and best for a requester that pays well and doesn&#8217;t reject (or at least seems to have a reason for a rejection when it happens). If a requester is going to accept the majority of my work, I as a worker feel that obligates me to provide them with the best quality possible. Similarly, although I&#8217;m conscientious with all tasks, I&#8217;m especially so with a high-paying one: it would be easy to take advantage of a high-pay, low-reject requester - which would ultimately lead them to either lower the pay or change the acceptance criteria. I don&#8217;t want that!! That&#8217;s the kind of requester I want around. I&#8217;m grateful for high pay and fair policies and that kind of requester gets an above-and-beyond effort from me.</p></blockquote>
-
-
-  <p>I&#8217;ve gotten great suggestions from a lot of Turkers (sometimes, when launching a new type of experiment, I&#8217;ll do a quick trial run in order to get some fast feedback before spending more time on the HIT design), and I suspect it&#8217;s partly because I&#8217;ve taken the time to connect with my workers.</p>
-
-  <p>So, as suggested above, one way of quickly garnering some goodwill when you&#8217;re first getting started is to make a post introducing yourself on TurkerNation. (There&#8217;s a <a href="http://turkernation.com/forumdisplay.php?23-Requester-Introductions">sub-forum</a> devoted to this exact purpose, in fact.)</p>
-
-  <p>This is useful because workers will often start new threads recommending particular requesters and encouraging other Turkers to work for them. In the amusing thread praising me, for example, one worker mentioned that she&#8217;d been hesitant to work on my HITs until she saw the post confirming I was a good requester.</p>
-
-  <p>Also, many Turkers mention that they always refer to <a href="http://turkopticon.differenceengines.com/">Turkopticon</a>, a Firefox extension that displays ratings of requesters by other Turkers, before accepting work from a requester they haven&#8217;t worked for before.</p>
-
-  <p>This is what TurkOpticon looks like:</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/jimyoung.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/jimyoung.png" alt="Jim Young" /></a></p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/mturk/productrnr.png"><img src="http://dl.dropbox.com/u/10506/blog/mturk/productrnr.png" alt="ProductRNR" /></a></p>
-
-  <p>Here are some comments about TurkOpticon on TurkerNation:</p>
-
-  <blockquote><p>I think that it is well worth taking the time to check reputation of requesters via TurkOpticon and/or in this forum. Checking first substantially minimizes your risk of rejection, of being blocked, and of being paid sub-human wages.</p></blockquote>
-
-
-
-
-  <blockquote><p>Blindly doing hits for requesters that were never heard of before got me with a pretty bad approval rate when I first started turking. After that, I rigorously inspect every requester that doesn&#8217;t have any ratings on Turkopticon. Actually, because of that little add-on I&#8217;ve been able to maintain a steady 98-99% approval rate ever since I began using it.</p></blockquote>
-
-
-  <h1>Waiting Time</h1>
-
-  <p>So how long does it take to get judgments? I&#8217;ve restricted the available worker pool pretty strongly to ensure high quality, and it&#8217;s still only taken a few hours to get a thousand judgments.</p>
-
-  <p>That&#8217;s pretty awesome. I&#8217;ve worked a lot with human evaluation systems before, but always using a small in-house set of judges &#8211; and what with constraints on when those judges were available, how much they were able to work each week, and other tasks taking higher priority, it&#8217;d invariably take at least a few days before I&#8217;d receive any useful data back.</p>
-
-  <p>Getting thousands of judgments in a couple hours means I can launch an MTurk task when I leave for work in the morning and have it done before lunch, which makes experimenting with a lot of different ideas much faster and easier.</p>
-
-  <h1>Scale</h1>
-
-  <p>So how many judgments can you actually get before you run out of workers? I&#8217;m still a small fish in the MTurk system, but I&#8217;m told by my MTurk contact at Amazon that there are companies getting over a million judgments each month.</p>
-
-  <p>I also asked my pool of workers how much they&#8217;re available to work, in case I would need to scale up to more judgments later on, and here are some samples from what they said:</p>
-
-  <blockquote><p>Typically, I work a total of 20-25 hours per week for a small select group of requesters.  I could put in at least 20 hours per week for you alone if you were to make a custom qualification for me.  If I know that I can continue to do exemplary work beyond 20 hours, I would be willing to put forth more hours of work.  I want to make sure that you are getting the quality of work that you need.</p></blockquote>
-
-
-
-
-  <blockquote><p>On a day when I don&#8217;t have those other assignments, I&#8217;d guess I&#8217;m turking 5 to 7 hours a day  (including weekends). I like to look for a large batch of HITs (preferably in the thousands) so that I can settle into a groove of being able to do them fairly quickly and once I find something like that I can happily settle in for several hours at a time.</p></blockquote>
-
-
-
-
-  <blockquote><p>I spend more time than the average person on mturk. I log on at about 5:30 AM and am constantly checking for work throughout the day. If the work is available, I will spend until 9PM working. Granted, I do have to take some breaks throughout the day to take care of my 3 year old, but for the most part, I am doing my best to earn while the hits are posted. If I take any time off, it is on the weekend (if I reach my earning goals for the week).</p></blockquote>
-
-
-
-
-  <blockquote><p>Of course, how much I can work varies. My main source of income is transcription for a market research company and mturk fills in my downtime. If I have an audio file from them, that gets my attention. If not, I&#8217;m on mturk. As a single mother working from home, I love the flexibility.</p></blockquote>
-
-
-  <h1>End</h1>
-
-  <p>I&#8217;ll end with a couple other notes.</p>
-
-  <ul>
-  <li>How do other companies use human evaluation systems? Google and Bing use human judgments in their search metrics, though I think they use an in-house set of judges rather than Mechanical Turk. I&#8217;ve heard Aardvark and Quora used Mechanical Turk to seed answers when they first launched their sites. There&#8217;s also a nice set of case studies <a href="http://aws.amazon.com/solutions/case-studies/">here</a> (search for the &#8220;On-Demand Workforce&#8221; section); in particular, Knewton&#8217;s use of <a href="http://aws.amazon.com/solutions/case-studies/knewton/">MTurk for performance and QA testing</a> is pretty interesting.</li>
-  <li>I&#8217;ve described one way of finding good workers, namely, using the filters Amazon provides. Another way could be to build a reputation system yourself, perhaps using an EM-style algorithm to determine judge quality.</li>
-  <li><a href="http://crowdflower.com/">Crowdflower</a> is another crowdsourcing system. There are a couple differences with MTurk:
-
-  <ul>
-  <li>Crowdflower&#8217;s worker pool consists of about 20 different sources, including Mechanical Turk, as well as sources like TrialPay (people can opt to complete a MTurk task to receive some kind of TrialPay deal).</li>
-  <li>Crowdflower offers both a self-serve platform (like MTurk), as well as a more enterprise-centric solution (where you work directly with a Crowdflower employee). The enterprise offering is pretty nice, since that means Crowdflower will take care of the lower-level details for you (like actually designing and creating the job), and they can offer suggestions for designing the HIT based on their experience.</li>
-  <li>Crowdflower provides the option of adding gold standard judgments to your task (items where you provide a golden answer, which are then randomly shown to workers; these are then used to monitor judges) and they try to automatically determine judge quality and item accuracy for you (e.g., by having each item judged by three different workers).</li>
-  </ul>
-  </li>
-  <li>An excellent crowdsourcing resource is <a href="http://crowdscope.org/index.php?title=Main_Page">CrowdScope</a>. I also like the <a href="http://groups.csail.mit.edu/uid/deneme/">Deneme</a> blog (though it hasn&#8217;t been updated in a while) for a lot of fun experiments. Panos Ipeirotis&#8217; <a href="http://www.behind-the-enemy-lines.com/">blog</a> has good information as well.</li>
-  </ul>
-
-  </div>  
-<script type= "text/javascript">
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-</script>
-
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
                         <h1 class="entry-title"><a href="http://blog.echen.me/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process</a></h1>
 <div class="post-info">
 	<ul>
@@ -1982,6 +1679,442 @@
 </script>
 
                     </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2012-01-17T04:15:00+01:00">
+          on&nbsp;Tue 17 January 2012
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>This is a bare-bones introduction to <a href="http://had.co.nz/ggplot2/">ggplot2</a>, a visualization package in R. It assumes no knowledge of R.</p>
+
+  <p>For a better-looking version of this post, see <a href="https://github.com/echen/ggplot2-tutorial">this Github repository</a>, which also contains some of the <a href="https://github.com/echen/ggplot2-tutorial/tree/master/data">example datasets</a> I use and a <a href="https://github.com/echen/ggplot2-tutorial/blob/master/ggplot2-tutorial.R">literate programming version</a> of this tutorial.</p>
+
+  <h1>Preview</h1>
+
+  <p>Let&#8217;s start with a preview of what ggplot2 can do.</p>
+
+  <p>Given Fisher&#8217;s <a href="http://en.wikipedia.org/wiki/Iris_flower_data_set">iris</a> data set and one simple command&#8230;</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>&#8230;we can produce this plot of sepal length vs. petal length, colored by species.</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-specied.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-specied.png" alt="Sepal vs. Petal, Colored by Species" /></a></p>
+
+  <h1>Installation</h1>
+
+  <p>You can download R <a href="http://cran.opensourceresources.org/">here</a>. After installation, you can launch R in interactive mode by either typing <code>R</code> on the command line or opening the standard GUI (which should have been included in the download).</p>
+
+  <h1>R Basics</h1>
+
+  <h2>Vectors</h2>
+
+  <p>Vectors are a core data structure in R, and are created with <code>c()</code>. Elements in a vector must be of the same type.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">numbers <span class="o">=</span> c<span class="p">(</span><span class="m">23</span><span class="p">,</span> <span class="m">13</span><span class="p">,</span> <span class="m">5</span><span class="p">,</span> <span class="m">7</span><span class="p">,</span> <span class="m">31</span><span class="p">)</span>
+  </span><span class="line">names <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;edwin&quot;</span><span class="p">,</span> <span class="s">&quot;alice&quot;</span><span class="p">,</span> <span class="s">&quot;bob&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Elements are indexed starting at 1, and are accessed with <code>[]</code> notation.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">numbers<span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="c1"># 23</span>
+  </span><span class="line">names<span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="c1"># edwin</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>Data frames</h2>
+
+  <p><a href="http://www.r-tutor.com/r-introduction/data-frame">Data frames</a> are like matrices, but with named columns of different types (similar to <a href="http://code.google.com/p/sqldf/">database tables</a>).</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">books <span class="o">=</span> data.frame<span class="p">(</span>
+  </span><span class="line">  title <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;harry potter&quot;</span><span class="p">,</span> <span class="s">&quot;war and peace&quot;</span><span class="p">,</span> <span class="s">&quot;lord of the rings&quot;</span><span class="p">),</span> <span class="c1"># column named &quot;title&quot;</span>
+  </span><span class="line">  author <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;rowling&quot;</span><span class="p">,</span> <span class="s">&quot;tolstoy&quot;</span><span class="p">,</span> <span class="s">&quot;tolkien&quot;</span><span class="p">),</span>
+  </span><span class="line">  num_pages <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;350&quot;</span><span class="p">,</span> <span class="s">&quot;875&quot;</span><span class="p">,</span> <span class="s">&quot;500&quot;</span><span class="p">)</span>
+  </span><span class="line"><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>You can access columns of a data frame with <code>$</code>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">books<span class="p">$</span>title <span class="c1"># c(&quot;harry potter&quot;, &quot;war and peace&quot;, &quot;lord of the rings&quot;)</span>
+  </span><span class="line">books<span class="p">$</span>author<span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="c1"># &quot;rowling&quot;</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>You can also create new columns with <code>$</code>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">books<span class="p">$</span>num_bought_today <span class="o">=</span> c<span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">5</span><span class="p">,</span> <span class="m">8</span><span class="p">)</span>
+  </span><span class="line">books<span class="p">$</span>num_bought_yesterday <span class="o">=</span> c<span class="p">(</span><span class="m">18</span><span class="p">,</span> <span class="m">13</span><span class="p">,</span> <span class="m">20</span><span class="p">)</span>
+  </span><span class="line">  
+  </span><span class="line">books<span class="p">$</span>total\_num\_bought <span class="o">=</span> books<span class="p">$</span>num_bought_today <span class="o">+</span> books<span class="p">$</span>num_bought_yesterday
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>read.table</h2>
+
+  <p>Suppose you want to import a TSV file into R as a data frame.</p>
+
+  <h3>tsv file without header</h3>
+
+  <p>For example, consider the <a href="https://github.com/echen/r-tutorial/blob/master/data/students.tsv"><code>data/students.tsv</code></a> file (with columns describing each student&#8217;s age, test score, and name).</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="m">13</span>   <span class="m">100</span> alice
+  </span><span class="line"><span class="m">14</span>   <span class="m">95</span>  bob
+  </span><span class="line"><span class="m">13</span>   <span class="m">82</span>  eve
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>We can import this file into R using <a href="http://stat.ethz.ch/R-manual/R-devel/library/utils/html/read.table.html"><code>read.table()</code></a>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">students <span class="o">=</span> read.table<span class="p">(</span><span class="s">&quot;data/students.tsv&quot;</span><span class="p">,</span>
+  </span><span class="line">  header <span class="o">=</span> <span class="k-Variable">F</span><span class="p">,</span> <span class="c1"># file does not contain a header (`F` is short for `FALSE`), so we must manually specify column names                    </span>
+  </span><span class="line">  sep <span class="o">=</span> <span class="s">&quot;\t&quot;</span><span class="p">,</span> <span class="c1"># file is tab-delimited        </span>
+  </span><span class="line">  col.names <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;age&quot;</span><span class="p">,</span> <span class="s">&quot;score&quot;</span><span class="p">,</span> <span class="s">&quot;name&quot;</span><span class="p">)</span> <span class="c1"># column names</span>
+  </span><span class="line"><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>We can now access the different columns in the data frame with <code>students$age</code>, <code>students$score</code>, and <code>students$name</code>.</p>
+
+  <h3>csv file with header</h3>
+
+  <p>For an example of a file in a different format, look at the <a href="https://github.com/echen/r-tutorial/blob/master/data/studentsWithHeader.tsv"><code>data/studentsWithHeader.tsv</code></a> file.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">age<span class="p">,</span>score<span class="p">,</span>name
+  </span><span class="line"><span class="m">13</span><span class="p">,</span><span class="m">100</span><span class="p">,</span>alice
+  </span><span class="line"><span class="m">14</span><span class="p">,</span><span class="m">95</span><span class="p">,</span>bob
+  </span><span class="line"><span class="m">13</span><span class="p">,</span><span class="m">82</span><span class="p">,</span>eve
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Here we have the same data, but now the file is comma-delimited and contains a header. We can import this file with</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">students <span class="o">=</span> read.table<span class="p">(</span><span class="s">&quot;data/students.tsv&quot;</span><span class="p">,</span>
+  </span><span class="line">  sep <span class="o">=</span> <span class="s">&quot;,&quot;</span><span class="p">,</span>
+  </span><span class="line">  header <span class="o">=</span> <span class="k-Variable">T</span>  <span class="c1"># first line contains column names, so we can immediately call `students$age`        </span>
+  </span><span class="line"><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>(Note: there is also a <code>read.csv</code> function that uses <code>sep = ","</code> by default.)</p>
+
+  <h2>help</h2>
+
+  <p>There are many more options that <code>read.table</code> can take. For a list of these, just type <code>help(read.table)</code> (or <code>?read.table</code>) at the prompt to access documentation.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># These work for other functions as well.</span>
+  </span><span class="line">help<span class="p">(</span>read.table<span class="p">)</span>
+  </span><span class="line">?read.table
+  </span></code></pre></td></tr></table></div>
+
+
+  <h1>ggplot2</h1>
+
+  <p>With these R basics in place, let&#8217;s dive into the ggplot2 package.</p>
+
+  <h2>Installation</h2>
+
+  <p>One of R&#8217;s greatest strengths is its excellent set of <a href="http://cran.r-project.org/web/packages/available_packages_by_name.html">packages</a>. To install a package, you can use the <code>install.packages()</code> function.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">install.packages<span class="p">(</span><span class="s">&quot;ggplot2&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>To load a package into your current R session, use <code>library()</code>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">library<span class="p">(</span>ggplot2<span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>Scatterplots with qplot()</h2>
+
+  <p>Let&#8217;s look at how to create a scatterplot in ggplot2. We&#8217;ll use the <code>iris</code> data frame that&#8217;s automatically loaded into R.</p>
+
+  <p>What does the data frame contain? We can use the <code>head</code> function to look at the first few rows.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">head<span class="p">(</span>iris<span class="p">)</span> <span class="c1"># by default, head displays the first 6 rows. see `?head`</span>
+  </span><span class="line">head<span class="p">(</span>iris<span class="p">,</span> n <span class="o">=</span> <span class="m">10</span><span class="p">)</span> <span class="c1"># we can also explicitly set the number of rows to display</span>
+  </span><span class="line">
+  </span><span class="line">Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+  </span><span class="line">         <span class="m">5.1</span>         <span class="m">3.5</span>          <span class="m">1.4</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">4.9</span>         <span class="m">3.0</span>          <span class="m">1.4</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">4.7</span>         <span class="m">3.2</span>          <span class="m">1.3</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">4.6</span>         <span class="m">3.1</span>          <span class="m">1.5</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">5.0</span>         <span class="m">3.6</span>          <span class="m">1.4</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">5.4</span>         <span class="m">3.9</span>          <span class="m">1.7</span>         <span class="m">0.4</span>  setosa
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>(The data frame actually contains three types of species: setosa, versicolor, and virginica.)</p>
+
+  <p>Let&#8217;s plot <code>Sepal.Length</code> against <code>Petal.Length</code> using ggplot2&#8217;s <code>qplot()</code> function.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">)</span>
+  </span><span class="line"><span class="c1"># Plot Sepal.Length vs. Petal.Length, using data from the `iris` data frame.</span>
+  </span><span class="line"><span class="c1"># * First argument `Sepal.Length` goes on the x-axis.</span>
+  </span><span class="line"><span class="c1"># * Second argument `Petal.Length` goes on the y-axis.</span>
+  </span><span class="line"><span class="c1"># * `data = iris` means to look for this data in the `iris` data frame.    </span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal.png" alt="Sepal Length vs. Petal Length" /></a></p>
+
+  <p>To see where each species is located in this graph, we can color each point by adding a <code>color = Species</code> argument.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">)</span> <span class="c1"># dude!</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-specied.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-specied.png" alt="Sepal vs. Petal, Colored by Species" /></a></p>
+
+  <p>Similarly, we can let the size of each point denote sepal width, by adding a <code>size = Sepal.Width</code> argument.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">,</span> size <span class="o">=</span> Petal.Width<span class="p">)</span>
+  </span><span class="line"><span class="c1"># We see that Iris setosa flowers have the narrowest petals.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-sized.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-sized.png" alt="Sepal vs. Petal, Sized by Petal Width" /></a></p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">,</span> size <span class="o">=</span> Petal.Width<span class="p">,</span> alpha <span class="o">=</span> I<span class="p">(</span><span class="m">0.7</span><span class="p">))</span>
+  </span><span class="line"><span class="c1"># By setting the alpha of each point to 0.7, we reduce the effects of overplotting.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-alpha.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-alpha.png" alt="Sepal vs. Petal, with Transparency" /></a></p>
+
+  <p>Finally, let&#8217;s fix the axis labels and add a title to the plot.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">,</span>
+  </span><span class="line">  xlab <span class="o">=</span> <span class="s">&quot;Sepal Length&quot;</span><span class="p">,</span> ylab <span class="o">=</span> <span class="s">&quot;Petal Length&quot;</span><span class="p">,</span>
+  </span><span class="line">  main <span class="o">=</span> <span class="s">&quot;Sepal vs. Petal Length in Fisher&#39;s Iris data&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-titled.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-titled.png" alt="Sepal vs. Petal, Titled" /></a></p>
+
+  <h2>Other common geoms</h2>
+
+  <p>In the scatterplot examples above, we implicitly used a <em>point</em> <strong>geom</strong>, the default when you supply two arguments to <code>qplot()</code>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># These two invocations are equivalent.</span>
+  </span><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;point&quot;</span><span class="p">)</span>
+  </span><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>But we can also easily use other types of geoms to create more kinds of plots.</p>
+
+  <h3>Barcharts: geom = &#8220;bar&#8221;</h3>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">movies <span class="o">=</span> data.frame<span class="p">(</span>
+  </span><span class="line">  director <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;spielberg&quot;</span><span class="p">,</span> <span class="s">&quot;spielberg&quot;</span><span class="p">,</span> <span class="s">&quot;spielberg&quot;</span><span class="p">,</span> <span class="s">&quot;jackson&quot;</span><span class="p">,</span> <span class="s">&quot;jackson&quot;</span><span class="p">),</span>
+  </span><span class="line">  movie <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;jaws&quot;</span><span class="p">,</span> <span class="s">&quot;avatar&quot;</span><span class="p">,</span> <span class="s">&quot;schindler&#39;s list&quot;</span><span class="p">,</span> <span class="s">&quot;lotr&quot;</span><span class="p">,</span> <span class="s">&quot;king kong&quot;</span><span class="p">),</span>
+  </span><span class="line">  minutes <span class="o">=</span> c<span class="p">(</span><span class="m">124</span><span class="p">,</span> <span class="m">163</span><span class="p">,</span> <span class="m">195</span><span class="p">,</span> <span class="m">600</span><span class="p">,</span> <span class="m">187</span><span class="p">)</span>
+  </span><span class="line"><span class="p">)</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1"># Plot the number of movies each director has.</span>
+  </span><span class="line">qplot<span class="p">(</span>director<span class="p">,</span> data <span class="o">=</span> movies<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;bar&quot;</span><span class="p">,</span> ylab <span class="o">=</span> <span class="s">&quot;# movies&quot;</span><span class="p">)</span>
+  </span><span class="line"><span class="c1"># By default, the height of each bar is simply a count.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/num-movies.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/num-movies.png" alt="# Movies" /></a></p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># But we can also supply a different weight.</span>
+  </span><span class="line"><span class="c1"># Here the height of each bar is the total running time of the director&#39;s movies.</span>
+  </span><span class="line">qplot<span class="p">(</span>director<span class="p">,</span> weight <span class="o">=</span> minutes<span class="p">,</span> data <span class="o">=</span> movies<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;bar&quot;</span><span class="p">,</span> ylab <span class="o">=</span> <span class="s">&quot;total length (min.)&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/total-length.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/total-length.png" alt="Total Running Time" /></a></p>
+
+  <h3>Line charts: geom = &#8220;line&#8221;</h3>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;line&quot;</span><span class="p">,</span> color <span class="o">=</span> Species<span class="p">)</span>
+  </span><span class="line"><span class="c1"># Using a line geom doesn&#39;t really make sense here, but hey.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-lined.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-lined.png" alt="Sepal vs. Petal, Lined" /></a></p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># `Orange` is another built-in data frame that describes the growth of orange trees.</span>
+  </span><span class="line">qplot<span class="p">(</span>age<span class="p">,</span> circumference<span class="p">,</span> data <span class="o">=</span> Orange<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;line&quot;</span><span class="p">,</span>
+  </span><span class="line">  colour <span class="o">=</span> Tree<span class="p">,</span>
+  </span><span class="line">  main <span class="o">=</span> <span class="s">&quot;How does orange tree circumference vary with age?&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/orange-tree-growth.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/orange-tree-growth.png" alt="Orange Tree Growth" /></a></p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># We can also plot both points and lines.</span>
+  </span><span class="line">qplot<span class="p">(</span>age<span class="p">,</span> circumference<span class="p">,</span> data <span class="o">=</span> Orange<span class="p">,</span> geom <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;point&quot;</span><span class="p">,</span> <span class="s">&quot;line&quot;</span><span class="p">),</span> colour <span class="o">=</span> Tree<span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/orange-tree-pointed.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/orange-tree-pointed.png" alt="Orange Tree with Points" /></a></p>
+
+  <p>And that&#8217;s it with what I&#8217;ll cover.</p>
+
+  <h1>Next Steps</h1>
+
+  <p>I skipped over a lot of aspects of R and ggplot2 in this intro.</p>
+
+  <p>For example,</p>
+
+  <ul>
+  <li>There are many geoms (and other functionalities) in ggplot2 that I didn&#8217;t cover, e.g., <a href="http://had.co.nz/ggplot2/geom_boxplot.html">boxplots</a> and <a href="http://had.co.nz/ggplot2/geom_histogram.html">histograms</a>.</li>
+  <li>I didn&#8217;t talk about ggplot2&#8217;s layering system, or the <a href="http://www.amazon.com/Grammar-Graphics-Statistics-Computing/dp/0387245448">grammar of graphics</a> it&#8217;s based on.</li>
+  </ul>
+
+
+  <p>So I&#8217;ll end with some additional resources on R and ggplot2.</p>
+
+  <ul>
+  <li>I don&#8217;t use it myself, but <a href="http://rstudio.org/">RStudio</a> is a popular IDE for R.</li>
+  <li>The <a href="http://had.co.nz/ggplot2/">official ggplot2 documentation</a> is great and has lots of examples. There&#8217;s also an excellent <a href="http://www.amazon.com/ggplot2-Elegant-Graphics-Data-Analysis/dp/0387981403">book</a>.</li>
+  <li><a href="http://plyr.had.co.nz/">plyr</a> is another fantastic R package that&#8217;s also by Hadley Wickham (the author of ggplot2).</li>
+  <li>The <a href="http://cran.r-project.org/doc/manuals/R-intro.html">official R introduction</a> is okay, but definitely not great. I haven&#8217;t found any R tutorials I really like, but I&#8217;ve heard good things about <a href="http://www.amazon.com/Art-Programming-Statistical-Software-Design/dp/1593273843">The Art of R Programming</a>.</li>
+  </ul>
+
+  </div>  
+<script type= "text/javascript">
+    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+        var mathjaxscript = document.createElement('script');
+        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+        mathjaxscript.type = 'text/javascript';
+        mathjaxscript.src = 'https:' == document.location.protocol
+                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+            "MathJax.Hub.Config({" +
+            "    config: ['MMLorHTML.js']," +
+            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+            "    displayAlign: 'center'," +
+            "    displayIndent: '0em'," +
+            "    showMathMenu: true," +
+            "    tex2jax: { " +
+            "        inlineMath: [ ['$','$'] ], " +
+            "        displayMath: [ ['$$','$$'] ]," +
+            "        processEscapes: true," +
+            "        preview: 'TeX'," +
+            "    }, " +
+            "    'HTML-CSS': { " +
+            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
+            "    } " +
+            "}); ";
+        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+    }
+</script>
+
+                    </article>
  
 <div class="paginator">
             <div class="navButton"> <a href="http://blog.echen.me/category/misc.html" >Prev</a></div>
@@ -2033,10 +2166,10 @@
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Making the Most of Mechanical Turk: Tips and Best Practices  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
             
           </div>
         </div>

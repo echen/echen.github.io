@@ -31,55 +31,6 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/04/27/choosing-a-machine-learning-classifier/">Choosing a Machine Learning Classifier</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-04-27T04:15:00+02:00">
-          on&nbsp;Wed 27 April 2011
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p>How do you know what machine learning algorithm to choose for your classification problem? Of course, if you really care about accuracy, your best bet is to test out a couple different ones (making sure to try different parameters within each algorithm as well), and select the best one by cross-validation. But if you&#8217;re simply looking for a &#8220;good enough&#8221; algorithm for your problem, or a place to start, here are some general guidelines I&#8217;ve found to work well over the years.</p>
-
-  <h1>How large is your training set?</h1>
-
-  <p>If your training set is small, high bias/low variance classifiers (e.g., Naive Bayes) have an advantage over low bias/high variance classifiers (e.g., kNN), since the latter will overfit. But low bias/high variance classifiers start to win out as your training set grows (they have lower asymptotic error), since high bias classifiers aren&#8217;t powerful enough to provide accurate models.</p>
-
-  <p>You can also think of this as a generative model vs. discriminative model distinction.</p>
-
-  <h1>Advantages of some particular algorithms</h1>
-
-  <p><strong>Advantages of Naive Bayes:</strong> Super simple, you&#8217;re just doing a bunch of counts. If the NB conditional independence assumption actually holds, a Naive Bayes classifier will converge quicker than discriminative models like logistic regression, so you need less training data. And even if the NB assumption doesn&#8217;t hold, a NB classifier still often does a great job in practice. A good bet if  want something fast and easy that performs pretty well. Its main disadvantage is that it can&#8217;t learn interactions between features (e.g., it can&#8217;t learn that although you love movies with Brad Pitt and Tom Cruise, you hate movies where they&#8217;re together).</p>
-
-  <p><strong>Advantages of Logistic Regression:</strong> Lots of ways to regularize your model, and you don&#8217;t have to worry as much about your features being correlated, like you do in Naive Bayes. You also have a nice probabilistic interpretation, unlike decision trees or SVMs, and you can easily update your model to take in new data (using an online gradient descent method), again unlike decision trees or SVMs. Use it if you want a probabilistic framework (e.g., to easily adjust classification thresholds, to say when you&#8217;re unsure, or to get confidence intervals) or if you expect to receive more training data in the future that you want to be able to quickly incorporate into your model.</p>
-
-  <p><strong>Advantages of Decision Trees:</strong> Easy to interpret and explain (for some people &#8211; I&#8217;m not sure I fall into this camp). They easily handle feature interactions and they&#8217;re non-parametric, so you don&#8217;t have to worry about outliers or whether the data is linearly separable (e.g., decision trees easily take care of cases where you have class A at the low end of some feature x, class B in the mid-range of feature x, and A again at the high end). One disadvantage is that they don&#8217;t support online learning, so you have to rebuild your tree when new examples come on. Another disadvantage is that they easily overfit, but that&#8217;s where ensemble methods like random forests (or boosted trees) come in. Plus, random forests are often the winner for lots of problems in classification (usually slightly ahead of SVMs, I believe), they&#8217;re fast and scalable, and you don&#8217;t have to worry about tuning a bunch of parameters like you do with SVMs, so they seem to be quite popular these days.</p>
-
-  <p><strong>Advantages of SVMs:</strong> High accuracy, nice theoretical guarantees regarding overfitting, and with an appropriate kernel they can work well even if you&#8217;re data isn&#8217;t linearly separable in the base feature space. Especially popular in text classification problems where very high-dimensional spaces are the norm. Memory-intensive, hard to interpret, and kind of annoying to run and tune, though, so I think random forests are starting to steal the crown.</p>
-
-  <h1>But&#8230;</h1>
-
-  <p>Recall, though, that better data often beats better algorithms, and designing good features goes a long way. And if you have a huge dataset, then whichever classification algorithm you use might not matter so much in terms of classification performance (so choose your algorithm based on speed or ease of use instead).</p>
-
-  <p>And to reiterate what I said above, if you really care about accuracy, you should definitely try a bunch of different classifiers and select the best one by cross-validation. Or, to take a lesson from the Netflix Prize (and Middle Earth), just use an ensemble method to choose them all.</p>
-  </div>  
-
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
                         <h1 class="entry-title"><a href="http://blog.echen.me/2011/04/25/kickstarter-data-analysis-success-and-pricing/">Kickstarter Data Analysis: Success and Pricing</a></h1>
 <div class="post-info">
 	<ul>
@@ -535,6 +486,112 @@
 </script>
 
                     </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/03/14/hacker-news-analysis/">Hacker News Analysis</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2011-03-14T04:15:00+01:00">
+          on&nbsp;Mon 14 March 2011
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  
+  <div class="entry-content"><p>I was playing around with the <a href="http://api.ihackernews.com/?db">Hacker News database</a> <a href="http://ronnieroller.com/">Ronnie Roller</a> made (thanks!), so I thought I&#8217;d post some of the things I looked at.</p>
+
+  <h1>Activity on the Site</h1>
+
+  <p>My first question was how activity on the site has increased over time. I looked at number of posts, points on posts, comments on posts, and number of users.</p>
+
+  <h2>Posts</h2>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/posts_by_month.png" alt="Hacker News Posts by Month" /></p>
+
+  <p>This looks like a strong linear fit, with an increase of 292 posts every month.</p>
+
+  <h2>Comments</h2>
+
+  <p>For comments, I fit a quadratic regression:</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/comments_by_month.png" alt="Hacker News Comments by Month" /></p>
+
+  <h2>Points</h2>
+
+  <p>A quadratic regression was also a better fit for points by month:</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/points_by_month.png" alt="Hacker News Points by Month" /></p>
+
+  <h2>Users</h2>
+
+  <p>And again for the number of distinct users with a submission:</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/users.png" alt="Hacker News Users by Month" /></p>
+
+  <h1>Points and Comments</h1>
+
+  <p>My next question was how points and comments related. Intuitively, posts with more points should have more comments, but it&#8217;s nice to check (maybe really good posts are kind of boring, so don&#8217;t lead to much discussion).</p>
+
+  <p>First, I plotted the points and comments of each individual post:</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/all_points_vs_comments.png" alt="All Points vs. Comments" /></p>
+
+  <p>As expected, there’s an overall positive correlation between points and comments. Interestingly, there are quite a few high-points posts with no comments.</p>
+
+  <p>The plot’s quite noisy, though, so let’s try cleaning it up a bit, by taking the median number of comments per points level (and removing posts at the higher end, where we have little data):</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/points_vs_median_comments.png" alt="Points vs. Median Comments" /></p>
+
+  <p>We see that posts with more points do tend to have more comments. Also, variance in number of comments is indicated by size and color, so (unsurprisingly) posts with more points have larger variance in their number of comments.</p>
+
+  <h1>Quality of Posts</h1>
+
+  <p>Another question was whether the quality of posts has degraded over time.</p>
+
+  <p>First, I computed a normalized &#8220;score&#8221; for each post, where a post&#8217;s score is defined as the number of points divided by the number of distinct users who made a submission in the same month. (The denominator is a rough proxy for the number of active users, and the goal of the score is to provide a way to compare posts across time.)</p>
+
+  <p>While the median score has declined over time (as perhaps should be expected, since only a fixed number of items can reach the front page):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/hn-analysis/median-score.png"><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/median-score.png" alt="Median Score" /></a></p>
+
+  <p>the absolute <em>number</em> of quality posts, defined as posts with a score greater than the (admittedly arbitrarily chosen) threshold 0.01, has increased (until possibly a dip starting in 2010):</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/num_quality_posts2.png" alt="Number of Quality Posts" /></p>
+
+  <p>(Of course, without some further analysis, it&#8217;s not clear how well this score measures quality of posts, so take these numbers with a grain of salt.)</p>
+
+  <h1>Company Trends</h1>
+
+  <p>Also, I wanted to see how certain topics have trended over time, so I looked at how mentions of some of the big-name companies (Google, Facebook, Microsoft, Yahoo, Twitter, Apple) have changed. For each company, I plotted the percentage of posts with the company&#8217;s name in the title, and also made a smoothed plot comparing all six at the end. Note that Microsoft and Yahoo seem to be trending slightly downward, and Apple seems to be trending upward.</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/pct_microsoft.png" alt="Mentions of Microsoft" /></p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/pct_yahoo.png" alt="Mentions of Yahoo" /></p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/pct_google.png" alt="Mentions of Google" /></p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/pct_facebook.png" alt="Mentions of Facebook" /></p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/pct_twitter.png" alt="Mentions of Twitter" /></p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/pct_apple.png" alt="Mentions of Apple" /></p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/all_trends2.png" alt="All Trends" /></p>
+  </div>
+
+                    </article>
  
 <div class="paginator">
             <div class="navButton"><a href="http://blog.echen.me/index4.html">Prev</a></div>
@@ -586,10 +643,10 @@
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Making the Most of Mechanical Turk: Tips and Best Practices  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
             
           </div>
         </div>
