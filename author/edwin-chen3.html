@@ -31,245 +31,6 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2012-01-03T04:15:00+01:00">
-          on&nbsp;Tue 03 January 2012
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p>Imagine you have a sequence of snapshots from a day in Justin Bieber&#8217;s life, and you want to label each image with the activity it represents (eating, sleeping, driving, etc.). How can you do this?</p>
-
-  <p>One way is to ignore the sequential nature of the snapshots, and build a <em>per-image</em> classifier. For example, given a month&#8217;s worth of labeled snapshots, you might learn that dark images taken at 6am tend to be about sleeping, images with lots of bright colors tend to be about dancing, images of cars are about driving, and so on.</p>
-
-  <p>By ignoring this sequential aspect, however, you lose a lot of information. For example, what happens if you see a close-up picture of a mouth &#8211; is it about singing or eating? If you know that the <em>previous</em> image is a picture of Justin Bieber eating or cooking, then it&#8217;s more likely this picture is about eating; if, however, the previous image contains Justin Bieber singing or dancing, then this one probably shows him singing as well.</p>
-
-  <p>Thus, to increase the accuracy of our labeler, we should incorporate the labels of nearby photos, and this is precisely what a <strong>conditional random field</strong> does.</p>
-
-  <h1>Part-of-Speech Tagging</h1>
-
-  <p>Let&#8217;s go into some more detail, using the more common example of <strong>part-of-speech tagging</strong>.</p>
-
-  <p>In POS tagging, the goal is to label a sentence (a sequence of words or tokens) with tags like ADJECTIVE, NOUN, PREPOSITION, VERB, ADVERB, ARTICLE.</p>
-
-  <p>For example, given the sentence &#8220;Bob drank coffee at Starbucks&#8221;, the labeling might be &#8220;Bob (NOUN) drank (VERB) coffee (NOUN) at (PREPOSITION) Starbucks (NOUN)&#8221;.</p>
-
-  <p>So let&#8217;s build a conditional random field to label sentences with their parts of speech. Just like any classifier, we&#8217;ll first need to decide on a set of feature functions $f_i$.</p>
-
-  <h2>Feature Functions in a CRF</h2>
-
-  <p>In a CRF, each <strong>feature function</strong> is a function that takes in as input:</p>
-
-  <ul>
-  <li>a sentence s</li>
-  <li>the position i of a word in the sentence</li>
-  <li>the label $l_i$ of the current word</li>
-  <li>the label $l_{i-1}$ of the previous word</li>
-  </ul>
-
-
-  <p>and outputs a real-valued number (though the numbers are often just either 0 or 1).</p>
-
-  <p>(Note: by restricting our features to depend on only the <em>current</em> and <em>previous</em> labels, rather than arbitrary labels throughout the sentence, I&#8217;m actually building the special case of a <strong>linear-chain CRF</strong>. For simplicity, I&#8217;m going to ignore general CRFs in this post.)</p>
-
-  <p>For example, one possible feature function could measure how much we suspect that the current word should be labeled as an adjective given that the previous word is &#8220;very&#8221;.</p>
-
-  <h2>Features to Probabilities</h2>
-
-  <p>Next, assign each feature function $f_j$ a <strong>weight</strong> $\lambda_j$ (I&#8217;ll talk below about how to learn these weights from the data). Given a sentence s, we can now score a labeling l of s by adding up the weighted features over all words in the sentence:</p>
-
-  <p>$score(l | s) = \sum_{j = 1}^m \sum_{i = 1}^n \lambda_j f_j(s, i, l_i, l_{i-1})$</p>
-
-  <p>(The first sum runs over each feature function $j$, and the inner sum runs over each position $i$ of the sentence.)</p>
-
-  <p>Finally, we can transform these scores into probabilities $p(l | s)$ between 0 and 1 by exponentiating and normalizing:</p>
-
-  <p>$p(l | s) = \frac{exp[score(l|s)]}{\sum_{l&#8217;} exp[score(l&#8217;|s)]} = \frac{exp[\sum_{j = 1}^m \sum_{i = 1}^n \lambda_j f_j(s, i, l_i, l_{i-1})]}{\sum_{l&#8217;} exp[\sum_{j = 1}^m \sum_{i = 1}^n \lambda_j f_j(s, i, l&#8217;_i, l&#8217;_{i-1})]}$</p>
-
-  <h2>Example Feature Functions</h2>
-
-  <p>So what do these feature functions look like? Examples of POS tagging features could include:</p>
-
-  <ul>
-  <li>$f_1(s, i, l_i, l_{i-1}) = 1$ if $l_i =$ ADVERB and the ith word ends in &#8220;-ly&#8221;; 0 otherwise.
-
-  <ul>
-  <li>If the weight $\lambda_1$ associated with this feature is large and positive, then this feature is essentially saying that we prefer labelings where words ending in -ly get labeled as ADVERB.</li>
-  </ul>
-  </li>
-  <li>$f_2(s, i, l_i, l_{i-1}) = 1$ if $i = 1$, $l_i =$ VERB, and the sentence ends in a question mark; 0 otherwise.
-
-  <ul>
-  <li>Again, if the weight $\lambda_2$ associated with this feature is large and positive, then labelings that assign VERB to the first word in a question (e.g., &#8220;Is this a sentence beginning with a verb?&#8221;) are preferred.</li>
-  </ul>
-  </li>
-  <li>$f_3(s, i, l_i, l_{i-1}) = 1$ if $l_{i-1} =$ ADJECTIVE and $l_i =$ NOUN; 0 otherwise.
-
-  <ul>
-  <li>Again, a positive weight for this feature means that adjectives tend to be followed by nouns.</li>
-  </ul>
-  </li>
-  <li>$f_4(s, i, l_i, l_{i-1}) = 1$ if $l_{i-1} =$ PREPOSITION and $l_i =$ PREPOSITION.
-
-  <ul>
-  <li>A <em>negative</em> weight $\lambda_4$ for this function would mean that prepositions don&#8217;t tend to follow prepositions, so we should avoid labelings where this happens.</li>
-  </ul>
-  </li>
-  </ul>
-
-
-  <p>And that&#8217;s it! To sum up: to build a conditional random field, you just define a bunch of feature functions (which can depend on the entire sentence, a current position, and nearby labels), assign them weights, and add them all together, transforming at the end to a probability if necessary.</p>
-
-  <p>Now let&#8217;s step back and compare CRFs to some other common machine learning techniques.</p>
-
-  <h1>Smells like Logistic Regression&#8230;</h1>
-
-  <p>The form of the CRF probabilities
-  $p(l | s) = \frac{exp[\sum_{j = 1}^m \sum_{i = 1}^n f_j(s, i, l_i, l_{i-1})]}{\sum_{l&#8217;} exp[\sum_{j = 1}^m \sum_{i = 1}^n f_j(s, i, l&#8217;_i, l&#8217;_{i-1})]}$
-  might look <a href="http://en.wikipedia.org/wiki/Logistic_regression">familiar</a>.</p>
-
-  <p>That&#8217;s because CRFs are indeed basically the sequential version of <strong>logistic regression</strong>: whereas logistic regression is a log-linear model for <em>classification</em>, CRFs are a log-linear model for <em>sequential labels</em>.</p>
-
-  <h1>Looks like HMMs&#8230;</h1>
-
-  <p>Recall that <strong><a href="http://en.wikipedia.org/wiki/Hidden_Markov_model">Hidden Markov Models</a></strong> are another model for part-of-speech tagging (and sequential labeling in general). Whereas CRFs throw any bunch of functions together to get a label score, HMMs take a <em>generative</em> approach to labeling, defining</p>
-
-  <p>$p(l,s) = p(l_1) \prod_i p(l_i | l_{i-1}) p(w_i | l_i)$</p>
-
-  <p>where</p>
-
-  <ul>
-  <li>$p(l_i | l_{i-1})$ are <strong>transition</strong> probabilities (e.g., the probability that a preposition is followed by a noun);</li>
-  <li>$p(w_i | l_i)$ are <strong>emission</strong> probabilities (e.g., the probability that a noun emits the word &#8220;dad&#8221;).</li>
-  </ul>
-
-
-  <p>So how do HMMs compare to CRFs? CRFs are more powerful &#8211; they can model everything HMMs can and more. One way of seeing this is as follows.</p>
-
-  <p>Note that the log of the HMM probability is $\log p(l,s) = \log p(l_0) + \sum_i \log p(l_i | l_{i-1}) + \sum_i \log p(w_i | l_i)$. This has exactly the log-linear form of a CRF if we consider these log-probabilities to be the weights associated to binary transition and emission indicator features.</p>
-
-  <p>That is, we can build a CRF equivalent to any HMM by&#8230;</p>
-
-  <ul>
-  <li>For each HMM <em>transition</em> probability $ p(l_i = y | l_{i-1} = x) $, define a set of CRF transition features of the form $f_{x,y}(s, i, l_i, l_{i-1}) = 1$ if $l_i = y$ and $l_{i-1} = x$. Give each feature a weight of $w_{x,y} = \log p(l_i = y | l_{i-1} = x)$.</li>
-  <li>Similarly, for each HMM <em>emission</em> probability $p(w_i = z | l_{i} = x)$, define a set of CRF emission features of the form $g_{x,y}(s, i, l_i, l_{i-1}) = 1$ if $w_i = z$ and $l_i = x$. Give each feature a weight of $w_{x,z} = \log p(w_i = z | l_i = x)$.</li>
-  </ul>
-
-
-  <p>Thus, the score $p(l|s)$ computed by a CRF using these feature functions is precisely proportional to the score computed by the associated HMM, and so every HMM is equivalent to some CRF.</p>
-
-  <p>However, CRFs can model a much richer set of label distributions as well, for two main reasons:</p>
-
-  <ul>
-  <li><strong>CRFs can define a much larger set of features.</strong> Whereas HMMs are necessarily <em>local</em> in nature (because they&#8217;re constrained to binary transition and emission feature functions, which force each word to depend only on the current label and each label to depend only on the previous label), CRFs can use more <em>global</em> features. For example, one of the features in our POS tagger above increased the probability of labelings that tagged the <em>first</em> word of a sentence as a VERB if the <em>end</em> of the sentence contained a question mark.</li>
-  <li><strong>CRFs can have arbitrary weights.</strong> Whereas the probabilities of an HMM must satisfy certain constraints (e.g., $0 &lt;= p(w_i | l_i) &lt;= 1, \sum_w p(w_i = w | l_1) = 1)$, the weights of a CRF are unrestricted (e.g., $\log p(w_i | l_i)$ can be anything it wants).</li>
-  </ul>
-
-
-  <h1>Learning Weights</h1>
-
-  <p>Let&#8217;s go back to the question of how to learn the feature weights in a CRF. One way is (surprise) to use <strong>gradient ascent</strong>.</p>
-
-  <p>Assume we have a bunch of training examples (sentences and associated part-of-speech labels). Randomly initialize the weights of our CRF model.
-  To shift these randomly initialized weights to the correct ones, for each training example&#8230;</p>
-
-  <ul>
-  <li>Go through each feature function $f_i$, and calculate the gradient of the log probability of the training example with respect to $\lambda_i$: $\frac{\partial}{\partial w_j} \log p(l | s) = \sum_{j = 1}^m f_i(s, j, l_j, l_{j-1}) - \sum_{l&#8217;} p(l&#8217; | s) \sum_{j = 1}^m f_i(s, j, l&#8217;_j, l&#8217;_{j-1})$</li>
-  <li>Note that the first term in the gradient is the contribution of feature $f_i$ under the <em>true</em> label, and the second term in the gradient is the <em>expected</em> contribution of feature $f_i$ under the current model. This is exactly the form you&#8217;d expect gradient ascent to take.</li>
-  <li>Move $\lambda_i$ in the direction of the gradient: $\lambda_i = \lambda_i + \alpha [\sum_{j = 1}^m f_i(s, j, l_j, l_{j-1}) - \sum_{l&#8217;} p(l&#8217; | s) \sum_{j = 1}^m f_i(s, j, l&#8217;_j, l&#8217;_{j-1})]$ where $\alpha$ is some learning rate.</li>
-  <li>Repeat the previous steps until some stopping condition is reached (e.g., the updates fall below some threshold).</li>
-  </ul>
-
-
-  <p>In other words, every step takes the difference between what we want the model to learn and the model&#8217;s current state, and moves $\lambda_i$ in the direction of this difference.</p>
-
-  <h1>Finding the Optimal Labeling</h1>
-
-  <p>Suppose we&#8217;ve trained our CRF model, and now a new sentence comes in. How do we do label it?</p>
-
-  <p>The naive way is to calculate $p(l | s)$ for every possible labeling l, and then choose the label that maximizes this probability. However, since there are $k^m$ possible labels for a tag set of size k and a sentence of length m, this approach would have to check an exponential number of labels.</p>
-
-  <p>A better way is to realize that (linear-chain) CRFs satisfy an <a href="http://en.wikipedia.org/wiki/Optimal_substructure">optimal substructure</a> property that allows us to use a (polynomial-time) dynamic programming algorithm to find the optimal label, similar to the <a href="http://en.wikipedia.org/wiki/Viterbi_algorithm">Viterbi algorithm</a> for HMMs.</p>
-
-  <h1>A More Interesting Application</h1>
-
-  <p>Okay, so part-of-speech tagging is kind of boring, and there are plenty of existing POS taggers out there. When might you use a CRF in real life?</p>
-
-  <p>Suppose you want to mine Twitter for the types of presents people received for Christmas:</p>
-
-  <blockquote class="twitter-tweet"><p>What people on Twitter wanted for Christmas, and what they got: <a href="http://t.co/EGeKTBgF" title="http://twitter.com/edchedch/status/153683967315419136/photo/1">twitter.com/edchedch/statu…</a></p>— Edwin Chen (@edchedch) <a href="https://twitter.com/edchedch/status/153683967315419136" data-datetime="2012-01-02T03:48:10+00:00">January 2, 2012</a></blockquote>
-
-
-  <script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-
-
-  <p>(Yes, I just embedded a tweet. BOOM.)</p>
-
-  <p>How can you figure out which words refer to gifts?</p>
-
-  <p>To gather data for the graphs above, I simply looked for phrases of the form &#8220;I want XXX for Christmas&#8221; and &#8220;I got XXX for Christmas&#8221;. However, a more sophisticated CRF variant could use a GIFT part-of-speech-like tag (even adding other tags like GIFT-GIVER and GIFT-RECEIVER, to get even more information on who got what from whom) and treat this like a POS tagging problem. Features could be based around things like &#8220;this word is a GIFT if the previous word was a GIFT-RECEIVER and the word before that was &#8216;gave&#8217;&#8221; or &#8220;this word is a GIFT if the next two words are &#8216;for Christmas&#8217;&#8221;.</p>
-
-  <h1>Fin</h1>
-
-  <p>I&#8217;ll end with some more random thoughts:</p>
-
-  <ul>
-  <li>I explicitly skipped over the graphical models framework that conditional random fields sit in, because I don&#8217;t think they add much to an initial understanding of CRFs. But if you&#8217;re interested in learning more, Daphne Koller is teaching a free, online course on <a href="http://www.pgm-class.org/">graphical models</a> starting in January.</li>
-  <li>Or, if you&#8217;re more interested in the many NLP applications of CRFs (like part-of-speech tagging or <a href="http://en.wikipedia.org/wiki/Named-entity_recognition">named entity extraction</a>), Manning and Jurafsky are teaching an <a href="http://www.nlp-class.org/">NLP class</a> in the same spirit.</li>
-  <li>I also glossed a bit over the analogy between CRFs:HMMs and Logistic Regression:Naive Bayes. This image (from <a href="http://arxiv.org/pdf/1011.4088v1">Sutton and McCallum&#8217;s introduction to conditional random fields</a>) sums it up, and shows the graphical model nature of CRFs as well:</li>
-  </ul>
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/crfs/crf-diagram.png"><img src="http://dl.dropbox.com/u/10506/blog/crfs/crf-diagram.png" alt="CRF Diagram" /></a></p></div>
-  
-<script type= "text/javascript">
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-</script>
-
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
                         <h1 class="entry-title"><a href="http://blog.echen.me/2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary</a></h1>
 <div class="post-info">
 	<ul>
@@ -1244,6 +1005,346 @@
   </div>  
 
                     </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/07/28/tweets-vs-likes-what-gets-shared-on-twitter-vs-facebook/">Tweets vs. Likes: What gets shared on Twitter vs. Facebook?</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2011-07-28T04:15:00+02:00">
+          on&nbsp;Thu 28 July 2011
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>It always strikes me as curious that some posts get a lot of love on Twitter, while others get many more shares on Facebook:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/twitter-beats-fb.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/twitter-beats-fb.png" alt="Twitter Beats FB" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/fb-beats-twitter.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/fb-beats-twitter.png" alt="FB Beats Twitter" /></a></p>
+
+  <p>What accounts for this difference? Some of it is surely site-dependent: maybe one blogger has a Facebook page but not a Twitter account, while another has these roles reversed. But even on sites maintained by a single author, tweet-to-likes ratios can vary widely from post to post.</p>
+
+  <p>So what kinds of articles tend to be more popular on Twitter, and which spread more easily on Facebook? To take a stab at an answer, I scraped data from a couple of websites over the weekend.</p>
+
+  <p><strong>tl;dr</strong> Twitter is still for the <em>techies</em>: articles where the number of tweets greatly outnumber FB likes tend to revolve around software companies and programming. Facebook, on the other hand, appeals to <em>everyone else</em>: yeah, to the masses, and to non-software technical folks in general as well.</p>
+
+  <h1>FlowingData</h1>
+
+  <p>The first site I looked at was Nathan Yau&#8217;s awesome <a href="http://www.flowingdata.com">FlowingData</a> website on data visualization. To see which articles are more popular on Facebook and which are more popular on Twitter, let&#8217;s sort all the FlowingData articles by their # tweets / # likes ratio.</p>
+
+  <p>Here are the 10 posts with the lowest tweets-to-likes ratio (i.e., the posts that were especially popular with Facebook users):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-facebook2.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-facebook2-small.png" alt="FlowingData Facebook" /></a></p>
+
+  <ul>
+  <li><a href="http://flowingdata.com/2011/01/30/what-your-state-is-the-worst-at-united-states-of-shame/">What your state is the worst at – United States of shame</a></li>
+  <li><a href="http://flowingdata.com/2011/05/13/plush-statistical-distribution-pillows/">Plush statistical distribution pillows</a></li>
+  <li><a href="http://flowingdata.com/2011/03/22/are-gas-prices-really-that-high/">Are gas prices really that high?</a></li>
+  <li><a href="http://flowingdata.com/2011/01/21/hey-jude-flowchart/">Hey Jude flowchart</a></li>
+  <li><a href="http://flowingdata.com/2011/04/28/womens-dress-sizes-demystified/">Women’s dress sizes demystified</a></li>
+  <li><a href="http://flowingdata.com/2011/02/22/america-is-not-the-best-at-everything/">America is not the best at everything</a></li>
+  <li><a href="http://flowingdata.com/2011/06/10/what-you-need-to-get-together/">What you need to get together</a></li>
+  <li><a href="http://flowingdata.com/2011/01/27/dexters-victims-through-season-five/">Dexter’s victims through season five</a></li>
+  <li><a href="http://flowingdata.com/2011/05/06/correlating-dog/">Correlating dog</a></li>
+  <li><a href="http://flowingdata.com/2011/02/14/valentines-day-importance/">Valentine’s Day importance</a></li>
+  </ul>
+
+
+  <p>And here are the 10 posts with the highest tweets-to-like ratio (i.e., the posts especially popular with Twitter users):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-twitter.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-twitter-small.png" alt="FlowingData Twitter" /></a></p>
+
+  <ul>
+  <li><a href="http://flowingdata.com/2011/01/04/delicious-mass-exodus/">Delicious mass exodus</a></li>
+  <li><a href="http://flowingdata.com/2011/05/25/pew-research-raw-survey-data-now-available/">Pew Research raw survey data now available</a></li>
+  <li><a href="http://flowingdata.com/2011/02/03/stock-market-predictions-with-twitter/">Stock market predictions with Twitter</a></li>
+  <li><a href="http://flowingdata.com/2011/01/25/growth-and-usage-of-foursquare-in-2010/">Growth and usage of foursquare in 2010</a></li>
+  <li><a href="http://flowingdata.com/2011/02/17/sunlight-labs-opens-up-real-time-congress-api/">Sunlight Labs opens up Real Time Congress API</a></li>
+  <li><a href="http://flowingdata.com/2011/03/25/open-source-data-science-toolkit/">Open-source Data Science Toolkit</a></li>
+  <li><a href="http://flowingdata.com/2011/01/24/explore-your-linkedin-network-visually-with-inmaps/">Explore your LinkedIn network visually with InMaps</a></li>
+  <li><a href="http://flowingdata.com/2011/05/03/perceived-vs-actual-country-rankings/">Perceived vs. actual country rankings</a></li>
+  <li><a href="http://flowingdata.com/2011/04/20/see-what-you-and-others-tweet-about-with-the-topic-explorer/">See what you and others tweet about with the Topic Explorer</a></li>
+  <li><a href="http://flowingdata.com/2011/04/24/history-of-detainees-at-guantnamo/">History of detainees at Guantánamo</a></li>
+  </ul>
+
+
+  <p>Notice any differences between the two?</p>
+
+  <ul>
+  <li>Instant gratification infographics, cuteness, comics, and pop culture get liked on Facebook.</li>
+  <li>APIs, datasets, visualizations related to techie sites (Delicious, foursquare, Twitter, LinkedIn), and picture-less articles get tweeted instead.</li>
+  </ul>
+
+
+  <p>Interestingly, it also looks like the colors in the top 10 Facebook articles tend to the red end of the spectrum, while the colors in the top 10 Twitter articles tend to the blue end of the spectrum. Does this pattern hold if we look at more data? Here&#8217;s a meta-visualization of the FlowingData articles, sorted by articles popular on Facebook in the top left to articles popular on Twitter in the bottom right (see <a href="http://flowingdata-melted.heroku.com/">here</a> for some interactivity and more details):</p>
+
+  <p><a href="http://flowingdata-melted.heroku.com/"><img src="http://dl.dropbox.com/u/10506/blog/flowingdata-metaviz/flowingdata-metaviz.png" alt="FlowingData MetaViz" /></a></p>
+
+  <p>It does indeed look like the images at the top (the articles popular on Facebook) are more pink, while the images at the bottom (the articles popular on Twitter) are more blue (though it would be nice to quantify this in some way)!</p>
+
+  <p>Furthermore, we can easily see from the grid that articles with no visualizations (represented by lorem ipsum text in the grid) cluster at the bottom. Grabbing some actual numbers, we find that 32% of articles with at least one picture have more shares on Facebook than on Twitter, compared to only 4% of articles with no picture at all.</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-viz-effect.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-viz-effect.png" alt="Effect of a visualization" /></a></p>
+
+  <p>Finally, let&#8217;s break down the percentage of articles with more Facebook shares by category.</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-categories.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-categories.png" alt="FlowingData Categories" /></a></p>
+
+  <p>(I filtered the categories so that each category in the plot above contains at least 5 articles.)</p>
+
+  <p>What do we find?</p>
+
+  <ul>
+  <li>Articles in the Software, Online Applications, News, and Data sources categories (yawn) get 100% of their shares from Twitter.</li>
+  <li>Articles tagged with <a href="http://flowingdata.com/category/projects/data-underload/">Data Underload</a> (which seems to contain short and sweet visualizations of everyday things), <a href="http://flowingdata.com/category/miscellaneous-data/">Miscellaneous</a> (which contains lots of comics or comic-like visualizations), and <a href="http://flowingdata.com/category/visualization/infographics/">Infographics</a> get the most shares on Facebook.</li>
+  <li>This category breakdown matches precisely what we saw in the top 10 examples above.</li>
+  </ul>
+
+
+  <h1>New Scientist</h1>
+
+  <p>When looking at FlowingData, we saw that Twitter users are much bigger on sharing technical articles. But is this true for technical articles in general, or only for programming-related posts? (In my experience with Twitter, I haven&#8217;t seen many people from math and the non-computer sciences.)</p>
+
+  <p>To answer, I took articles from the <a href="http://www.newscientist.com/search?rbsection1=Physics+%26+Math&amp;sortby=rbpubdate">Physics &amp; Math</a> and <a href="http://www.newscientist.com/search?rbsection1=tech&amp;sortby=rbpubdate">Technology</a> sections of <a href="http://www.newscientist.com">New Scientist</a>, and</p>
+
+  <ul>
+  <li>Calculated the percentage of shares each article received on Twitter (i.e., # tweets / (# tweets + # likes)).</li>
+  <li>Grouped articles by their number of tweets rounded to the nearest multiple of 25 (bin #1 contains articles close to 25 tweets, bin #2 contains articles close to 50 tweets, etc.).</li>
+  <li>Calculated the median percentage of shares on Twitter for each bin.</li>
+  </ul>
+
+
+  <p>Here&#8217;s a graph of the result:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/tech_vs_physicsmath.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/tech_vs_physicsmath.png" alt="Technology vs. Physics &amp; Math" /></a></p>
+
+  <p>Notice that:</p>
+
+  <ul>
+  <li>The technology articles get consistently more shares from Twitter than the physics and math articles do.</li>
+  <li>Twitter accounts for the majority of the technology shares.</li>
+  <li>Facebook accounts for the majority of the physics and math shares.</li>
+  </ul>
+
+
+  <p>So this suggests that Twitter really is for computer technology in particular, not technical matters in general (though it would be nice to look at areas other than physics and math as well).</p>
+
+  <h1>Quora</h1>
+
+  <p>To get some additional evidence on the computer science vs. math/physics divide, I</p>
+
+  <ul>
+  <li>Scraped about 350 profiles of followers from each of the Computer Science, Software Engineering, Mathematics, and Physics categories on Quora;</li>
+  <li>Checked each user to see whether they link to their Facebook and Twitter accounts on their profile.</li>
+  </ul>
+
+
+  <p>Here&#8217;s the ratio of the number of people linking to their Facebook account to the number of people linking to their Twitter account, sliced by topic:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/math-physics-vs-cs-software.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/math-physics-vs-cs-software.png" alt="Math/Physics vs. CS/Software" /></a></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/math-physics-vs-cs-software-collapsed.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/math-physics-vs-cs-software-collapsed.png" alt="Math/Physics vs. CS/Software, Collapsed" /></a></p>
+
+  <p>We find exactly what we expect from the New Scientist data: people following the math and physics categories have noticeably smaller Twitter / Facebook ratios compared to people following the computer science and software engineering categories (i.e., compared to computer scientists and software engineers, mathematicians and physicists are more likely to be on Facebook than on Twitter). What&#8217;s more, this difference is in fact significant: the graphs display individual 90% confidence intervals (which overlap not at all or only slightly), and we do indeed get significance at the 95% level if we look at the differences between categories.</p>
+
+  <p>This corroborates the New Scientist evidence that Twitter gets the computer technology shares, while Facebook gets the math and physics shares.</p>
+
+  <h1>XKCD</h1>
+
+  <p>Finally, let&#8217;s take a look at which XKCD comics are especially popular on Facebook vs. Twitter.</p>
+
+  <p>Here are the 10 comics with the highest likes-to-tweets ratio (i.e., the comics especially popular on Facebook):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/xkcd-facebook.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/xkcd-facebook-small.png" alt="XKCD Facebook" /></a></p>
+
+  <ul>
+  <li><a href="http://xkcd.com/846/">Dental Nerve</a></li>
+  <li><a href="http://xkcd.com/861/">Wisdom Teeth</a></li>
+  <li><a href="http://xkcd.com/876/">Trapped</a></li>
+  <li><a href="http://xkcd.com/849/">Complex Conjugate</a></li>
+  <li><a href="http://xkcd.com/854/">Learning to Cook</a></li>
+  <li><a href="http://xkcd.com/840/">Serious</a></li>
+  <li><a href="http://xkcd.com/839/">Explorers</a></li>
+  <li><a href="http://xkcd.com/815/">Mu</a></li>
+  <li><a href="http://xkcd.com/809/">Los Alamos</a></li>
+  <li><a href="http://xkcd.com/911/">Magic School Bus</a></li>
+  </ul>
+
+
+  <p>Here are the 10 comics with the highest tweets-to-likes ratio (i.e., the comics especially popular on Twitter):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/xkcd-twitter.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/xkcd-twitter-small.png" alt="XKCD Twitter" /></a></p>
+
+  <ul>
+  <li><a href="http://xkcd.com/869/">Server Attention Span</a></li>
+  <li><a href="http://xkcd.com/818/">Illness</a></li>
+  <li><a href="http://xkcd.com/865/">Nanobots</a></li>
+  <li><a href="http://xkcd.com/912/">Manual Override</a></li>
+  <li><a href="http://xkcd.com/908/">The Cloud</a></li>
+  <li><a href="http://xkcd.com/810/">Constructive</a></li>
+  <li><a href="http://xkcd.com/887/">Future Timeline</a></li>
+  <li><a href="http://xkcd.com/844/">Good Code</a></li>
+  <li><a href="http://xkcd.com/801/">Golden Hammer</a></li>
+  <li><a href="http://xkcd.com/906/">Advertising Discovery</a></li>
+  <li><a href="http://xkcd.com/802/">Online Communities 2</a></li>
+  </ul>
+
+
+  <p>Note that the XKCD comics popular on Facebook have more of a layman flavor, while the XKCD comics popular on Twitter are much more programming-related:</p>
+
+  <ul>
+  <li>Of the XKCD comics popular on Twitter, one&#8217;s about server attention spans, another&#8217;s about IPv6 addresses, a third is about GNU info pages, another deals with cloud computing, a fifth talks about Java, and the last is about a bunch of techie sites. (This is just like what we saw with the FlowingData visualizations.)</li>
+  <li>Facebook, on the other hand, gets Ke$ha and Magic School Bus.</li>
+  <li>And while both top 10&#8217;s contain a flowchart, the one popular on FB is about <em>cooking</em>, while the one popular on Twitter is about <em>code</em>!</li>
+  <li>What&#8217;s more, if we look at the few technical-ish comics that are more popular on Facebook (the complex conjugate, mu, and Los Alamos comics), we see that they&#8217;re about physics and math, not programming (which matches our findings from the New Scientist articles).</li>
+  </ul>
+
+
+  <h1>Lesson</h1>
+
+  <p>So why should you care? Here&#8217;s one takeaway:</p>
+
+  <ul>
+  <li>If you&#8217;re blogging about technology, programming, and computer science, Twitter is your friend.</li>
+  <li>But if you&#8217;re blogging about anything else, be it math/physics or pop culture, don&#8217;t rely on a Twitter account alone; your shares are more likely to propagate on Facebook, so make sure to have a Facebook page as well.</li>
+  </ul>
+
+
+  <h1>What&#8217;s Next?</h1>
+
+  <p>The three websites I looked at are all fairly tech-oriented, so it would be nice to gather data from other kinds of websites as well.</p>
+
+  <p>And now that we have an idea how Twitter and Facebook compare, the next burning question is surely: <a href="http://finalbossform.com/post/7214184180/google-is-fast-becoming-the-leading-social">what do people share on Google+?!</a></p>
+
+  <h1>Addendum</h1>
+
+  <p>Let&#8217;s consider the following thought experiment. Suppose you come across the most unpopular article ever written. What will its FB vs. Twitter shares look like? Although no <em>real</em> person will ever share this article, I think Twitter has many more spambots (who tweet out any and every link) than FB does, so maybe unpopular articles will have more tweets than likes by default. Conversely, suppose you come across the most popular article ever written, which everybody wants to share. Then since FB has many more users than Twitter does, maybe popular articles will tend to have more likes than tweets anyways.</p>
+
+  <p>Thus, in order to find out which types of articles are <em>especially</em> popular on FB vs. Twitter, instead of looking at tweets-to-likes ratios directly, we could try to remove this baseline popularity effect. (Taking ratios instead of raw number of tweets or raw number of likes is one kind of normalization; this is another.)</p>
+
+  <p>So does this scenario (or something similar to it) actually play out in practice?</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-overall-popularity-vs-fb.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-overall-popularity-vs-fb.png" alt="Overall Popularity vs. Facebook" /></a></p>
+
+  <p>Here I&#8217;ve plotted the overall popularity of a post (the total number of shares it received on either Twitter or FB) against the percentage of shares on Facebook alone, and we can see that as a post&#8217;s popularity grows, more and more shares do indeed tend to come from Facebook rather than Twitter.</p>
+
+  <p>Also, see the posts at the lower end of the popularity scale that are only getting shares on Twitter? Let&#8217;s take a look at the five most unpopular of these:</p>
+
+  <ul>
+  <li><a href="http://flowingdata.com/2011/03/31/flowingdata-is-brought-to-you-by-8/">Flowing Data is brought to you by&#8230; (March 2011 edition)</a> (11 tweets, 0 likes)</li>
+  <li><a href="http://flowingdata.com/2011/07/05/flowingdata-is-brought-to-you-by-11/">Flowing Data is brought to you by&#8230; (July 2011 edition)</a> (14 tweets, 0 likes)</li>
+  <li><a href="http://flowingdata.com/2011/06/06/flowingdata-is-brought-to-you-by-10/">Flowing Data is brought to you by&#8230; (June 2011 edition)</a> (17 tweets, 0 likes)</li>
+  <li><a href="http://flowingdata.com/2011/05/09/flowingdata-is-brought-to-you-by-9/">Flowing Data is brought to you by&#8230; (May 2011 edition)</a> (18 tweets, 0 likes)</li>
+  <li><a href="http://flowingdata.com/2011/02/28/flowingdata-is-brought-to-you-by-7/">Flowing Data is brought to you by&#8230; (May 2011 edition)</a> (12 tweets, 1 like)</li>
+  </ul>
+
+
+  <p>Notice that they&#8217;re all shoutouts to FlowingData&#8217;s sponsors! There&#8217;s pretty much no reason any <em>real</em> person would share these on Twitter or Facebook, and indeed, checking Twitter to see who actually tweeted out these links, we see that the tweeters are bots:</p>
+
+  <ul>
+  <li><a href="https://twitter.com/#!/myVisualization/status/77685824224894976">https://twitter.com/#!/myVisualization/status/77685824224894976</a></li>
+  <li><a href="https://twitter.com/#!/InfographicTwts/status/67668615142457344">https://twitter.com/#!/InfographicTwts/status/6766861514245734</a></li>
+  <li><a href="https://twitter.com/#!/guysgoogle/status/77644902510493696">https://twitter.com/#!/guysgoogle/status/77644902510493696</a></li>
+  <li><a href="https://twitter.com/#!/WhereIsYourData/status/77631743292735488">https://twitter.com/#!/WhereIsYourData/status/77631743292735488</a></li>
+  </ul>
+
+
+  <p>Now let&#8217;s switch to a slightly different view of the above scenario, where I plot number of tweets against number of likes:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-tweets-vs-likes.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-tweets-vs-likes.png" alt="FlowingData Tweets vs. Likes" /></a></p>
+
+  <p>We see that as popularity on Twitter increases, so too does popularity on Facebook &#8211; but at a slightly faster rate. (The form of the blue line plotted is roughly $\log(likes) = -3.87 + 1.70 \log(tweets)$.)</p>
+
+  <p>So instead of looking at the ratios above, to figure out which articles are popular on FB vs. Twitter, we could look at the residuals of the above plot. Posts with large positive residuals would be posts that are especially popular on FB, and posts with negative residuals would be posts that are especially popular on Twitter.</p>
+
+  <p>In practice, however, there wasn&#8217;t much difference between looking at residuals vs. ratios directly when using the datasets I had, so to keep things simple in the main discussion above, I stuck to ratios alone. Still, it&#8217;s another option which might be useful when looking at different questions or different sources of data, so just for completeness, here&#8217;s what the FlowingData results look like if we use residuals instead.</p>
+
+  <p>The 10 articles with the highest residuals (i.e., the articles most popular on Facebook):</p>
+
+  <ul>
+  <li><a href="http://flowingdata.com/2011/06/10/what-you-need-to-get-together/">What you need to get together</a></li>
+  <li><a href="http://flowingdata.com/2011/02/14/valentines-day-importance/">Valentine’s Day importance</a></li>
+  <li><a href="http://flowingdata.com/2011/01/30/what-your-state-is-the-worst-at-united-states-of-shame/">What your state is the worst at – United States of shame</a></li>
+  <li><a href="http://flowingdata.com/2011/05/13/plush-statistical-distribution-pillows/">Plush statistical distribution pillows</a></li>
+  <li><a href="http://flowingdata.com/2011/07/01/hitler-learns-topology/">Hitler learns topology</a></li>
+  <li><a href="http://flowingdata.com/2011/01/27/dexters-victims-through-season-five/">Dexter’s victims through season five</a></li>
+  <li><a href="http://flowingdata.com/2011/07/06/access-to-education-where-you-live/">Access to education where you live</a></li>
+  <li><a href="http://flowingdata.com/2011/03/09/watching-costco-warehouses-open-nationwide/">Watching the growth of Costco warehouses</a></li>
+  <li><a href="http://flowingdata.com/2011/03/22/are-gas-prices-really-that-high/">Are gas prices really that high?</a></li>
+  <li><a href="http://flowingdata.com/2011/01/21/flight-safety-esque-beer-pong-guide/">Flight safety-esque beer pong guide</a></li>
+  </ul>
+
+
+  <p>The 10 articles with the lowest residuals (i.e., the articles most popular on Twitter):</p>
+
+  <ul>
+  <li><a href="http://flowingdata.com/2011/05/25/pew-research-raw-survey-data-now-available/">Pew Research raw survey data now available</a></li>
+  <li><a href="http://flowingdata.com/2011/01/24/explore-your-linkedin-network-visually-with-inmaps/">Explore your LinkedIn network visually with InMaps</a></li>
+  <li><a href="http://flowingdata.com/2011/02/03/stock-market-predictions-with-twitter/">Stock market predictions with Twitter</a></li>
+  <li><a href="http://flowingdata.com/2011/01/04/delicious-mass-exodus/">Delicious mass exodus</a></li>
+  <li><a href="http://flowingdata.com/2011/03/25/open-source-data-science-toolkit/">Open-source Data Science Toolkit</a></li>
+  <li><a href="http://flowingdata.com/2011/04/17/business-intelligence-vs-infotainment/">Business intelligence vs. infotainment</a></li>
+  <li><a href="http://flowingdata.com/2011/04/20/see-what-you-and-others-tweet-about-with-the-topic-explorer/">See what you and others tweet about with the Topic Explorer</a></li>
+  <li><a href="http://flowingdata.com/2011/01/25/growth-and-usage-of-foursquare-in-2010/">Growth and usage of foursquare in 2010</a></li>
+  <li><a href="http://flowingdata.com/2011/05/10/flash-vs-html5/">Flash vs. HTML5</a></li>
+  <li><a href="http://flowingdata.com/2011/06/09/gender-and-time-comparisons-on-twitter/">Gender and time comparisons on Twitter</a></li>
+  </ul>
+
+
+  <p>Here&#8217;s a density plot of article residuals, split by whether the article has a visualization or not (residuals of picture-free articles are clearly shifted towards the negative end):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/has-viz-residuals.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/has-viz-residuals.png" alt="Residuals" /></a></p>
+
+  <p>Here are the mean residuals per category (again, we see that the miscellaneous, data underload, data art, and infographics categories tend to be more popular on Facebook, while the data sources, software, online applications, and news categories tend to be more popular on Twitter):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/category-residuals.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/category-residuals.png" alt="Category Residuals" /></a></p>
+
+  <p>And that&#8217;s it! In the spirit of these findings, I hope this article gets <a href="http://blog.echen.me/2011/07/28/tweets-vs-likes-what-gets-shared-on-twitter-vs-facebook/?share=facebook&amp;nb=1">liked</a> a little and <a href="https://twitter.com/share?original_referer=http%3A%2F%2Fblog.echen.me%2F2011%2F07%2F28%2Ftweets-vs-likes-what-gets-shared-on-twitter-vs-facebook%2F&amp;source=tweetbutton&amp;text=Tweets%20vs.%20Likes%3A%20What%20gets%20shared%20on%20Twitter%20vs.%20Facebook%3F%3A&amp;url=http%3A%2F%2Fwp.me%2Fpy9AS-6P">tweeted</a> lots and lots.</p>
+  </div>  
+<script type= "text/javascript">
+    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+        var mathjaxscript = document.createElement('script');
+        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+        mathjaxscript.type = 'text/javascript';
+        mathjaxscript.src = 'https:' == document.location.protocol
+                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+            "MathJax.Hub.Config({" +
+            "    config: ['MMLorHTML.js']," +
+            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+            "    displayAlign: 'center'," +
+            "    displayIndent: '0em'," +
+            "    showMathMenu: true," +
+            "    tex2jax: { " +
+            "        inlineMath: [ ['$','$'] ], " +
+            "        displayMath: [ ['$$','$$'] ]," +
+            "        processEscapes: true," +
+            "        preview: 'TeX'," +
+            "    }, " +
+            "    'HTML-CSS': { " +
+            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
+            "    } " +
+            "}); ";
+        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+    }
+</script>
+
+                    </article>
  
 <div class="paginator">
             <div class="navButton"><a href="http://blog.echen.me/author/edwin-chen2.html">Prev</a></div>
@@ -1277,7 +1378,6 @@
 
           <div id="recent_posts">
               <h3>Recent Posts</h3>
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2015/07/05/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
@@ -1287,6 +1387,7 @@
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
             
           </div>
         </div>

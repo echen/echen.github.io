@@ -31,93 +31,6 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/04/25/kickstarter-data-analysis-success-and-pricing/">Kickstarter Data Analysis: Success and Pricing</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-04-25T04:15:00+02:00">
-          on&nbsp;Mon 25 April 2011
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p><a href="http://www.kickstarter.com/">Kickstarter</a> is an online crowdfunding platform for launching creative projects. When starting a new project, project owners specify a deadline and the minimum amount of money they need to raise. They receive the money (less a transaction fee) only if they reach or exceed that minimum; otherwise, no money changes hands.</p>
-
-  <p>What&#8217;s particularly fun about Kickstarter is that in contrast to <a href="http://www.kiva.org/">that other microfinance site</a>, Kickstarter projects don&#8217;t ask for loans; instead, patrons receive pre-specified rewards unique to each project. For example, someone donating money to help an artist record an album might receive a digital copy of the album if they donate 20 dollars, or a digital copy plus a signed physical cd if they donate 50 dollars.</p>
-
-  <p>There are <a href="http://www.kickstarter.com/discover/hall-of-fame?ref=sidebar">a bunch</a> of <a href="http://www.kickstarter.com/projects/1104350651/tiktok-lunatik-multi-touch-watch-kits">neat</a> <a href="http://www.kickstarter.com/projects/2024077040/neil-gaimans-the-price">projects</a>, and I&#8217;m tempted to put one of my own on there soon, so I thought it would be fun to gather some data from the site and see what makes a project successful.</p>
-
-  <h1>Categories</h1>
-
-  <p>I started by scraping the categories section.</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/successful-projects-by-category.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/successful-projects-by-category.png" alt="Successful projects by category" /></a></p>
-
-  <p>In true indie fashion, the artsy categories tend to dominate. (I&#8217;m surprised/disappointed how little love the Technology category gets.)</p>
-
-  <h1>Ending Soon</h1>
-
-  <p>The categories section really only provides a history of <em>successful</em> projects, though, so to get some data on unsuccessful projects as well, I took a look at the <a href="http://www.kickstarter.com/discover/ending-soon?ref=sidebar">Ending Soon</a> section of projects whose deadlines are about to pass.</p>
-
-  <p>It looks like about 50% of all Kickstarter projects get successfully funded by the deadline:</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/ending-soon-success.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/ending-soon-success.png" alt="Successful projects as deadline approaches" /></a></p>
-
-  <p>Interestingly, most of the final funding seems to happen in the final few days: with just 5 days left, only about 20% of all projects have been funded. (In other words, with just 5 days left, 60% of the projects that will eventually be successful are still unfunded.) So the approaching deadline seems to really spur people to donate. I wonder if it&#8217;s because of increased publicity in the final few days (the project owners begging everyone for help!) or if it&#8217;s simply procrastination in action (perhaps people want to wait to see if their donation is really necessary)?</p>
-
-  <p>Lesson: if you&#8217;re still not fully funded with only a couple days remaining, don&#8217;t despair.</p>
-
-  <h1>Success vs. Failure</h1>
-
-  <p>What factors lead a project to succeed? Are there any quantitative differences between projects that eventually get funded and those that don&#8217;t?</p>
-
-  <p>Two simple (if kind of obvious) things I noticed are that unsuccessful projects tend to require a larger amount of money:</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/successful-vs-unsuccessful-goal.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/successful-vs-unsuccessful-goal.png" alt="Unsuccessful projects tend to ask for more money" /></a></p>
-
-  <p>and unsuccessful projects also tend to raise less money in absolute terms (i.e., it&#8217;s not just that they ask for too much money to reach their goal &#8211; they&#8217;re simply not receiving enough money as well):</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/successful-vs-unsuccessful-amount-pledged.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/successful-vs-unsuccessful-amount-pledged.png" alt="Unsuccessful projects received less money" /></a></p>
-
-  <p>Not terribly surprising, but it&#8217;s good to confirm (and I&#8217;m still working on finding other predictors).</p>
-
-  <h1>Pledge Rewards</h1>
-
-  <p>There&#8217;s a lot of interesting work in behavioral economics on pricing and choice &#8211; for example, the <a href="http://youarenotsosmart.com/2010/07/27/anchoring-effect/">anchoring effect</a> suggests that when building a menu, you should <a href="http://www.neurosciencemarketing.com/blog/articles/neuro-menus-and-restaurant-psychology.htm">include an expensive item</a> to make other menu items look reasonably priced in comparison, and the <a href="http://en.wikipedia.org/wiki/The_Paradox_of_Choice:_Why_More_Is_Less">paradox of choice </a> suggests that too many choices lead to a decision freeze &#8211; so one aspect of the Kickstarter data I was especially interested in was how pricing of rewards affects donations. For example, does pricing the lowest reward at 25 dollars lead to more money donated (people don&#8217;t lowball at 5 dollars instead) or less money donated (25 dollars is more money than most people are willing to give)? And what happens if a new reward at 5 dollars is added &#8211; again, does it lead to more money (now people can donate something they can afford) or less money (the people that would have paid 25 dollars switch to a 5 dollar donation)?</p>
-
-  <p>First, here&#8217;s a look at the total number of pledges at each price. (More accurately, it&#8217;s the number of claimed rewards at each price.) [Update: the original version of this graph was wrong, but I&#8217;ve since fixed it.]</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/pledge%20amounts.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/pledge%20amounts.png" alt="Pledge Amounts" /></a></p>
-
-  <p>Surprisingly, 5 dollar and 1 dollar donations are actually not the most common contribution.</p>
-
-  <p>To investigate pricing effects, I started by looking at all (successful) projects that had a reward priced at 1 dollar, and compared the number of donations at 1 dollar with the number of donations at the next lowest reward.</p>
-
-  <p>Up to about 15-20 dollars, there&#8217;s a steady increase in the proportion of people who choose the second reward over the first reward, but after that, the proportion decreases.</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/anchoring.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/anchoring.png" alt="Anchoring" /></a></p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/anchoring-abline-b.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/anchoring-abline-b.png" alt="Anchoring with Regression Lines" /></a></p>
-
-  <p>So this perhaps suggests that if you&#8217;re going to price your lowest reward at 1 dollar, your next reward should cost roughly 20 dollars (or slightly more, to maximize your total revenue). Pricing above 20 dollars is a little too expensive for the folks who want to support you, but aren&#8217;t rich enough to throw gads of money; maybe rewards below 20 dollars aren&#8217;t good enough to merit the higher donation.</p>
-
-  <p>Next, I&#8217;m planning on digging a little deeper into pricing effects and what makes a project successful, so I&#8217;ll hopefully have some more Kickstarter analysis in a future post. In the meantime, in case anyone else wants to take a look, I put the data onto <a href="https://github.com/echen/kickstarter-data-analysis">my Github account</a>.</p>
-  </div>
-
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
                         <h1 class="entry-title"><a href="http://blog.echen.me/2011/04/21/a-mathematical-introduction-to-least-angle-regression/">A Mathematical Introduction to Least Angle Regression</a></h1>
 <div class="post-info">
 	<ul>
@@ -592,6 +505,55 @@
   </div>
 
                     </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/03/14/laymans-introduction-to-measure-theory/">Layman's Introduction to Measure Theory</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2011-03-14T04:15:00+01:00">
+          on&nbsp;Mon 14 March 2011
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info -->
+  
+  <div class="entry-content"><p>Measure theory studies ways of generalizing the notions of length/area/volume. Even in 2 dimensions, it might not be clear how to measure the area of the following fairly tame shape:</p>
+
+  <p><img src="http://d2o7bfz2il9cb7.cloudfront.net/main-qimg-809c3bdb18539dfa2917ee766a0a6159" alt="What's the area of this shape?" /></p>
+
+  <p>much less the &#8220;area&#8221; of even weirder shapes in higher dimensions or different spaces entirely.</p>
+
+  <p>For example, suppose you want to measure the length of a book (so that you can get a good sense of how long it takes to read). What&#8217;s a good measure? One possibility is to measure a book&#8217;s length in <em>pages</em>. Since books provide page counts, this is a fairly easy measure to get. However, different versions of the same book (e.g., hardcover and paperback versions) tend to have different page counts, so this page measure doesn&#8217;t satisfy the nice property of version invariance (which we would like to have, since hardcover and paperback versions of the same book take the same time to read). Also, not all books even have page counts (think Kindle books), so this measure doesn&#8217;t allow us to measure the length of all books we might want to read.</p>
+
+  <p>Another, possibly better measure is to measure a book&#8217;s length in terms of the number of <em>words</em> it contains. Now we do have version invariance (hardcover and paperback versions contain the same number of words) and we can measure the length of Kindle books as well. We can even do things like add two books together, and the measure/number of words of the concatenated books will pleasantly equal the sum of the measures/number of words of each book alone.</p>
+
+  <p>However, what happens when we try to measure a picture book&#8217;s length in words? We can&#8217;t &#8211; picture books are too pathological. Maybe we could say that a picture book has measure zero (since a picture book has no words), but then we get unhappy things like books of measure zero taking a really long time to read (imagine a really long picture book). So maybe a better option is to say that picture books are simply unmeasurable. Whenever someone asks for the length of a picture book, we ignore them, and this way our measure will continue to be a good approximation of reading time and we get to keep our other nice properties as well.</p>
+
+  <p>Similarly, measure theory asks questions like:</p>
+
+  <ul>
+  <li>How do we define a measure on our space? (Jordan measure and Lebesgue measure are two different options in Euclidean space.)</li>
+  <li>What properties does our measure satisfy? (For example, does it satisfy translational invariance, rotational invariance, additivity?)</li>
+  <li>Which objects are measurable/which objects can we say it&#8217;s okay not to measure in order to preserve nice properties of our measure? (The Banach-Tarski ball can be rigidly reassembled into two copies of the same shape and size as the original, so we don&#8217;t want it to be measurable, since then we would lose additivity properties.)</li>
+  </ul>
+
+
+  <p>And once we&#8217;ve defined a &#8220;generalized area&#8221; (our measure), we can try to generalize other mathematical concepts as well. For example, recall that the (Riemann) integral that you learn in calculus measures the area under a curve. What happens if we replace the &#8220;area&#8221; in the Riemann integral with our new, generalized measure (e.g., to get the Lebesgue integral)? Measure theory also helps make certain probability statements mathematically precise (e.g., we can say exactly what it means that a fair coin flipped infinitely often will &#8220;almost never&#8221; land heads more than 50% of the time).</p>
+  </div>
+
+                    </article>
  
 <div class="paginator">
             <div class="navButton"><a href="http://blog.echen.me/author/edwin-chen4.html">Prev</a></div>
@@ -625,7 +587,6 @@
 
           <div id="recent_posts">
               <h3>Recent Posts</h3>
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2015/07/05/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
@@ -635,6 +596,7 @@
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
             
           </div>
         </div>
