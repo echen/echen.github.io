@@ -49,7 +49,7 @@
 &lt;/ul&gt;
 &lt;p&gt;(Note: I usually prefer a three-point or five-point Likert scale with a "neutral" option, but I was feeling a little wild.)&lt;/p&gt;
 &lt;p&gt;For example, here's how a rater reviewed the related books for Anne Rice's &lt;em&gt;The Wolves of Midwinter&lt;/em&gt;.&lt;/p&gt;
-&lt;p&gt;&lt;a href="http://imgur.com/59445e4c-7205-4e1b-864b-6d12962d59e5"&gt;&lt;img alt="Anne Rice" src="http://imgur.com/59445e4c-7205-4e1b-864b-6d12962d59e5" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/eh9VKhR.png"&gt;&lt;img alt="Anne Rice" src="http://i.imgur.com/eh9VKhR.png" /&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;So how good are Amazon's recommendations? Quite good, in fact: 47% of raters said they'd definitely buy the first related book, another 29% said it was good enough that they might buy it, and only 24% of raters disliked the suggestion.&lt;/p&gt;
 &lt;p&gt;&lt;a href="http://i.imgur.com/MNSGpIi.png"&gt;&lt;img alt="A1 Ratings" src="http://i.imgur.com/MNSGpIi.png" /&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;The second and third book suggestions, while a bit worse, seem to perform pretty well too: around 65% of raters rated them positive.&lt;/p&gt;
@@ -1386,13 +1386,13 @@
 
   &lt;p&gt;Let&amp;#8217;s take a look.&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="https://dl.dropbox.com/u/10506/blog/sodapop/united-states.png"&gt;&lt;img src="https://dl.dropbox.com/u/10506/blog/sodapop/united-states.png" alt="United States" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="http://i.imgur.com/OgNjpqI.png"&gt;&lt;img src="http://i.imgur.com/OgNjpqI.png" alt="United States" /&gt;&lt;/a&gt;&lt;/p&gt;
 
   &lt;p&gt;To make this map, I sampled geo-tagged tweets containing the words &amp;#8220;soda&amp;#8221;, &amp;#8220;pop&amp;#8221;, or &amp;#8220;coke&amp;#8221;, performed some state-of-the-art NLP technology to ensure the tweets were soft drink related (e.g., the tweets had to contain &amp;#8220;drink soda&amp;#8221; or &amp;#8220;drink a pop&amp;#8221;), and tried to filter out coke tweets that were specifically about the Coke brand (e.g., Coke Zero).&lt;/p&gt;
 
   &lt;p&gt;It&amp;#8217;s a little cluttered, though, so let&amp;#8217;s clean it up by aggregating nearby tweets.&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="https://dl.dropbox.com/u/10506/blog/sodapop/united_states_binned.png"&gt;&lt;img src="https://dl.dropbox.com/u/10506/blog/sodapop/united_states_binned.png" alt="United States Binned" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="http://i.imgur.com/iWesmoA.png"&gt;&lt;img src="http://i.imgur.com/iWesmoA.png" alt="United States Binned" /&gt;&lt;/a&gt;&lt;/p&gt;
 
   &lt;p&gt;Here, I bucketed all tweets within a 0.333 latitude/longitude radius, calculated the term distribution within each bucket, and colored each bucket with the word furthest from its overall mean. I also sized each point according to the (log-transformed) number of tweets in the bucket.&lt;/p&gt;
 
@@ -1407,19 +1407,19 @@
 
   &lt;p&gt;For comparison, here&amp;#8217;s another map based on a survey at &lt;a href="http://www.popvssoda.com/"&gt;popvssoda.com&lt;/a&gt;.&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="https://dl.dropbox.com/u/10506/blog/sodapop/popvssoda.png"&gt;&lt;img src="https://dl.dropbox.com/u/10506/blog/sodapop/popvssoda.png" alt="Pop vs. Soda Map" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="http://i.imgur.com/5jAbC0G.png"&gt;&lt;img src="http://i.imgur.com/5jAbC0G.png" alt="Pop vs. Soda Map" /&gt;&lt;/a&gt;&lt;/p&gt;
 
   &lt;p&gt;We can see similar patterns, though interestingly, our map has less Coke in the Southeast and less pop in the Northwest.&lt;/p&gt;
 
   &lt;p&gt;Finally, here&amp;#8217;s a world map of the terms, bucketed again. Notice that &amp;#8220;pop&amp;#8221; seems to be prevalent only in parts of the United States and Canada.&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="https://dl.dropbox.com/u/10506/blog/sodapop/world-map.png"&gt;&lt;img src="https://dl.dropbox.com/u/10506/blog/sodapop/world-map.png" alt="World" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="http://i.imgur.com/GewG65x.png"&gt;&lt;img src="http://i.imgur.com/GewG65x.png" alt="World" /&gt;&lt;/a&gt;&lt;/p&gt;
 
   &lt;p&gt;As some astute readers noted, though, the seeming dominance of coke is probably due to the difficulty in distinguishing the generic use of coke for soft drinks in general from the particular use of coke for referring to the Coca-Cola brand.&lt;/p&gt;
 
   &lt;p&gt;So let&amp;#8217;s instead look at a world map of a couple other soft drink terms (&amp;#8220;fizzy drink&amp;#8221;, &amp;#8220;mineral&amp;#8221;, and &amp;#8220;tonic&amp;#8221;):&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="https://dl.dropbox.com/u/10506/blog/sodapop/fizzy-mineral-tonic.png"&gt;&lt;img src="https://dl.dropbox.com/u/10506/blog/sodapop/fizzy-mineral-tonic.png" alt="Fizzy Drink vs. Mineral vs. Tonic" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="http://i.imgur.com/R0CASuw.png"&gt;&lt;img src="http://i.imgur.com/R0CASuw.png" alt="Fizzy Drink vs. Mineral vs. Tonic" /&gt;&lt;/a&gt;&lt;/p&gt;
 
   &lt;p&gt;Notice that:&lt;/p&gt;
 
@@ -1434,27 +1434,27 @@
 
   &lt;p&gt;What do people eat during the Super Bowl? (wings and beer, apparently)&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="https://twitter.com/echen/status/166343879547822080"&gt;&lt;img src="https://dl.dropbox.com/u/10506/blog/sodapop/superbowl-snacks.png" alt="Superbowl Snacks" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="https://twitter.com/echen/status/166343879547822080"&gt;&lt;img src="http://i.imgur.com/6D3D4OJ.png" alt="Superbowl Snacks" /&gt;&lt;/a&gt;&lt;/p&gt;
 
   &lt;p&gt;What do people want for Christmas, compared to what they actually get?&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="https://twitter.com/echen/status/153683967315419136"&gt;&lt;img src="https://dl.dropbox.com/u/10506/blog/sodapop/xmas.png" alt="Christmas" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="https://twitter.com/echen/status/153683967315419136"&gt;&lt;img src="http://i.imgur.com/rJmfMTA.png" alt="Christmas" /&gt;&lt;/a&gt;&lt;/p&gt;
 
   &lt;p&gt;What do guys and girls &lt;em&gt;really&lt;/em&gt; say?&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="https://twitter.com/echen/status/261667822793551873/photo/1"&gt;&lt;img src="https://dl.dropbox.com/u/10506/twitter/shitguysandgirlssay.png" alt="Shit Guys and Girls Say" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="https://twitter.com/echen/status/261667822793551873/photo/1"&gt;&lt;img src="http://i.imgur.com/awPZdyj.png" alt="Shit Guys and Girls Say" /&gt;&lt;/a&gt;&lt;/p&gt;
 
   &lt;p&gt;When were people losing and gaining power during Hurricane Sandy? (&lt;a href="http://blog.echen.me/hurricane-sandy-outages/"&gt;click&lt;/a&gt; the image to interact)&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="http://blog.echen.me/hurricane-sandy-outages/"&gt;&lt;img src="https://dl.dropbox.com/u/10506/twitter/sandy-outages.png" alt="Sandy Power Outages" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="http://blog.echen.me/hurricane-sandy-outages/"&gt;&lt;img src="http://i.imgur.com/6MzIHww.png" alt="Sandy Power Outages" /&gt;&lt;/a&gt;&lt;/p&gt;
 
   &lt;p&gt;How does information of a &lt;em&gt;geographic&lt;/em&gt;-specific nature spread? (&lt;a href="http://hurricanesandy.herokuapp.com/"&gt;click&lt;/a&gt; the image to see a dynamic visualization of when and where tweets related to surviving Hurricane Sandy were shared)&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="http://hurricanesandy.herokuapp.com/"&gt;&lt;img src="https://dl.dropbox.com/u/10506/twitter/sandy-spread.png" alt="Hurricane Sandy Retweets" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="http://hurricanesandy.herokuapp.com/"&gt;&lt;img src="http://i.imgur.com/x3Z2Kpe.png" alt="Hurricane Sandy Retweets" /&gt;&lt;/a&gt;&lt;/p&gt;
 
   &lt;p&gt;Can we use Twitter to measure presidential votes? (yes!)&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="https://twitter.com/echen/status/265894918382305284/photo/1"&gt;&lt;img src="https://dl.dropbox.com/u/10506/twitter/electoral-map.png" alt="Electoral Map" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="https://twitter.com/echen/status/265894918382305284/photo/1"&gt;&lt;img src="http://i.imgur.com/D7GhNLR.png" alt="Electoral Map" /&gt;&lt;/a&gt;&lt;/p&gt;
   &lt;/div&gt;  
 </description><dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Edwin Chen</dc:creator><pubDate>Fri, 06 Jul 2012 04:15:00 +0200</pubDate><guid>tag:blog.echen.me,2012-07-06:2012/07/06/soda-vs-pop-with-twitter/</guid></item><item><title>Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process</title><link>http://blog.echen.me/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/</link><description>
   &lt;div class="entry-content"&gt;&lt;p&gt;Imagine you&amp;#8217;re a budding chef. A data-curious one, of course, so you start by taking a set of foods (pizza, salad, spaghetti, etc.) and ask 10 friends how much of each they ate in the past day.&lt;/p&gt;
