@@ -494,7 +494,7 @@
 
   <p>Here&#8217;s a sample:</p>
 
-  <p><a href="http://link-prediction.herokuapp.com/network"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_untrimmed.png" alt="1 Untrimmed Network" /></a></p>
+  <p><a href="http://link-prediction.herokuapp.com/network"><img src="http://i.imgur.com/L2S5GC1.png" alt="1 Untrimmed Network" /></a></p>
 
   <p>(Go ahead, click on the picture to <a href="http://link-prediction.herokuapp.com/network">play with the app yourself</a>. It&#8217;s pretty fun.)</p>
 
@@ -504,7 +504,7 @@
 
   <p>There are quite a few dangling nodes (nodes at distance 3 with only one connection to the rest of the local network), though, so let&#8217;s remove these to reveal the core structure:</p>
 
-  <p><a href="http://link-prediction.herokuapp.com/network"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_network.png" alt="1 Untrimmed Network" /></a></p>
+  <p><a href="http://link-prediction.herokuapp.com/network"><img src="http://i.imgur.com/w1kAj6x.png" alt="1 Untrimmed Network" /></a></p>
 
   <p>And here&#8217;s an embedded version you can manipulate inline:</p>
 
@@ -513,33 +513,33 @@
 
   <p>Since the default view doesn&#8217;t encode the distinction between following and follower relationships, we can mouse over each node to see who it follows and who it&#8217;s followed by. Here, for example, is the following/follower network of one of the central node&#8217;s friends:</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_friend1.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_friend1.png" alt="1 - Friend1" /></a></p>
+  <p><a href="http://i.imgur.com/38laphs.png"><img src="http://i.imgur.com/38laphs.png" alt="1 - Friend1" /></a></p>
 
   <p>The moused over node is highlighted in black, its friends (users who both follow the node and are followed back in turn) are colored in purple, its followees are teal, and its followers in orange. We can also see that the node shares a friend with the central user (<a href="http://en.wikipedia.org/wiki/Triadic_closure">triadic closure</a>, <em>holla!</em>).</p>
 
   <p>Here&#8217;s another network, this time of the friend at the bottom:</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_friend2.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_friend2.png" alt="1 - Friend2" /></a></p>
+  <p><a href="http://i.imgur.com/bmJdrGT.png"><img src="http://i.imgur.com/bmJdrGT.png" alt="1 - Friend2" /></a></p>
 
   <p>Interestingly, while the first friend had several only-followers (in orange), the second friend has none. (which suggests, perhaps, a node-level feature that measures how follow-hungry a user is&#8230;)</p>
 
   <p>And here&#8217;s one more node, a little further out (maybe a celebrity, given it has nothing but followers?):</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_celebrity.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_celebrity.png" alt="1 - Celebrity" /></a></p>
+  <p><a href="http://i.imgur.com/vXXT1np.png"><img src="http://i.imgur.com/vXXT1np.png" alt="1 - Celebrity" /></a></p>
 
   <h2>The Quiet One</h2>
 
   <p>Let&#8217;s take a look at another graph, one whose local network is a little smaller:</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/4_network.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/4_network.png" alt="4 Network" /></a></p>
+  <p><a href="http://i.imgur.com/YDjamZK.png"><img src="http://i.imgur.com/YDjamZK.png" alt="4 Network" /></a></p>
 
   <h2>A Social Butterfly</h2>
 
   <p>And one more, whose local network is a little larger:</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/2_network.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/2_network.png" alt="2 Network" /></a></p>
+  <p><a href="http://i.imgur.com/0dPnb3V.png"><img src="http://i.imgur.com/0dPnb3V.png" alt="2 Network" /></a></p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/2_friend.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/2_friend.png" alt="2 Network - Friend" /></a></p>
+  <p><a href="http://i.imgur.com/RSS8Ikh.png"><img src="http://i.imgur.com/RSS8Ikh.png" alt="2 Network - Friend" /></a></p>
 
   <p>Again, I encourage everyone to play around with the app <a href="http://link-prediction.herokuapp.com/network">here</a>, and I&#8217;ll come back to the question of coloring each node later.</p>
 
@@ -549,17 +549,17 @@
 
   <p>Here&#8217;s the distribution of the number of followers of each node in the training set (cut off at 50 followers for a better fit &#8211; the maximum number of followers is 552), as well as the number of users each node is following (again, cut off at 50 &#8211; the maximum here is 1566)</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/training_full_followers.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/training_full_followers.png" alt="Training Followers" /></a></p>
+  <p><a href="http://i.imgur.com/c5BfwaG.png"><img src="http://i.imgur.com/c5BfwaG.png" alt="Training Followers" /></a></p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/training_full_followees.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/training_full_followees.png" alt="Training Followees" /></a></p>
+  <p><a href="http://i.imgur.com/NLBHgy8.png"><img src="http://i.imgur.com/NLBHgy8.png" alt="Training Followees" /></a></p>
 
   <p>Nothing terribly surprising, but that alone is good to verify. (For people tempted to mutter about power laws, I&#8217;ll hold you off with the bitter coldness of <a href="http://cscs.umich.edu/~crshalizi/weblog/491.html">baby Gauss&#8217;s tears</a>.)</p>
 
   <p>Similarly, here are the same two graphs, but limited to the nodes in the test set alone:</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/test_followers.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/test_followers.png" alt="Test Followers" /></a></p>
+  <p><a href="http://i.imgur.com/O6ogEYy.png"><img src="http://i.imgur.com/O6ogEYy.png" alt="Test Followers" /></a></p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/test_followees.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/test_followees.png" alt="Test Followees" /></a></p>
+  <p><a href="http://i.imgur.com/roUrV5I.png"><img src="http://i.imgur.com/roUrV5I.png" alt="Test Followees" /></a></p>
 
   <p>Notice that there are relatively more test set users with 0 followees than in the full training set, and relatively fewer test set users with 0 followers. This information could be used to better simulate a validation set for model selection, though I didn&#8217;t end up doing this myself.</p>
 
@@ -1030,47 +1030,47 @@
 
   <p>Here&#8217;s the local network of node 317 (different from the node above), where each node is colored by its personalized PageRank (higher scores are in darker red):</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_propagation.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_propagation.png" alt="317 - Personalized PageRank" /></a></p>
+  <p><a href="http://i.imgur.com/0OpjUAK.png"><img src="http://i.imgur.com/0OpjUAK.png" alt="317 - Personalized PageRank" /></a></p>
 
   <p>If we look at the following vs. follower relationships of the central node (recall that purple is friends, teal is followings, orange is followers):</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_following_followers.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_following_followers.png" alt="317 - Personalized PageRank" /></a></p>
+  <p><a href="http://i.imgur.com/IPWrww9.png"><img src="http://i.imgur.com/IPWrww9.png" alt="317 - Personalized PageRank" /></a></p>
 
   <p>&#8230;we can see that, as expected (because edges that represented both following and follower were double-weighted in my PageRank calculation), the darkest red nodes are those that are friends with the central node, while those in a following-only or follower-only relationship have a lower score.</p>
 
   <p>How does the propagation score compare to personalized PageRank? Here, I colored each node according to the log ratio of its propagation score and personalized PageRank:</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_log_ratio.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_log_ratio.png" alt="317 - Log Ratio" /></a></p>
+  <p><a href="http://i.imgur.com/aenZaq6.png"><img src="http://i.imgur.com/aenZaq6.png" alt="317 - Log Ratio" /></a></p>
 
   <p>Comparing this coloring with the local follow/follower network:</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_propagation_local.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_propagation_local.png" alt="317 - Local Network of Node" /></a></p>
+  <p><a href="http://i.imgur.com/n6AZWyq.png"><img src="http://i.imgur.com/n6AZWyq.png" alt="317 - Local Network of Node" /></a></p>
 
   <p>&#8230;we can see that followed nodes (in teal) receive a higher propagation weight than friend nodes (in purple), while follower nodes (in orange) receive almost no propagation score at all.</p>
 
   <p>Going back to node 1, let&#8217;s look at a different metric. Here, each node is colored according to its Jaccard similarity with the source, when nodes are represented by the set of their followers:</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_sim_by_followers.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_sim_by_followers.png" alt="1 - Similarity by Followers" /></a></p>
+  <p><a href="http://i.imgur.com/hVnnFAO.png"><img src="http://i.imgur.com/hVnnFAO.png" alt="1 - Similarity by Followers" /></a></p>
 
   <p>We can see that, while the PageRank and propagation metrics tended to favor nodes <em>close</em> to the central node, the Jaccard similarity feature helps us explore nodes that are further out.</p>
 
   <p>However, if we look the high-scoring nodes more closely, we see that they often have only a single connection to the rest of the network:</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_single_connection.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1_single_connection.png" alt="1 - Single Connection" /></a></p>
+  <p><a href="http://i.imgur.com/mRArIFf.png"><img src="http://i.imgur.com/mRArIFf.png" alt="1 - Single Connection" /></a></p>
 
   <p>In other words, their high Jaccard similarity is due to the fact that they don&#8217;t have many connections to begin with. This suggests that some regularization or shrinking is in order.</p>
 
   <p>So here&#8217;s a regularized version of Jaccard similarity, where we downweight nodes with few connections:</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1-regularized.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/1-regularized.png" alt="1 - Regularized" /></a></p>
+  <p><a href="http://i.imgur.com/1fZWX45.png"><img src="http://i.imgur.com/1fZWX45.png" alt="1 - Regularized" /></a></p>
 
   <p>We can see that the outlier nodes are much more muted this time around.</p>
 
   <p>For a starker difference, compare the following two graphs of the Jaccard similarity metric around node 317 (the first graph is an unregularized version, the second is regularized):</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_unregularized.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_unregularized.png" alt="317 - Unregularized" /></a></p>
+  <p><a href="http://i.imgur.com/a7QWscH.png"><img src="http://i.imgur.com/a7QWscH.png" alt="317 - Unregularized" /></a></p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_regularized.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/317_regularized.png" alt="317 - Regularized" /></a></p>
+  <p><a href="http://i.imgur.com/MPwk5Bv.png"><img src="http://i.imgur.com/MPwk5Bv.png" alt="317 - Regularized" /></a></p>
 
   <p>Notice, in particular, how the popular node in the top left and the popular nodes at the bottom have a much higher score when we regularize.</p>
 
@@ -1128,7 +1128,7 @@
 
   <p>So let&#8217;s look at the variable importance scores as determined by one of my random forest models, which (unsurprisingly) consistently outperformed logistic regression.</p>
 
-  <p><a href="https://dl.dropbox.com/u/10506/blog/kaggle-fb/rf-importance-scores.png"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/rf-importance-scores.png" alt="Random Forest Importance Scores" /></a></p>
+  <p><a href="http://i.imgur.com/7D5yi6G.png"><img src="http://i.imgur.com/7D5yi6G.png" alt="Random Forest Importance Scores" /></a></p>
 
   <p>The random forest classifier here is one of my earlier models (using a slightly smaller subset of my full suite of features), where the targeting step consisted of taking the top 25 nodes with the highest propagation scores.</p>
 
@@ -1147,7 +1147,7 @@
 
   <p>To enable these kinds of comparisons, I made <a href="http://link-prediction.herokuapp.com/comparison">a small module</a> that allows you to select two models and then visualize their sliced performance.</p>
 
-  <p><a href="http://link-prediction.herokuapp.com/comparison"><img src="https://dl.dropbox.com/u/10506/blog/kaggle-fb/pagerank_vs_is_followed_by_v2.png" alt="PageRank vs. Is Followed By" /></a></p>
+  <p><a href="http://link-prediction.herokuapp.com/comparison"><img src="http://i.imgur.com/ahNHp5z.png" alt="PageRank vs. Is Followed By" /></a></p>
 
   <p>(Go ahead, <a href="http://link-prediction.herokuapp.com/comparison">play around</a>.)</p>
 
