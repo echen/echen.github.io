@@ -57,7 +57,7 @@
 <h1>Amazon, and Moving Beyond Log-Based Metrics</h1>
 <p>(Let's continue motivating a bit why log-based metrics are often imperfect measures of relevance and quality, as this is an important but difficult-to-understand point.)</p>
 <p>So take Amazon's <em>Customers Who Bought This Item Also Bought</em> feature, which tries to show you related books.</p>
-<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/amazon-related-books.png"><img alt="Amazon Related Books" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/amazon-related-books.png" /></a></p>
+<p><a href="http://i.imgur.com/NoTD5Vk.png"><img alt="Amazon Related Books" src="http://i.imgur.com/NoTD5Vk.png" /></a></p>
 <p>To measure its effectiveness, the standard approach is to run a live experiment and measure the change in metrics like revenue or CTR.</p>
 <p>But imagine we suddenly replace all of Amazon's book suggestions with pornography. What's going to happen? <a href="http://www.lazygamer.net/general-news/a-history-of-evony-ads-the-insanity-continues/"><em>CTR's likely to shoot through the roof!</em></a></p>
 <p>Or suppose that we replace all of Amazon's related books with shinier, more expensive items. Again, CTR and revenue are likely to increase, as the flashier content draws eyeballs. But is this anything but a short-term boost? Perhaps the change decreases total sales in the long run, as customers start to find Amazon too expensive for their tastes and move to other marketplaces.</p>
@@ -65,7 +65,7 @@
 <h1>Human Evaluation</h1>
 <p>Solution: let's inject humans into the process. Computers can't measure relatedness (if they could, we'd be done), but people of course can.</p>
 <p>For example, in the screenshot below, I asked a worker (on a crowdsourcing platform I've built on my own) to rate the first three <em>Customers Who Bought This Also Bought</em> suggestions for a book on <a href="http://www.barnesandnoble.com/">barnesandnoble.com</a>.</p>
-<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/fools-assassin-rating.png"><img alt="Fool's Assassin" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/fools-assassin-rating.png" /></a></p>
+<p><a href="http://imgur.com/3090a350-3b18-4b06-8b1d-be8440f0f6e2"><img alt="Fool's Assassin" src="http://imgur.com/3090a350-3b18-4b06-8b1d-be8440f0f6e2" /></a></p>
 <p>(Copying the text from the screenshot:</p>
 <ul>
 <li><strong><em>Fool's Assassin</em>, by Robin Hobb.</strong> (original book) "I only just read this recently, but it's one of my favorites of this year's releases. This book was so beautifully written. I've always been a fan of the Fantasy genre, but often times it's all stylistically similar. Hobb has a wonderful way with characters and narration. The story was absolutely heartbreaking and lead me wanting another book."</li>
@@ -82,12 +82,12 @@
 <p>So in general, here's one way to understand the quality of a <em>Do This Next</em> algorithm:</p>
 <ol>
 <li>Take a bunch of items (e.g., books if we're Amazon or Barnes &amp; Noble), and generate their related brethren.</li>
-<li>Send these <item, related items> pairs off to a bunch of judges (say, by using a crowdsourcing platform like Mechanical Turk), and ask them to rate their relevance.</li>
+<li>Send these <item, related items> pairs off to a bunch of judges (say, by using a crowdsourcing platform like <a href="https://www.gethybrid.io">Hybrid</a>), and ask them to rate their relevance.</li>
 <li>Analyze the data that comes back.</li>
 </ol>
 <h1>Algorithmic Relevance on Amazon, Barnes &amp; Noble, and Google</h1>
 <p>Let's make this process concrete. Pretend I'm a newly minted VP of What Customers Also Buy at Amazon, and I want to understand the product's flaws and stars.</p>
-<p>I started by going to Mechanical Turk and asking a couple hundred workers to take a book they enjoyed in the past year, and to find it on Amazon. They'd then take the first three related book suggestions from a different author, rate them on the following scale, and explain their ratings.</p>
+<p>I started by asking a couple hundred of my own human workers to take a book they enjoyed in the past year, and to find it on Amazon. They'd then take the first three related book suggestions from a different author, rate them on the following scale, and explain their ratings.</p>
 <ul>
 <li><strong>Great suggestion.</strong> I'd definitely buy it. (Very positive)</li>
 <li><strong>Decent suggestion.</strong> I might buy it. (Mildly positive)</li>
@@ -96,12 +96,12 @@
 </ul>
 <p>(Note: I usually prefer a three-point or five-point Likert scale with a "neutral" option, but I was feeling a little wild.)</p>
 <p>For example, here's how a rater reviewed the related books for Anne Rice's <em>The Wolves of Midwinter</em>.</p>
-<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/anne-rice.png"><img alt="Anne Rice" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/anne-rice.png" /></a></p>
+<p><a href="http://imgur.com/59445e4c-7205-4e1b-864b-6d12962d59e5"><img alt="Anne Rice" src="http://imgur.com/59445e4c-7205-4e1b-864b-6d12962d59e5" /></a></p>
 <p>So how good are Amazon's recommendations? Quite good, in fact: 47% of raters said they'd definitely buy the first related book, another 29% said it was good enough that they might buy it, and only 24% of raters disliked the suggestion.</p>
-<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/a1-ratings.png"><img alt="A1 Ratings" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/a1-ratings.png" /></a></p>
+<p><a href="http://i.imgur.com/MNSGpIi.png"><img alt="A1 Ratings" src="http://i.imgur.com/MNSGpIi.png" /></a></p>
 <p>The second and third book suggestions, while a bit worse, seem to perform pretty well too: around 65% of raters rated them positive.</p>
 <p>What can we learn from the bad ratings? I ran a follow-up task that asked workers to categorize the bad related books, and here's the breakdown.</p>
-<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/bad-categories.png"><img alt="Bad Suggestions Breakdown" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/bad-categories.png" /></a></p>
+<p><a href="http://i.imgur.com/h4DOvju.png"><img alt="Bad Suggestions Breakdown" src="http://i.imgur.com/h4DOvju.png" /></a></p>
 <ul>
 <li><strong>Related but different-subtopic.</strong> These were book suggestions that were generally related to the original book, but that were in a different sub-topic that the rater wasn't interested in. For example, the first related book for Sun Tzu's <em>The Art of War</em> (a book nominally about war, but which nowadays has become more of a life hack book) was <a href="http://www.amazon.com/On-War-Carl-von-Clausewitz/dp/1469947021"><em>On War</em></a> (a war treatise), but the rater wasn't actually interested in the military aspects: <em>"I would not buy this book, because it only focuses on military war. I am not interested in that. I am interested in mental tactics that will help me prosper in life."</em></li>
 <li><strong>Completely unrelated.</strong> These were book suggestions that were completely unrelated to the original book. For example, a Scrabble dictionary appearing on <em>The Art of War</em>'s page.</li>
@@ -116,7 +116,7 @@
 <h2>Competitive Analysis</h2>
 <p>We now have a general grasp of Amazon's related book suggestions and how they could be improved, and just like we could quote a metric like a CTR of 6.2% or whatnot, we can also now quote a <em>relevance score</em> of 0.62 (or whatever). So let's turn to the question of how Amazon compares to other online booksellers like Barnes &amp; Noble and Google Play.</p>
 <p>I took the same task I used above, but this time asked raters to review the related suggestions on those two sites as well.</p>
-<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/amazon-bn-google.png"><img alt="Amazon vs. B&amp;N vs. Google" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/amazon-bn-google.png" /></a></p>
+<p><a href="http://i.imgur.com/kdWcSPs.png"><img alt="Amazon vs. B&amp;N vs. Google" src="http://i.imgur.com/kdWcSPs.png" /></a></p>
 <p>In short,</p>
 <ul>
 <li><strong>Barnes &amp; Nobles's algorithm are almost as good as Amazon's</strong>: the first three suggestions were rated positive 58% of the time, compared to 68% on Amazon.</li>
@@ -124,12 +124,12 @@
 </ul>
 <p>Why are the Play Store's suggestions so bad? Let's look at a couple examples.</p>
 <p>Here's the Play Store page for John Green's <em>The Fault in Our Stars</em>, a critics-loved-it book about cancer and romance (and now also a movie).</p>
-<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/fault-in-our-stars.png"><img alt="Fault in Our Stars" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/fault-in-our-stars.png" /></a></p>
+<p><a href="http://i.imgur.com/oYKFLeV.png"><img alt="Fault in Our Stars" src="http://i.imgur.com/oYKFLeV.png" /></a></p>
 <p>Two of the suggestions are completely random: a poorly-rated Excel manual and a poorly-reviewed textbook on sexual health. The others are completely unrelated cowboy books, by a different John Green.</p>
 <p>Here's the page for <em>The Strain</em>. In this case, all the suggestions are in a different language! And there are only four of them.</p>
-<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/the-strain.png"><img alt="The Strain" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/the-strain.png" /></a></p>
+<p><a href="http://i.imgur.com/F1XNxPz.png"><img alt="The Strain" src="http://i.imgur.com/F1XNxPz.png" /></a></p>
 <p>Once again asking raters to categorize all of the Play Store's bad recommendations...</p>
-<p><a href="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/google-atrocity.png"><img alt="Google Atrocity" src="https://dl.dropboxusercontent.com/u/10506/blog/human-evaluation/google-atrocity.png" /></a></p>
+<p><a href="http://i.imgur.com/1rWRQ0r.png"><img alt="Google Atrocity" src="http://i.imgur.com/1rWRQ0r.png" /></a></p>
 <ul>
 <li>45% of the time, the related book suggestions were completely unrelated to the original book in question. For example: displaying a physics textbook on the page for a romance novel.</li>
 <li>32% of the time, there simply wasn't a book suggestion at all. (I'm guessing the Play Bookstore's catalog is pretty limited.)</li>
@@ -177,7 +177,6 @@
 <p>In the spirit of item-item similarities, here are some other posts readers of this post might also want to read.</p>
 <ul>
 <li><a href="http://www.quora.com/How-does-Amazons-collaborative-filtering-recommendation-engine-work/answer/Edwin-Chen-1">How Amazon's related books feature works</a></li>
-<li><a href="http://blog.echen.me/2012/04/25/making-the-most-of-mechanical-turk-tips-and-best-practices/">Best practices on Mechanical Turk</a></li>
 <li><a href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation/">Real-time human computation at Twitter</a></li>
 <li><a href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Generating movie recommendations in Hadoop and Scalding</a></li>
 </ul>
