@@ -50,7 +50,7 @@
 
   <p>So how can you use the data you&#8217;ve gathered to discover different kinds of groups?</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/clustering-example.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/clustering-example.png" alt="Clustering Example" /></a></p>
+  <p><a href="http://i.imgur.com/sxBfR1R.png"><img src="http://i.imgur.com/sxBfR1R.png" alt="Clustering Example" /></a></p>
 
   <p>One way is to use a standard clustering algorithm like <strong>k-means</strong> or <strong>Gaussian mixture modeling</strong> (see <a href="http://blog.echen.me/2011/03/19/counting-clusters/">this previous post</a> for a brief introduction). The problem is that these both assume a <em>fixed</em> number of clusters, which they need to be told to find. There are a couple methods for selecting the number of clusters to learn (e.g., the <a href="http://blog.echen.me/2011/03/19/counting-clusters/">gap and prediction strength statistics</a>), but the problem is a more fundamental one: most real-world data simply doesn&#8217;t have a fixed number of clusters.</p>
 
@@ -343,13 +343,13 @@
 
   <p>Here are some sample density plots of the colors in the urn, when using a unit normal as the base color distribution:</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_1.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_1.png" alt="Polya Urn Model, Alpha = 1" /></a></p>
+  <p><a href="http://i.imgur.com/4aOd7TI.png"><img src="http://i.imgur.com/4aOd7TI.png" alt="Polya Urn Model, Alpha = 1" /></a></p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_5.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_5.png" alt="Polya Urn Model, Alpha = 5" /></a></p>
+  <p><a href="http://i.imgur.com/vTLeppf.png"><img src="http://i.imgur.com/vTLeppf.png" alt="Polya Urn Model, Alpha = 5" /></a></p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_25.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_25.png" alt="Polya Urn Model, Alpha = 25" /></a></p>
+  <p><a href="http://i.imgur.com/SQPZY95.png"><img src="http://i.imgur.com/SQPZY95.png" alt="Polya Urn Model, Alpha = 25" /></a></p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_50.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_50.png" alt="Polya Urn Model, Alpha = 50" /></a></p>
+  <p><a href="http://i.imgur.com/PFmE0q3.png"><img src="http://i.imgur.com/PFmE0q3.png" alt="Polya Urn Model, Alpha = 50" /></a></p>
 
   <p>Notice that as alpha increases (i.e., we sample more new ball colors from our base; i.e., as we place more weight on our prior), the colors in the urn tend to a unit normal (our base color distribution).</p>
 
@@ -361,15 +361,15 @@
   </ul>
 
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.1.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.1.png" alt="Alpha 0.1" /></a></p>
+  <p><a href="http://i.imgur.com/QdRnCbn.png"><img src="http://i.imgur.com/QdRnCbn.png" alt="Alpha 0.1" /></a></p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.2.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.2.png" alt="Alpha 0.2" /></a></p>
+  <p><a href="http://i.imgur.com/n0CLgfs.png"><img src="http://i.imgur.com/n0CLgfs.png" alt="Alpha 0.2" /></a></p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.3.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.3.png" alt="Alpha 0.3" /></a></p>
+  <p><a href="http://i.imgur.com/yp9XINd.png"><img src="http://i.imgur.com/yp9XINd.png" alt="Alpha 0.3" /></a></p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.5.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-0.5.png" alt="Alpha 0.5" /></a></p>
+  <p><a href="http://i.imgur.com/MkoA8kP.png"><img src="http://i.imgur.com/MkoA8kP.png" alt="Alpha 0.5" /></a></p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-1.0.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/alpha-1.0.png" alt="Alpha 1.0" /></a></p>
+  <p><a href="http://i.imgur.com/UEmRqQU.png"><img src="http://i.imgur.com/UEmRqQU.png" alt="Alpha 1.0" /></a></p>
 
   <p>Notice that the points clump together in fewer clusters for low values of alpha, but become more dispersed as alpha increases.</p>
 
@@ -426,11 +426,11 @@
 
   <p>And here&#8217;s some sample output:</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/sbp_alpha_1.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/sbp_alpha_1.png" alt="Stick-Breaking Process, alpha = 1" /></a></p>
+  <p><a href="http://i.imgur.com/8gzowzf.png"><img src="http://i.imgur.com/8gzowzf.png" alt="Stick-Breaking Process, alpha = 1" /></a></p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/sbp_alpha_3.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/sbp_alpha_3.png" alt="Stick-Breaking Process, alpha = 3" /></a></p>
+  <p><a href="http://i.imgur.com/yM0Wckw.png"><img src="http://i.imgur.com/yM0Wckw.png" alt="Stick-Breaking Process, alpha = 3" /></a></p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/sbp_alpha_5.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/sbp_alpha_5.png" alt="Stick-Breaking Process, alpha = 5" /></a></p>
+  <p><a href="http://i.imgur.com/8tATMw6.png"><img src="http://i.imgur.com/8tATMw6.png" alt="Stick-Breaking Process, alpha = 5" /></a></p>
 
   <p>Notice that for low values of alpha, the stick weights are concentrated on the first few weights (meaning our data points are concentrated on a few clusters), while the weights become more evenly dispersed as we increase alpha (meaning we posit more clusters in our data points).</p>
 
@@ -440,13 +440,13 @@
 
   <p>For example, let&#8217;s look again at the plots from above, where I generated samples from a Polya Urn Model with the standard unit normal as the base distribution:</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_1.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_1.png" alt="Polya Urn Model, Alpha = 1" /></a></p>
+  <p><a href="http://i.imgur.com/4aOd7TI.png"><img src="http://i.imgur.com/4aOd7TI.png" alt="Polya Urn Model, Alpha = 1" /></a></p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_5.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_5.png" alt="Polya Urn Model, Alpha = 5" /></a></p>
+  <p><a href="http://i.imgur.com/vTLeppf.png"><img src="http://i.imgur.com/vTLeppf.png" alt="Polya Urn Model, Alpha = 5" /></a></p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_25.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_25.png" alt="Polya Urn Model, Alpha = 25" /></a></p>
+  <p><a href="http://i.imgur.com/SQPZY95.png"><img src="http://i.imgur.com/SQPZY95.png" alt="Polya Urn Model, Alpha = 25" /></a></p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_50.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/polya_alpha_50.png" alt="Polya Urn Model, Alpha = 50" /></a></p>
+  <p><a href="http://i.imgur.com/PFmE0q3.png"><img src="http://i.imgur.com/PFmE0q3.png" alt="Polya Urn Model, Alpha = 50" /></a></p>
 
   <p>Each run of the Polya Urn Model produces a slighly different distribution, though each is &#8220;centered&#8221; in some fashion around the standard Gaussian I used as base. In other words, the Polya Urn Model gives us a <strong>distribution over distributions</strong> (we get a distribution of ball colors, and this distribution of colors changes each time) &#8211; and so we finally get to the Dirichlet Process.</p>
 
@@ -529,13 +529,13 @@
 
   <p>First, how does the number of clusters inferred by the Dirichlet Process mixture vary as we feed in more (randomly ordered) points?</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/num-clusters-vary.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/num-clusters-vary.png" alt="Growth of Number of Clusters" /></a></p>
+  <p><a href="http://i.imgur.com/36Pxuq3.png"><img src="http://i.imgur.com/36Pxuq3.png" alt="Growth of Number of Clusters" /></a></p>
 
   <p>As expected, the Dirichlet Process model discovers more and more clusters as more and more food items arrive. (And indeed, the number of clusters appears to grow logarithmically, which can in fact be proved.)</p>
 
   <p>How many clusters does the mixture model infer from the entire dataset? Running the Gibbs sampler several times, we find that the number of clusters tends around 11:</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/num_mcdonalds_clusters.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/num_mcdonalds_clusters_small.png" alt="Number of clusters" /></a></p>
+  <p><a href="http://i.imgur.com/qbkq1uo.png"><img src="http://i.imgur.com/qbkq1uo.png" alt="Number of clusters" /></a></p>
 
   <p>Let&#8217;s dive into one of these clusterings.</p>
 
@@ -560,7 +560,7 @@
 
   <p>We can also look at the nutritional profile of some foods from this cluster (after <a href="http://en.wikipedia.org/wiki/Standard_score">z-scaling</a> each nutrition dimension to have mean 0 and standard deviation 1):</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster1.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster1.png" alt="Cluster 1" /></a></p>
+  <p><a href="http://i.imgur.com/oM1aPCE.png"><img src="http://i.imgur.com/oM1aPCE.png" alt="Cluster 1" /></a></p>
 
   <p>We see that foods in this cluster tend to be high in trans fat and low in vitamins, protein, fiber, and sodium.</p>
 
@@ -577,7 +577,7 @@
 
   <p>And looking at the nutritional profile of points in this cluster, we see that it&#8217;s heavy in sodium and fat:</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster2.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster2.png" alt="Cluster 2" /></a></p>
+  <p><a href="http://i.imgur.com/3bOYEBz.png"><img src="http://i.imgur.com/3bOYEBz.png" alt="Cluster 2" /></a></p>
 
   <p><strong>Cluster 3 (Burgers, Crispy Foods, High-Cholesterol)</strong></p>
 
@@ -599,7 +599,7 @@
 
   <p>It&#8217;s also high in fat and sodium, and low in carbs and sugar</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster3.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster3.png" alt="Cluster 3" /></a></p>
+  <p><a href="http://i.imgur.com/XdoVfXG.png"><img src="http://i.imgur.com/XdoVfXG.png" alt="Cluster 3" /></a></p>
 
   <p><strong>Cluster 4 (Creamy Sauces)</strong></p>
 
@@ -615,7 +615,7 @@
 
   <p>Nutritionally, these sauces are higher in calories from fat, and much lower in sodium:</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster4.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster4.png" alt="Cluster 4" /></a></p>
+  <p><a href="http://i.imgur.com/4gQzyLO.png"><img src="http://i.imgur.com/4gQzyLO.png" alt="Cluster 4" /></a></p>
 
   <p><strong>Cluster 5 (Salads)</strong></p>
 
@@ -632,7 +632,7 @@
 
   <p>This is reflected in the higher content of iron, vitamin A, and fiber:</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster5.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster5.png" alt="Cluster 5" /></a></p>
+  <p><a href="http://i.imgur.com/hqkpKz5.png"><img src="http://i.imgur.com/hqkpKz5.pngg" alt="Cluster 5" /></a></p>
 
   <p><strong>Cluster 6 (More Sauces)</strong></p>
 
@@ -647,7 +647,7 @@
 
   <p>These are still high in sodium, but much lower in fat compared to the other sauce clusters:</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster6.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster6.png" alt="Cluster 6" /></a></p>
+  <p><a href="http://i.imgur.com/i2Y2M6u.png"><img src="http://i.imgur.com/i2Y2M6u.png" alt="Cluster 6" /></a></p>
 
   <p><strong>Cluster 7 (Fruit and Maple Oatmeal)</strong></p>
 
@@ -658,7 +658,7 @@
   </ul>
 
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster7.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster7.png" alt="Cluster 7" /></a></p>
+  <p><a href="http://i.imgur.com/qoyNFK4.png"><img src="http://i.imgur.com/qoyNFK4.png" alt="Cluster 7" /></a></p>
 
   <p><strong>Cluster 8 (Sugary Drinks)</strong></p>
 
@@ -680,7 +680,7 @@
 
   <p>In addition to high sugar content, this cluster is also high in carbohydrates and calcium, and low in fat.</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster8.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster8.png" alt="Cluster 8" /></a></p>
+  <p><a href="http://i.imgur.com/MNdKmrr.png"><img src="http://i.imgur.com/MNdKmrr.png" alt="Cluster 8" /></a></p>
 
   <p><strong>Cluster 9 (Breakfast Foods)</strong></p>
 
@@ -690,13 +690,13 @@
   <li>Sausage McMuffin with Egg</li>
   <li>Sausage Burrito</li>
   <li>Egg McMuffin</li>
-  <li>Bacon, Egg &amp; Chees Biscuit</li>
+  <li>Bacon, Egg &amp; Cheese Biscuit</li>
   <li>McSkillet Burrito with Sausage</li>
   <li>Big Breakfast with Hotcakes</li>
   </ul>
 
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster9.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster9.png" alt="Cluster 9" /></a></p>
+  <p><a href="http://i.imgur.com/m67oVsY.png"><img src="http://i.imgur.com/m67oVsY.png" alt="Cluster 9" /></a></p>
 
   <p><strong>Cluster 10 (Coffee Drinks)</strong></p>
 
@@ -712,7 +712,7 @@
 
   <p>These are much higher in calcium and protein, and lower in sugar, than the other drink cluster above:</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster11.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster11.png" alt="Cluster 11" /></a></p>
+  <p><a href="http://i.imgur.com/UB8i5j4.png"><img src="http://i.imgur.com/UB8i5j4.png" alt="Cluster 11" /></a></p>
 
   <p><strong>Cluster 11 (Apples)</strong></p>
 
@@ -726,11 +726,11 @@
 
   <p>Vitamin C, check.</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster10.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/cluster10.png" alt="Cluster 10" /></a></p>
+  <p><a href="http://i.imgur.com/w6VBaBt.png"><img src="http://i.imgur.com/w6VBaBt.png" alt="Cluster 10" /></a></p>
 
   <p>And finally, here&#8217;s an overview of all the clusters at once (using a different clustering run):</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/dirichlet-process/all-clusters.png"><img src="http://dl.dropbox.com/u/10506/blog/dirichlet-process/all-clusters-small.png" alt="All Clusters" /></a></p>
+  <p><a href="http://i.imgur.com/RJ6FuGH.png"><img src="http://i.imgur.com/RJ6FuGH.png" alt="All Clusters" /></a></p>
 
   <h1>No More!</h1>
 
