@@ -294,6 +294,33 @@
             <aside id="featured">
                 <div class="body">
                     <article>
+                        <h1 class="entry-title"><a href="http://blog.echen.me/2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb</a></h1>
+<div class="post-info">
+	<ul>
+        <li class="vcard author">
+                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
+        </li>
+        <li class="published" title="2014-08-14T00:00:00+02:00">
+          on&nbsp;Thu 14 August 2014
+        </li>
+
+	</ul>
+
+</div><!-- /.post-info --><p>I love studying users and products, and think data science can be extremely useful in guiding product/strategy as a whole. So I thought it would be fun to depart from the usual machine learning and engineering things I write about, and do a quick study of Airbnb.</p>
+<p>Think of this like business analysis, or strategy – from a data science point of view. </p>
+<p>(It's in <a href="https://speakerdeck.com/edwinchen/product-insights-for-airbnb">slide deck form</a>, of course, because that's how these things roll.)</p>
+<script async class="speakerdeck-embed" data-id="228abf8d857a4a21b9e79b4b518f507d" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
                         <h1 class="entry-title"><a href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation</a></h1>
 <div class="post-info">
 	<ul>
@@ -1493,111 +1520,6 @@
 </script>
 
                     </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2012-07-06T04:15:00+02:00">
-          on&nbsp;Fri 06 July 2012
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p>One of the great things about Twitter is that it&#8217;s a global conversation anyone can join anytime. Eavesdropping on the world, what what!</p>
-
-  <p>Of course, it gets even better when you can <em>mine</em> all this chatter to study the way humans live and interact.</p>
-
-  <p>For example, <a href="http://blog.echen.me/2011/04/18/twifferences-between-californians-and-new-yorkers/">how do people in New York City differ from those in Silicon Valley?</a> We tend to think they&#8217;re more financially driven and restless with the world &#8211; is this true, and if so, <a href="http://blog.echen.me/2011/04/18/twifferences-between-californians-and-new-yorkers/">how much more</a>?</p>
-
-  <p>Or how does language change as you travel to different regions? Recall the classic soda vs. pop. vs. coke question: some people use the word &#8220;soda&#8221; to describe their soft drinks, others use &#8220;pop&#8221;, and still others use &#8220;coke&#8221;. Who says what where?</p>
-
-  <p>Let&#8217;s take a look.</p>
-
-  <p><a href="http://i.imgur.com/OgNjpqI.png"><img src="http://i.imgur.com/OgNjpqI.png" alt="United States" /></a></p>
-
-  <p>To make this map, I sampled geo-tagged tweets containing the words &#8220;soda&#8221;, &#8220;pop&#8221;, or &#8220;coke&#8221;, performed some state-of-the-art NLP technology to ensure the tweets were soft drink related (e.g., the tweets had to contain &#8220;drink soda&#8221; or &#8220;drink a pop&#8221;), and tried to filter out coke tweets that were specifically about the Coke brand (e.g., Coke Zero).</p>
-
-  <p>It&#8217;s a little cluttered, though, so let&#8217;s clean it up by aggregating nearby tweets.</p>
-
-  <p><a href="http://i.imgur.com/iWesmoA.png"><img src="http://i.imgur.com/iWesmoA.png" alt="United States Binned" /></a></p>
-
-  <p>Here, I bucketed all tweets within a 0.333 latitude/longitude radius, calculated the term distribution within each bucket, and colored each bucket with the word furthest from its overall mean. I also sized each point according to the (log-transformed) number of tweets in the bucket.</p>
-
-  <p>We can see that:</p>
-
-  <ul>
-  <li>The South is pretty Coke-heavy.</li>
-  <li>Soda belongs to the Northeast and far West.</li>
-  <li>Pop gets the mid-West, except for some interesting spots of blue around Wisconsin and the Illinois-Missouri border.</li>
-  </ul>
-
-
-  <p>For comparison, here&#8217;s another map based on a survey at <a href="http://www.popvssoda.com/">popvssoda.com</a>.</p>
-
-  <p><a href="http://i.imgur.com/5jAbC0G.png"><img src="http://i.imgur.com/5jAbC0G.png" alt="Pop vs. Soda Map" /></a></p>
-
-  <p>We can see similar patterns, though interestingly, our map has less Coke in the Southeast and less pop in the Northwest.</p>
-
-  <p>Finally, here&#8217;s a world map of the terms, bucketed again. Notice that &#8220;pop&#8221; seems to be prevalent only in parts of the United States and Canada.</p>
-
-  <p><a href="http://i.imgur.com/GewG65x.png"><img src="http://i.imgur.com/GewG65x.png" alt="World" /></a></p>
-
-  <p>As some astute readers noted, though, the seeming dominance of coke is probably due to the difficulty in distinguishing the generic use of coke for soft drinks in general from the particular use of coke for referring to the Coca-Cola brand.</p>
-
-  <p>So let&#8217;s instead look at a world map of a couple other soft drink terms (&#8220;fizzy drink&#8221;, &#8220;mineral&#8221;, and &#8220;tonic&#8221;):</p>
-
-  <p><a href="http://i.imgur.com/R0CASuw.png"><img src="http://i.imgur.com/R0CASuw.png" alt="Fizzy Drink vs. Mineral vs. Tonic" /></a></p>
-
-  <p>Notice that:</p>
-
-  <ul>
-  <li>&#8220;Fizzy drink&#8221; shows up for the UK, New Zealand, and Maine.</li>
-  <li>&#8220;Tonic&#8221; appears in Massachusetts.</li>
-  <li>While South Africa gets &#8220;fizzy drink&#8221;, Nigeria gets &#8220;mineral&#8221;.</li>
-  </ul>
-
-
-  <p>I&#8217;ve been getting a lot of questions lately about interesting things you can do with the Twitter API, so this was just one small project I&#8217;ve worked on to illustrate. <a href="http://www.cc.gatech.edu/~jeisenst/papers/emnlp2010.pdf">This paper</a> contains another awesome application of Twitter data to geographic language variation, and just for fun, here are a few other cute mini-projects:</p>
-
-  <p>What do people eat during the Super Bowl? (wings and beer, apparently)</p>
-
-  <p><a href="https://twitter.com/echen/status/166343879547822080"><img src="http://i.imgur.com/6D3D4OJ.png" alt="Superbowl Snacks" /></a></p>
-
-  <p>What do people want for Christmas, compared to what they actually get?</p>
-
-  <p><a href="https://twitter.com/echen/status/153683967315419136"><img src="http://i.imgur.com/rJmfMTA.png" alt="Christmas" /></a></p>
-
-  <p>What do guys and girls <em>really</em> say?</p>
-
-  <p><a href="https://twitter.com/echen/status/261667822793551873/photo/1"><img src="http://i.imgur.com/awPZdyj.png" alt="Shit Guys and Girls Say" /></a></p>
-
-  <p>When were people losing and gaining power during Hurricane Sandy? (<a href="http://blog.echen.me/hurricane-sandy-outages/">click</a> the image to interact)</p>
-
-  <p><a href="http://blog.echen.me/hurricane-sandy-outages/"><img src="http://i.imgur.com/6MzIHww.png" alt="Sandy Power Outages" /></a></p>
-
-  <p>How does information of a <em>geographic</em>-specific nature spread? (<a href="http://hurricanesandy.herokuapp.com/">click</a> the image to see a dynamic visualization of when and where tweets related to surviving Hurricane Sandy were shared)</p>
-
-  <p><a href="http://hurricanesandy.herokuapp.com/"><img src="http://i.imgur.com/x3Z2Kpe.png" alt="Hurricane Sandy Retweets" /></a></p>
-
-  <p>Can we use Twitter to measure presidential votes? (yes!)</p>
-
-  <p><a href="https://twitter.com/echen/status/265894918382305284/photo/1"><img src="http://i.imgur.com/D7GhNLR.png" alt="Electoral Map" /></a></p>
-  </div>  
-
-                    </article>
  
 <div class="paginator">
     <div class="navButton">Page 1 / 7</div>
@@ -1631,6 +1553,7 @@
               <h3>Recent Posts</h3>
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
+                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
@@ -1638,7 +1561,6 @@
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
                 <a style="font-size: 0.9em" href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
             
           </div>
         </div>
