@@ -3819,9 +3819,9 @@
 
   &lt;p&gt;Here&amp;#8217;s a graph of the topics that question upvoters follow. (Each node is a topic, and every time upvoter X follows both topics A and B, I add an edge between A and B.)&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoter-topics-unlabeled.png"&gt;&lt;img src="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoter-topics-unlabeled.png" alt="Upvoters' Topics - Unlabeled" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="http://i.imgur.com/SYaWo7V.png"&gt;&lt;img src="http://i.imgur.com/SYaWo7V.png" alt="Upvoters' Topics - Unlabeled" /&gt;&lt;/a&gt;&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoter-topics-labeled.png"&gt;&lt;img src="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoter-topics-labeled.png" alt="Upvoters' Topics - Labeled" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="http://i.imgur.com/A4Z1KF7.png"&gt;&lt;img src="http://i.imgur.com/A4Z1KF7.png" alt="Upvoters' Topics - Labeled" /&gt;&lt;/a&gt;&lt;/p&gt;
 
   &lt;p&gt;We can see from the graph that upvoters tend to be interested in three kinds of topics:&lt;/p&gt;
 
@@ -3834,9 +3834,9 @@
 
   &lt;p&gt;Also, here&amp;#8217;s the network of the upvoters themselves (there&amp;#8217;s an edge between users A and B if A follows B):&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoters-unlabeled.png"&gt;&lt;img src="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoters-unlabeled.png" alt="Upvote Network - Unlabeled" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="http://i.imgur.com/JuqybXw.png"&gt;&lt;img src="http://i.imgur.com/JuqybXw.png" alt="Upvote Network - Unlabeled" /&gt;&lt;/a&gt;&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoters-labeled.png"&gt;&lt;img src="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoters-labeled.png" alt="Upvote Network - Labeled" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="http://i.imgur.com/0E2ekqO.png"&gt;&lt;img src="http://i.imgur.com/0E2ekqO.png" alt="Upvote Network - Labeled" /&gt;&lt;/a&gt;&lt;/p&gt;
 
   &lt;p&gt;We can see three main clusters of users:&lt;/p&gt;
 
@@ -3893,7 +3893,7 @@
 
   &lt;p&gt;For another view of the upvote dynamics, here&amp;#8217;s a static visualization, where we can again easily see the clusters of activity:&lt;/p&gt;
 
-  &lt;p&gt;&lt;a href="http://dl.dropbox.com/u/10506/blog/social-network-transmission/upvote-clusters-labeled-v2.png"&gt;&lt;img src="http://dl.dropbox.com/u/10506/blog/social-network-transmission/upvote-clusters-labeled-v2.png" alt="Upvote Temporal Clusters" /&gt;&lt;/a&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;a href="http://i.imgur.com/jmOacPR.png"&gt;&lt;img src="http://i.imgur.com/jmOacPR.png" alt="Upvote Temporal Clusters" /&gt;&lt;/a&gt;&lt;/p&gt;
 
   &lt;h1&gt;Fin&lt;/h1&gt;
 
