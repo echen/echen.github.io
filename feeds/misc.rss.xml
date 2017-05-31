@@ -205,9 +205,9 @@
 &lt;p&gt;(i.e., an "A" or B", followed by 1-10 x's, then a delimiter "Y", ending with a lowercase version of the initial character). This way &lt;a href="http://blog.echen.me/lstm-explorer/#/network?file=state_memorizer"&gt;the network&lt;/a&gt; needs to remember whether it's in an "A" or "B" state.&lt;/p&gt;
 &lt;p&gt;We expect to find a neuron that fires when remembering that the sequence started with an "A", and another neuron that fires when remembering that it started with a "B". We do.&lt;/p&gt;
 &lt;p&gt;For example, here is an "A" neuron that activates when it reads an "A", and remembers until it needs to generate the final character. Notice that the input gate ignores all the "x" characters in between.&lt;/p&gt;
-&lt;p&gt;&lt;a href="http://i.imgur.com/wFmrU8L.png"&gt;&lt;img alt="A Neuron - #8" src="http://i.imgur.com/wFmrU8L.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/UfGWJ9w.png"&gt;&lt;img alt="A Neuron - #8" src="http://i.imgur.com/UfGWJ9w.png" /&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;Here is its "B" counterpart:&lt;/p&gt;
-&lt;p&gt;&lt;a href="http://i.imgur.com/2qhh2Ls.png"&gt;&lt;img alt="B Neuron - #17" src="http://i.imgur.com/2qhh2Ls.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/pAKw9Y2.png"&gt;&lt;img alt="B Neuron - #17" src="http://i.imgur.com/pAKw9Y2.png" /&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;One interesting point is that even though knowledge of the A vs. B state isn't needed until the network reads the "Y" delimiter, the hidden state fires throughout all the intermediate inputs anyways. This seems a bit "inefficient", but perhaps it's because the neurons are doing a bit of double-duty in counting the number of x's as well.&lt;/p&gt;
 &lt;iframe src="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&amp;layer=1&amp;n=8" style="width: 100%; height: 500px"&gt;&lt;/iframe&gt;
 
