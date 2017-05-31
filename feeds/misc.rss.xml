@@ -97,7 +97,7 @@
 &lt;div class="math"&gt;$$remember_t = \sigma(W_r x_t+  U_r wm_{t-1}) $$&lt;/div&gt;
 &lt;div class="math"&gt;$$save_t = \sigma(W_s x_t + U_s wm_{t-1})$$&lt;/div&gt;
 &lt;div class="math"&gt;$$focus_t = \sigma(W_f x_t + U_f wm_{t-1})$$&lt;/div&gt;
-&lt;div class="math"&gt;$$ ltm'_t = \phi(W_l x_t + U_l wm_{t-1}) $$&lt;/div&gt;
+&lt;div class="math"&gt;$$ ltm'_t = tanh(W_l x_t + U_l wm_{t-1}) $$&lt;/div&gt;
 &lt;p&gt;(Note: the terminology and variable names I've been using are different from the usual literature. Here are the standard names, which I'll use interchangeably from now on:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;The long-term memory, &lt;span class="math"&gt;\(ltm_t\)&lt;/span&gt;, is usually called the &lt;strong&gt;cell state&lt;/strong&gt;, denoted &lt;span class="math"&gt;\(c_t\)&lt;/span&gt;.&lt;/li&gt;

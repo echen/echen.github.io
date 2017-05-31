@@ -134,7 +134,7 @@
 <div class="math">$$remember_t = \sigma(W_r x_t+  U_r wm_{t-1}) $$</div>
 <div class="math">$$save_t = \sigma(W_s x_t + U_s wm_{t-1})$$</div>
 <div class="math">$$focus_t = \sigma(W_f x_t + U_f wm_{t-1})$$</div>
-<div class="math">$$ ltm'_t = \phi(W_l x_t + U_l wm_{t-1}) $$</div>
+<div class="math">$$ ltm'_t = tanh(W_l x_t + U_l wm_{t-1}) $$</div>
 <p>(Note: the terminology and variable names I've been using are different from the usual literature. Here are the standard names, which I'll use interchangeably from now on:</p>
 <ul>
 <li>The long-term memory, <span class="math">\(ltm_t\)</span>, is usually called the <strong>cell state</strong>, denoted <span class="math">\(c_t\)</span>.</li>
