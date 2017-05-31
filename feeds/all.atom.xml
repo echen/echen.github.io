@@ -257,9 +257,9 @@
 &lt;p&gt;&lt;a href="http://i.imgur.com/wQA8H0Q.png"&gt;&lt;img alt="Quotes" src="http://i.imgur.com/wQA8H0Q.png" /&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;There's even a MAGA and capitalization neuron:&lt;/p&gt;
 &lt;p&gt;&lt;a href="http://i.imgur.com/1QdT0MS.png"&gt;&lt;img alt="MAGA" src="http://i.imgur.com/1QdT0MS.png" /&gt;&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;And here are some of the proclamations the LSTM generates (one of these is actually a real tweet; I'll let you guess which):&lt;/p&gt;
+&lt;p&gt;And here are some of the proclamations the LSTM generates (okay, one of these is a real tweet; I'll let you guess which):&lt;/p&gt;
 &lt;p&gt;&lt;a href="http://i.imgur.com/YSVVWGp.png"&gt;&lt;img alt="Tweets" src="http://i.imgur.com/YSVVWGp.png" /&gt;&lt;/a&gt;
-&lt;a href="http://i.imgur.com/A6RbIyF.png"&gt;&lt;img alt="Tweet" src="http://i.imgur.com/A6RbIyF.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;a href="http://i.imgur.com/rhw4lTb.png"&gt;&lt;img alt="Tweet" src="http://i.imgur.com/rhw4lTb.png" /&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;Unfortunately, the LSTM merely learned to ramble like a madman.&lt;/p&gt;
 &lt;h1&gt;Recap&lt;/h1&gt;
 &lt;p&gt;That's it. To summarize, here's what you've learned:&lt;/p&gt;
