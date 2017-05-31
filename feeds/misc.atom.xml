@@ -1,5 +1,299 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Edwin Chen's Blog</title><link href="http://blog.echen.me/" rel="alternate"></link><link href="http://blog.echen.me/feeds/misc.atom.xml" rel="self"></link><id>http://blog.echen.me/</id><updated>2014-10-07T00:00:00+02:00</updated><entry><title>Moving Beyond CTR: Better Recommendations Through Human Evaluation</title><link href="http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/" rel="alternate"></link><updated>2014-10-07T00:00:00+02:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2014-10-07:2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/</id><summary type="html">&lt;p&gt;Imagine you're building a recommendation algorithm for your new online site. How do you measure its quality, to make sure that it's sending users relevant and personalized content? Click-through rate may be your initial hope…but after a bit of thought, it's not clear that it's the best metric after all.&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Edwin Chen's Blog</title><link href="http://blog.echen.me/" rel="alternate"></link><link href="http://blog.echen.me/feeds/misc.atom.xml" rel="self"></link><id>http://blog.echen.me/</id><updated>2017-05-30T00:00:00+02:00</updated><entry><title>Exploring LSTMs</title><link href="http://blog.echen.me/2017/05/30/exploring-lstms/" rel="alternate"></link><updated>2017-05-30T00:00:00+02:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2017-05-30:2017/05/30/exploring-lstms/</id><summary type="html">&lt;script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"&gt;&lt;/script&gt;
+
+&lt;p&gt;The first time I learned about LSTMs, my eyes glazed over.&lt;/p&gt;
+&lt;p&gt;Not in a good, jelly donut kind of way.&lt;/p&gt;
+&lt;p&gt;It turns out LSTMs are a fairly simple extension to neural networks, and they're behind a lot of the amazing achievements deep learning has made in the past few years. So I'll try to present them as intuitively as possible – in such a way that you could have discovered them yourself.&lt;/p&gt;
+&lt;p&gt;But first, a picture:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/lnBi8OZ.png"&gt;&lt;img alt="LSTM" src="http://i.imgur.com/lnBi8OZ.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Aren't LSTMs beautiful? Let's go.&lt;/p&gt;
+&lt;p&gt;(Note: if you're already familiar with neural networks and LSTMs, skip to the middle – the first half of this post is a tutorial.)&lt;/p&gt;
+&lt;h1&gt;Neural Networks&lt;/h1&gt;
+&lt;p&gt;Imagine we have a sequence of images from a movie, and we want to label each image with an activity (is this a fight?, are the characters talking?, are the characters eating?).&lt;/p&gt;
+&lt;p&gt;How do we do this?&lt;/p&gt;
+&lt;p&gt;One way is to ignore the sequential nature of the images, and build a &lt;em&gt;per-image&lt;/em&gt; classifier that considers each image in isolation. For example, given enough images and labels:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Our algorithm might first learn to detect low-level patterns like shapes and edges. &lt;/li&gt;
+&lt;li&gt;With more data, it might learn to combine these patterns into more complex ones, like faces (two circular things atop a triangular thing atop an oval thing) or cats.&lt;/li&gt;
+&lt;li&gt;And with even more data, it might learn to map these higher-level patterns into activities themselves (scenes with mouths, steaks, and forks are probably about eating).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This, then, is a &lt;strong&gt;deep neural network&lt;/strong&gt;: it takes an image input, returns an activity output, and – just as we might learn to detect patterns in puppy behavior without knowing anything about dogs (after seeing enough corgis, we discover common characteristics like fluffy butts and drumstick legs; next, we learn advanced features like splooting) – in between it learns to represent images through hidden layers of representations.&lt;/p&gt;
+&lt;h2&gt;Mathematically&lt;/h2&gt;
+&lt;p&gt;I assume people are familiar with basic neural networks already, but let's quickly review them.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;A &lt;strong&gt;neural network&lt;/strong&gt; with a single hidden layer takes as input a vector x, which we can think of as a set of neurons. &lt;/li&gt;
+&lt;li&gt;Each input neuron is connected to a hidden layer of neurons via a set of learned weights. &lt;/li&gt;
+&lt;li&gt;The jth hidden neuron outputs &lt;span class="math"&gt;\(h_j = \phi(\sum_i w_{ij} x_i)\)&lt;/span&gt;, where &lt;span class="math"&gt;\(\phi\)&lt;/span&gt; is an activation function. &lt;/li&gt;
+&lt;li&gt;The hidden layer is fully connected to an output layer, and the jth output neuron outputs &lt;span class="math"&gt;\(y_j = \sum_i u_{ij} h_i\)&lt;/span&gt;. If we need probabilities, we can transform the output layer via a &lt;a href="https://en.wikipedia.org/wiki/Softmax_function"&gt;softmax&lt;/a&gt; function.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;In matrix notation:&lt;/p&gt;
+&lt;div class="math"&gt;$$h = \phi(Wx)$$&lt;/div&gt;
+&lt;div class="math"&gt;$$y = Vh$$&lt;/div&gt;
+&lt;p&gt;where&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;x is our input vector&lt;/li&gt;
+&lt;li&gt;W is a weight matrix connecting the input and hidden layers&lt;/li&gt;
+&lt;li&gt;V is a weight matrix connecting the hidden and output layers&lt;/li&gt;
+&lt;li&gt;Common activation functions for &lt;span class="math"&gt;\(\phi\)&lt;/span&gt; are the &lt;a href="https://en.wikipedia.org/wiki/Sigmoid_function"&gt;sigmoid function&lt;/a&gt;, &lt;span class="math"&gt;\(\sigma(x)\)&lt;/span&gt;, which squashes numbers into the range (0, 1); the &lt;a href="https://en.wikipedia.org/wiki/Hyperbolic_function#Standard_analytic_expressions"&gt;hyperbolic tangent&lt;/a&gt;, &lt;span class="math"&gt;\(tanh(x)\)&lt;/span&gt;, which squashes numbers into the range (-1, 1), and the &lt;a href="https://en.wikipedia.org/wiki/Rectifier_(neural_networks)"&gt;rectified linear unit&lt;/a&gt;, &lt;span class="math"&gt;\(ReLU(x) = max(0, x)\)&lt;/span&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Here's a pictorial view:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/tFMQMOn.png"&gt;&lt;img alt="Neural Network" src="http://i.imgur.com/tFMQMOn.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;(Note: to make the notation a little cleaner, I assume x and h each contain an extra bias neuron fixed at 1 for learning bias weights.)&lt;/p&gt;
+&lt;h1&gt;Remembering Information with RNNs&lt;/h1&gt;
+&lt;p&gt;Ignoring the sequential aspect of the movie images is pretty ML 101, though. If we see a scene of a beach, we should boost beach activities in future frames: an image of someone in the water should probably be labeled &lt;em&gt;swimming&lt;/em&gt;, not &lt;em&gt;bathing&lt;/em&gt;, and an image of someone lying with their eyes closed is probably &lt;em&gt;suntanning&lt;/em&gt;. If we remember that Bob just arrived at a supermarket, then even without any distinctive supermarket features, an image of Bob holding a slab of bacon should probably be categorized as &lt;em&gt;shopping&lt;/em&gt; instead of &lt;em&gt;cooking&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;So what we'd like is to let our model track the state of the world:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;After seeing each image, the model outputs a label and also updates its knowledge of the world.&lt;/strong&gt; For example, the model might learn to automatically discover and track information like location (are scenes currently in a house or beach?), time of day (if a scene contains an image of the moon, the model should remember that it's nighttime), and within-movie progress (is this image the first frame or the 100th?). Importantly, just as a neural network automatically discovers hidden patterns like edges, shapes, and faces without being fed them, our model should automatically discover useful information by itself.&lt;/li&gt;
+&lt;li&gt;When given a new image, the model should &lt;strong&gt;incorporate the knowledge it's gathered&lt;/strong&gt; to do a better job.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;This, then, is a &lt;strong&gt;recurrent neural network&lt;/strong&gt;. Instead of simply taking an image and returning an activity, an RNN also maintains internal memories about the world (weights assigned to different pieces of information) to help perform its classifications.&lt;/p&gt;
+&lt;h2&gt;Mathematically&lt;/h2&gt;
+&lt;p&gt;So let's add the notion of &lt;strong&gt;internal knowledge&lt;/strong&gt; to our equations, which we can think of as memories or pieces of information that the network maintains over time. &lt;/p&gt;
+&lt;p&gt;But this is easy: we know that the hidden layers of neural networks already encode useful information about their inputs, so why not use these layers as memory? This gives us our RNN equations:&lt;/p&gt;
+&lt;div class="math"&gt;$$h_t = \phi(Wx_t + Uh_{t-1})$$&lt;/div&gt;
+&lt;div class="math"&gt;$$y_t = Vh_t$$&lt;/div&gt;
+&lt;p&gt;Note that the hidden state computed at time &lt;span class="math"&gt;\(t\)&lt;/span&gt; (&lt;span class="math"&gt;\(h_t\)&lt;/span&gt;, our internal knowledge) is fed back at the next time step. (Also, I'll use concepts like hidden state, knowledge, memories, and beliefs to describe &lt;span class="math"&gt;\(h_t\)&lt;/span&gt; interchangeably.)&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/ifQrKRR.png"&gt;&lt;img alt="RNN" src="http://i.imgur.com/ifQrKRR.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;h1&gt;Longer Memories through LSTMs&lt;/h1&gt;
+&lt;p&gt;Let's think about how our model updates its knowledge of the world. So far, we've placed no constraints on this update, so its knowledge can change pretty chaotically: at one frame it thinks the characters are in the US, at the next frame it sees the characters eating sushi and thinks they're in Japan, and at the next frame it sees polar bears and thinks they're on Hydra Island. Or perhaps it has a wealth of information to suggest that Alice is an investment analyst, but decides she's a professional assassin after seeing her cook.&lt;/p&gt;
+&lt;p&gt;This chaos means information quickly transforms and vanishes, and it's difficult for the model to keep a long-term memory. So what we'd like is for the network to &lt;em&gt;learn&lt;/em&gt; how to update its beliefs (scenes without Bob shouldn't change Bob-related information, scenes with Alice should focus on gathering details about her), in a way that its knowledge of the world evolves more gently. &lt;/p&gt;
+&lt;p&gt;This is how we do it.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Adding a forgetting mechanism.&lt;/strong&gt; If a scene ends, for example, the model should forget the current scene location, the time of day, and reset any scene-specific information; however, if a character dies in the scene, it should continue remembering that he's no longer alive. Thus, we want the model to learn a separate &lt;em&gt;forgetting/remembering&lt;/em&gt; mechanism: when new inputs come in, it needs to know which beliefs to keep or throw away.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Adding a saving mechanism.&lt;/strong&gt; When the model sees a new image, it needs to learn whether any information about the image is worth using and saving. Maybe your mom sent you an article about the Kardashians, but who cares?&lt;/li&gt;
+&lt;li&gt;So when new a input comes in, the model first forgets any long-term information it decides it no longer needs. Then it learns which parts of the new input are worth using, and saves them into its long-term memory.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Focusing long-term memory into working memory.&lt;/strong&gt; Finally, the model needs to learn which parts of its long-term memory are immediately useful. For example, Bob's age may be a useful piece of information to keep in the long term (children are more likely to be crawling, adults are more likely to be working), but is probably irrelevant if he's not in the current scene. So instead of using the full long-term memory all the time, it learns which parts to focus on instead.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;This, then, is an &lt;strong&gt;long short-term memory network&lt;/strong&gt;. Whereas an RNN can overwrite its memory at each time step in a fairly uncontrolled fashion, an LSTM transforms its memory in a very precise way: by using &lt;em&gt;specific learning mechanisms&lt;/em&gt; for which pieces of information to remember, which to update, and which to pay attention to. This helps it keep track of information over longer periods of time.&lt;/p&gt;
+&lt;h2&gt;Mathematically&lt;/h2&gt;
+&lt;p&gt;Let's describe the LSTM additions mathematically.&lt;/p&gt;
+&lt;p&gt;At time &lt;span class="math"&gt;\(t\)&lt;/span&gt;, we receive a new input &lt;span class="math"&gt;\(x_t\)&lt;/span&gt;. We also have our long-term and working memories passed on from the previous time step, &lt;span class="math"&gt;\(ltm_{t-1}\)&lt;/span&gt; and &lt;span class="math"&gt;\(wm_{t-1}\)&lt;/span&gt; (both n-length vectors), which we want to update.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;We'll start with our long-term memory.&lt;/strong&gt; First, we need to know which pieces of long-term memory to continue remembering and which to discard, so we want to use the new input and our working memory to learn a &lt;strong&gt;remember gate&lt;/strong&gt; of n numbers between 0 and 1, each of which determines how much of a long-term memory element to keep. (A 1 means to keep it, a 0 means to forget it entirely.)&lt;/p&gt;
+&lt;p&gt;Naturally, we can use a small neural network to learn this remember gate:&lt;/p&gt;
+&lt;div class="math"&gt;$$remember_t = \sigma(W_r x_t + U_r wm_{t-1}) $$&lt;/div&gt;
+&lt;p&gt;(Notice the similarity to our previous network equations; this is just a shallow neural network. Also, we use a sigmoid activation because we need numbers between 0 and 1.)&lt;/p&gt;
+&lt;p&gt;Next, we need to compute the information we can learn from &lt;span class="math"&gt;\(x_t\)&lt;/span&gt;, i.e., a &lt;strong&gt;candidate addition to our long-term memory&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class="math"&gt;$$ ltm'_t = \phi(W_l x_t + U_l wm_{t-1}) $$&lt;/div&gt;
+&lt;p&gt;&lt;span class="math"&gt;\(\phi\)&lt;/span&gt; is an activation function, commonly chosen to be &lt;span class="math"&gt;\(tanh\)&lt;/span&gt;.&lt;/p&gt;
+&lt;p&gt;Before we add the candidate into our memory, though, we want to learn &lt;strong&gt;which parts of it are actually worth using and saving&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class="math"&gt;$$save_t = \sigma(W_s x_t + U_s wm_{t-1})$$&lt;/div&gt;
+&lt;p&gt;(Think of what happens when you read something on the web. While a news article might contain information about Hillary, you should ignore it if the source is Breitbart.)&lt;/p&gt;
+&lt;p&gt;Let's now combine all these steps. After forgetting memories we don't think we'll ever need again and saving useful pieces of incoming information, we have our &lt;strong&gt;updated long-term memory&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class="math"&gt;$$ltm_t = remember_t \circ ltm_{t-1} + save_t \circ ltm'_t$$&lt;/div&gt;
+&lt;p&gt;where &lt;span class="math"&gt;\(\circ\)&lt;/span&gt; denotes element-wise multiplication.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Next, let's update our working memory.&lt;/strong&gt; We want to learn how to focus our long-term memory into information that will be &lt;em&gt;immediately&lt;/em&gt; useful. (Put differently, we want to learn what to move from an &lt;em&gt;external hard drive&lt;/em&gt; onto our &lt;em&gt;working laptop&lt;/em&gt;.) So we learn a &lt;strong&gt;focus/attention vector&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class="math"&gt;$$focus_t = \sigma(W_f x_t + U_f wm_{t-1})$$&lt;/div&gt;
+&lt;p&gt;Our &lt;strong&gt;working memory&lt;/strong&gt; is then&lt;/p&gt;
+&lt;div class="math"&gt;$$wm_t = focus_t \circ \phi(ltm_t)$$&lt;/div&gt;
+&lt;p&gt;In other words, we pay full attention to elements where the focus is 1, and ignore elements where the focus is 0.&lt;/p&gt;
+&lt;p&gt;And we're done! Hopefully this made it into your long-term memory as well.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;p&gt;To summarize, whereas a vanilla RNN uses one equation to update its hidden state/memory:&lt;/p&gt;
+&lt;div class="math"&gt;$$h_t = \phi(Wx_t + Uh_{t-1})$$&lt;/div&gt;
+&lt;p&gt;An LSTM uses several:&lt;/p&gt;
+&lt;div class="math"&gt;$$ltm_t = remember_t \circ ltm_{t-1} + save_t \circ ltm'_t$$&lt;/div&gt;
+&lt;div class="math"&gt;$$wm_t = focus_t \circ tanh(ltm_t)$$&lt;/div&gt;
+&lt;p&gt;where each memory/attention sub-mechanism is just a mini brain of its own:&lt;/p&gt;
+&lt;div class="math"&gt;$$remember_t = \sigma(W_r x_t+  U_r wm_{t-1}) $$&lt;/div&gt;
+&lt;div class="math"&gt;$$save_t = \sigma(W_s x_t + U_s wm_{t-1})$$&lt;/div&gt;
+&lt;div class="math"&gt;$$focus_t = \sigma(W_f x_t + U_f wm_{t-1})$$&lt;/div&gt;
+&lt;div class="math"&gt;$$ ltm'_t = \phi(W_l x_t + U_l wm_{t-1}) $$&lt;/div&gt;
+&lt;p&gt;(Note: the terminology and variable names I've been using are different from the usual literature. Here are the standard names, which I'll use interchangeably from now on:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The long-term memory, &lt;span class="math"&gt;\(ltm_t\)&lt;/span&gt;, is usually called the &lt;strong&gt;cell state&lt;/strong&gt;, denoted &lt;span class="math"&gt;\(c_t\)&lt;/span&gt;.&lt;/li&gt;
+&lt;li&gt;The working memory, &lt;span class="math"&gt;\(wm_t\)&lt;/span&gt;, is usually called the &lt;strong&gt;hidden state&lt;/strong&gt;, denoted &lt;span class="math"&gt;\(h_t\)&lt;/span&gt;. This is analogous to the hidden state in vanilla RNNs.&lt;/li&gt;
+&lt;li&gt;The remember vector, &lt;span class="math"&gt;\(remember_t\)&lt;/span&gt;, is usually called the &lt;strong&gt;forget gate&lt;/strong&gt; (despite the fact that a 1 in the forget gate still means to keep the memory and a 0 still means to forget it), denoted &lt;span class="math"&gt;\(f_t\)&lt;/span&gt;.&lt;/li&gt;
+&lt;li&gt;The save vector, &lt;span class="math"&gt;\(save_t\)&lt;/span&gt;, is usually called the &lt;strong&gt;input gate&lt;/strong&gt; (as it determines how much of the input to let into the cell state), denoted &lt;span class="math"&gt;\(i_t\)&lt;/span&gt;.&lt;/li&gt;
+&lt;li&gt;The focus vector, &lt;span class="math"&gt;\(focus_t\)&lt;/span&gt;, is usually called the &lt;strong&gt;output gate&lt;/strong&gt;, denoted &lt;span class="math"&gt;\(o_t\)&lt;/span&gt;.
+)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/vsqgLYn.png"&gt;&lt;img alt="LSTM" src="http://i.imgur.com/vsqgLYn.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;h1&gt;Snorlax&lt;/h1&gt;
+&lt;p&gt;I could have caught a hundred Pidgeys in the time it took me to write this post, so here's a cartoon.&lt;/p&gt;
+&lt;h2&gt;Neural Networks&lt;/h2&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/cOGzJxk.png"&gt;&lt;img alt="Neural Network" src="http://i.imgur.com/cOGzJxk.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;h2&gt;Recurrent Neural Networks&lt;/h2&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/PnWiSCf.png"&gt;&lt;img alt="RNN" src="http://i.imgur.com/PnWiSCf.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;h2&gt;LSTMs&lt;/h2&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/EGZIUuc.png"&gt;&lt;img alt="LSTM" src="http://i.imgur.com/EGZIUuc.pngg" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;h2&gt;Learning to Code&lt;/h2&gt;
+&lt;p&gt;Let's look at a few examples of what an LSTM can do. Following Andrej Karpathy's &lt;a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/"&gt;terrific post&lt;/a&gt;, I'll use character-level LSTM models that are fed sequences of characters and trained to predict the next character in the sequence. &lt;/p&gt;
+&lt;p&gt;While this may seem a bit toyish, character-level models can actually be very useful, even on top of word models. For example:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Imagine a code autocompleter smart enough to allow you to program on your phone.&lt;/strong&gt; An LSTM could (in theory) track the return type of the method you're currently in, and better suggest which variable to return; it could also know without compiling whether you've made a bug by returning the wrong type.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;NLP applications like machine translation often have trouble dealing with rare terms.&lt;/strong&gt; How do you translate a word you've never seen before, or convert adjectives to adverbs? Even if you know what a tweet means, how do you generate a new hashtag to capture it? Character models can daydream new terms, so this is another area with &lt;a href="https://arxiv.org/pdf/1508.07909.pdf"&gt;interesting applications&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;So to start, I spun up an EC2 p2.xlarge spot instance, and trained a 3-layer LSTM on the &lt;a href="https://github.com/apache/commons-lang"&gt;Apache Commons Lang codebase&lt;/a&gt;. Here's a program it generates after a few hours.&lt;/p&gt;
+&lt;p&gt;&lt;code data-gist-id="de1d2d1bd34a94fba100b57b3a9e49ab" data-gist-hide-footer="true"&gt;&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;While the code certainly isn't perfect, it's better than a lot of data scientists I know. And we can see that the LSTM has learned a lot of interesting (and correct!) coding behavior:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;It knows how to structure classes:&lt;/strong&gt; a license up top, followed by packages and imports, followed by comments and a class definition, followed by variables and methods. Similarly, it knows how to create methods: comments follow the correct orders (description, then @param, then @return, etc.), decorators are properly placed, and non-void methods end with appropriate return statements. Crucially, this behavior spans long ranges of code – see how giant the blocks are!&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;It can also track subroutines and nesting levels:&lt;/strong&gt; indentation is always correct, and if statements and for loops are always closed out.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;It even knows how to create tests.&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;How does the model do this? Let's look at a few of the hidden states.&lt;/p&gt;
+&lt;p&gt;Here's a neuron that seems to track the code's &lt;em&gt;outer&lt;/em&gt; level of indentation (each character is colored by the neuron's state when reading the character as input, i.e., when trying to generate the next character; red cells are negative, and blue cells are positive):&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/szJnfAY.png"&gt;&lt;img alt="http://i.imgur.com/szJnfAY.png" src="http://i.imgur.com/szJnfAY.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;And here's a neuron that counts down the spaces between tabs:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/EBbM9Kx.png"&gt;&lt;img alt="http://i.imgur.com/EBbM9Kx.png" src="http://i.imgur.com/EBbM9Kx.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;For kicks, here's the output of a different 3-layer LSTM trained on TensorFlow's codebase:&lt;/p&gt;
+&lt;p&gt;&lt;code data-gist-id="926b34e5bec6cd2b304cdecabda255b1" data-gist-hide-footer="true"&gt;&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;There are &lt;a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/"&gt;plenty of other fun examples&lt;/a&gt; floating around the web, so check them out if you want to see more.&lt;/p&gt;
+&lt;h1&gt;Investigating LSTM Internals&lt;/h1&gt;
+&lt;p&gt;Let's dig a little deeper. We looked in the last section at examples of hidden states, but I wanted to play with LSTM cell states and their other memory mechanisms too. Do they fire when we expect, or are there surprising patterns?&lt;/p&gt;
+&lt;h2&gt;Counting&lt;/h2&gt;
+&lt;p&gt;To investigate, let's start by teaching an LSTM to count. (Remember how the Java and Python LSTMs were able to generate proper indentation!) So I generated sequences of the form&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;aaaaaXbbbbb&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;(N "a" characters, followed by a delimiter X, followed by N "b" characters, where 1 &amp;lt;= N &amp;lt;= 10), and trained a single-layer LSTM with 10 hidden neurons.&lt;/p&gt;
+&lt;p&gt;As expected, the LSTM learns perfectly within its training range – and can even generalize a few steps beyond it. (Although it starts to fail once we try to get it to count to 19.)&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;aaaaaaaaaaaaaaaXbbbbbbbbbbbbbbb&lt;/span&gt;
+&lt;span class="n"&gt;aaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbb&lt;/span&gt;
+&lt;span class="n"&gt;aaaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbbb&lt;/span&gt;
+&lt;span class="n"&gt;aaaaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbbbb&lt;/span&gt;
+&lt;span class="n"&gt;aaaaaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbbbb&lt;/span&gt; &lt;span class="err"&gt;#&lt;/span&gt; &lt;span class="n"&gt;Here&lt;/span&gt; &lt;span class="n"&gt;it&lt;/span&gt; &lt;span class="n"&gt;begins&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="n"&gt;fail&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;the&lt;/span&gt; &lt;span class="n"&gt;model&lt;/span&gt; &lt;span class="n"&gt;is&lt;/span&gt; &lt;span class="n"&gt;given&lt;/span&gt; &lt;span class="mi"&gt;19&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;a&amp;quot;&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;but&lt;/span&gt; &lt;span class="n"&gt;outputs&lt;/span&gt; &lt;span class="n"&gt;only&lt;/span&gt; &lt;span class="mi"&gt;18&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;b&amp;quot;&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;We expect to find a hidden state neuron that counts the number of a's if we look as its internals. And we do:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/JEIhBeh.png"&gt;&lt;img alt="Neuron #2 Hidden State" src="http://i.imgur.com/JEIhBeh.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;I built a &lt;a href="http://blog.echen.me/lstm-explorer"&gt;small web app&lt;/a&gt; to play around with LSTMs, and &lt;a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;amp;layer=1&amp;amp;n=2"&gt;Neuron #2&lt;/a&gt; seems to be counting both the number of a's it's seen, as well as the number of b's. (Remember that cells are shaded according to the neuron's activation, from dark red [-1] to dark blue [+1].)&lt;/p&gt;
+&lt;p&gt;What about the cell state? It behaves similarly:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/5DB3wnJ.png"&gt;&lt;img alt="Neuron #2 Cell State" src="http://i.imgur.com/5DB3wnJ.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;One interesting thing is that the working memory looks like a "sharpened" version of the long-term memory. Does this hold true in general? &lt;/p&gt;
+&lt;p&gt;It does. (This is exactly as we would expect, since the long-term memory gets squashed by the tanh activation function and the output gate limits what gets passed on.) For example, here is an overview of all 10 cell state nodes at once. We see plenty of light-colored cells, representing values close to 0.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/yGfaCh3.png"&gt;&lt;img alt="Counting LSTM Cell States" src="http://i.imgur.com/yGfaCh3.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;In contrast, &lt;strong&gt;the 10 working memory neurons look much more focused&lt;/strong&gt;. Neurons 1, 3, 5, and 7 are even zeroed out entirely over the first half of the sequence.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/scQXaPL.png"&gt;&lt;img alt="Counting LSTM Hidden States" src="http://i.imgur.com/scQXaPL.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Let's go back to Neuron #2. Here are the candidate memory and input gate. They're relatively constant over each half of the sequence – as if the neuron is calculating &lt;code&gt;a += 1&lt;/code&gt; or &lt;code&gt;b += 1&lt;/code&gt; at each step.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/Nu504g0.png"&gt;&lt;img alt="Counting LSTM Candidate Memory" src="http://i.imgur.com/Nu504g0.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/iBkuAiV.png"&gt;&lt;img alt="Input Gate" src="http://i.imgur.com/iBkuAiV.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Finally, here's an overview of all of Neuron 2's internals:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/VUwMnHJ.png"&gt;&lt;img alt="Neuron 2 Overview" src="http://i.imgur.com/VUwMnHJ.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;If you want to investigate the different counting neurons yourself, you can play around with the visualizer &lt;a href="http://blog.echen.me/lstm-explorer/#/network?file=counter"&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;iframe src="http://blog.echen.me/lstm-explorer/#/network?file=counter" style="width: 100%; height: 500px"&gt;&lt;/iframe&gt;
+
+&lt;p&gt;(Note: this is far from the only way an LSTM can learn to count, and I'm anthropomorphizing quite a bit here. But I think viewing the network's behavior is interesting and can help build better models – after all, many of the ideas in neural networks come from analogies to the human brain, and if we see unexpected behavior, we may be able to design more efficient learning mechanisms.)&lt;/p&gt;
+&lt;h2&gt;Count von Count&lt;/h2&gt;
+&lt;p&gt;Let's look at a slightly more complicated counter. This time, I generated sequences of the form&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;aaXaXaaYbbbbb&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;(N a's with X's randomly sprinkled in, followed by a delimiter Y, followed by N b's). The LSTM still has to count the number of a's, but this time needs to ignore the X's as well. &lt;/p&gt;
+&lt;p&gt;&lt;a href="http://blog.echen.me/lstm-explorer/#/network?file=selective_counter"&gt;Here's the full LSTM.&lt;/a&gt; We expect to see &lt;strong&gt;a counting neuron, but one where the input gate is zero whenever it sees an X.&lt;/strong&gt; And we do!&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/fFs0MNm.png"&gt;&lt;img alt="Counter 2 - Cell State" src="http://i.imgur.com/fFs0MNm.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Above is the cell state of &lt;a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;amp;layer=1&amp;amp;n=20"&gt;Neuron 20&lt;/a&gt;. It increases until it hits the delimiter Y, and then decreases to the end of the sequence – just like it's calculating a &lt;code&gt;num_bs_left_to_print&lt;/code&gt; variable that increments on a's and decrements on b's.&lt;/p&gt;
+&lt;p&gt;If we look at its input gate, it is indeed ignoring the X's:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/ccqdcn8.png"&gt;&lt;img alt="Counter 2 - Input Gate" src="http://i.imgur.com/ccqdcn8.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Interestingly, though, the candidate memory fully activates on the irrelevant X's – which shows why the input gate is needed. (Although, if the input gate weren't part of the architecture, presumably the network would have presumably learned to ignore the X's some other way, at least for this simple example.)&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/wmjemE1.png"&gt;&lt;img alt="Counter 2 - Candidate Memory" src="http://i.imgur.com/wmjemE1.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Let's also look at &lt;a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;amp;layer=1&amp;amp;n=10"&gt;Neuron 10&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/02ySRxl.png"&gt;&lt;img alt="Counter 2 - Neuron 10" src="http://i.imgur.com/02ySRxl.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;This neuron is interesting as it only activates when reading the delimiter "Y" – and yet it still manages to encode the number of a's seen so far in the sequence. (It may be hard to tell from the picture, but when reading Y's belonging to sequences with the same number of a's, all the cell states have values either identical or within 0.1% of each other. You can see that Y's with fewer a's are lighter than those with more.) Perhaps some other neuron sees Neuron 10 slacking and helps a buddy out.&lt;/p&gt;
+&lt;iframe src="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20" style="width: 100%; height: 500px"&gt;&lt;/iframe&gt;
+
+&lt;h2&gt;Remembering State&lt;/h2&gt;
+&lt;p&gt;Next, I wanted to look at how LSTMs remember state. I generated sequences of the form&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;AxxxxxxYa&lt;/span&gt;
+&lt;span class="n"&gt;BxxxxxxYb&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;(i.e., an "A" or B", followed by 1-10 x's, then a delimiter "Y", ending with a lowercase version of the initial character). This way &lt;a href="http://blog.echen.me/lstm-explorer/#/network?file=state_memorizer"&gt;the network&lt;/a&gt; needs to remember whether it's in an "A" or "B" state.&lt;/p&gt;
+&lt;p&gt;We expect to find a neuron that fires when remembering that the sequence started with an "A", and another neuron that fires when remembering that it started with a "B". We do.&lt;/p&gt;
+&lt;p&gt;For example, here is an "A" neuron that activates when it reads an "A", and remembers until it needs to generate the final character. Notice that the input gate ignores all the "x" characters in between.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/wFmrU8L.png"&gt;&lt;img alt="A Neuron - #8" src="http://i.imgur.com/wFmrU8L.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here is its "B" counterpart:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/2qhh2Ls.png"&gt;&lt;img alt="B Neuron - #17" src="http://i.imgur.com/2qhh2Ls.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;One interesting point is that even though knowledge of the A vs. B state isn't needed until the network reads the "Y" delimiter, the hidden state fires throughout all the intermediate inputs anyways. This seems a bit "inefficient", but perhaps it's because the neurons are doing a bit of double-duty in counting the number of x's as well.&lt;/p&gt;
+&lt;iframe src="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&amp;layer=1&amp;n=8" style="width: 100%; height: 500px"&gt;&lt;/iframe&gt;
+
+&lt;h2&gt;Copy Task&lt;/h2&gt;
+&lt;p&gt;Finally, let's look at how an LSTM learns to copy information. (Recall that our Java LSTM was able to memorize and copy an Apache license.)&lt;/p&gt;
+&lt;p&gt;(Note: if you think about how LSTMs work, remembering lots of individual, detailed pieces of information isn't something they're very good at. For example, you may have noticed that one major flaw of the LSTM-generated code was that it often made use of undefined variables – the LSTMs couldn't remember which variables were in scope. This isn't surprising, since it's hard to use single cells to efficiently encode multi-valued information like characters, and LSTMs don't have a natural mechanism to chain adjacent memories to form words. &lt;a href="https://arxiv.org/abs/1503.08895"&gt;Memory networks&lt;/a&gt; and &lt;a href="https://arxiv.org/abs/1410.5401"&gt;neural Turing machines&lt;/a&gt; are two extensions to neural networks that help fix this, by augmenting with external memory components. So while copying isn't something LSTMs do very efficiently, it's fun to see how they try anyways.)&lt;/p&gt;
+&lt;p&gt;For this copy task, I trained a tiny 2-layer LSTM on sequences of the form&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;baaXbaa&lt;/span&gt;
+&lt;span class="n"&gt;abcXabc&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;(i.e., a 3-character subsequence composed of a's, b's, and c's, followed by a delimiter "X", followed by the same subsequence).&lt;/p&gt;
+&lt;p&gt;I wasn't sure what "copy neurons" would look like, so in order to find neurons that were memorizing parts of the initial subsequence, I looked at their hidden states when reading the delimiter X. Since the network needs to encode the initial subsequence, its states should exhibit different patterns depending on what they're learning.&lt;/p&gt;
+&lt;p&gt;The graph below, for example, plots Neuron 5's hidden state when reading the "X" delimiter. The neuron is clearly able to distinguish sequences beginning with a "c" from those that don't.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/QdQXIVu.png"&gt;&lt;img alt="Neuron 5" src="http://i.imgur.com/QdQXIVu.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;For another example, here is Neuron 20's hidden state when reading the "X". It looks like it picks out sequences beginning with a "b".&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/ud8NjEA.png"&gt;&lt;img alt="Neuron 20 Hidden State" src="http://i.imgur.com/ud8NjEA.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Interestingly, if we look at Neuron 20's &lt;em&gt;cell&lt;/em&gt; state, it almost seems to capture the entire 3-character subsequence by itself (no small feat given its one-dimensionality!):&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/PLpSocg.png"&gt;&lt;img alt="Neuron 20 Cell State" src="http://i.imgur.com/PLpSocg.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here are &lt;a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;amp;layer=1&amp;amp;n=20"&gt;Neuron 20's cell and hidden states&lt;/a&gt;, across the entire sequence. Notice that &lt;strong&gt;its hidden state is turned off over the entire initial subsequence&lt;/strong&gt; (perhaps expected, since its memory only needs to be passively kept at that point).&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/dO0Ai6H.png"&gt;&lt;img alt="Copy LSTM - Neuron 20 Hidden and Cell" src="http://i.imgur.com/dO0Ai6H.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;However, if we look more closely, the neuron actually seems to be firing whenever the &lt;em&gt;next&lt;/em&gt; character is a "b". So rather than being a "the sequence started with a b" neuron, it appears to be a "the next character is a b" neuron.&lt;/p&gt;
+&lt;p&gt;As far as I can tell, this pattern holds across the network – all the neurons seem to be predicting the next character, rather than memorizing characters at specific positions. For example, &lt;a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;amp;layer=1&amp;amp;n=5"&gt;Neuron 5&lt;/a&gt; seems to be a "next character is a c" predictor.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/30LKz6j.png"&gt;&lt;img alt="Copy LSTM - Neuron 5" src="http://i.imgur.com/30LKz6j.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;I'm not sure if this is the default kind of behavior LSTMs learn when copying information, or what other copying mechanisms are available as well.&lt;/p&gt;
+&lt;iframe src="http://blog.echen.me/lstm-explorer/#/network?file=copy_machine" style="width: 100%; height: 500px"&gt;&lt;/iframe&gt;
+
+&lt;h1&gt;Extensions&lt;/h1&gt;
+&lt;p&gt;Let's recap a bit how you could have discovered LSTMs by yourself.&lt;/p&gt;
+&lt;p&gt;First, many of the problems we'd like to solve are sequential or temporal of some sort, so we should incorporate past learnings into our models. But we already know that the hidden layers of neural networks encode useful information, so why not use these hidden layers as the memories we pass from one time step to the next? &lt;strong&gt;And so we get RNNs.&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;But we know from our own behavior that we don't keep track of knowledge willy-nilly; when we read a new article about politics, we don't immediately believe whatever it tells us and incorporate it into our beliefs of the world. We selectively decide what information to save, what information to discard, and what pieces of information to use to make decisions the next time we read the news. Thus, we want to &lt;em&gt;learn&lt;/em&gt; how to gather, update, and apply information – and why not learn these things through their own mini neural networks? &lt;strong&gt;And so we get LSTMs.&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;And now that we've gone through this process, we can come up with our own modifications.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;For example, maybe you think it's silly for LSTMs to distinguish between long-term and working memories – why not have one? Or maybe you find separate remember gates and save gates kind of redundant – anything we forget should be replaced by new information, and vice-versa. &lt;strong&gt;And so now you've come up with one popular LSTM variant, the &lt;a href="https://arxiv.org/abs/1412.3555"&gt;GRU&lt;/a&gt;&lt;/strong&gt;.&lt;/li&gt;
+&lt;li&gt;Or maybe you think that when deciding what information to remember, save, and focus on, we shouldn't rely on our working memory alone – why not use our long-term memory as well? &lt;strong&gt;And so now you've discovered &lt;a href="http://machinelearning.wustl.edu/mlpapers/paper_files/GersSS02.pdf"&gt;Peephole LSTMs&lt;/a&gt;&lt;/strong&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h1&gt;Making Neural Nets Great Again&lt;/h1&gt;
+&lt;p&gt;Let's look at one final example, using a 2-layer LSTM trained on Trump's tweets. Despite the &lt;del&gt;tiny&lt;/del&gt; &lt;em&gt;big&lt;/em&gt; dataset, it's enough to learn a lot of patterns.&lt;/p&gt;
+&lt;p&gt;For example, here's a neuron that tracks its position within hashtags, URLs, and @mentions:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/eBJQLOf.png"&gt;&lt;img alt="Hashtags, URLs, @mentions" src="http://i.imgur.com/eBJQLOf.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here's a proper noun detector (note that it's not simply firing at capitalized words):&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/SC4XMHr.png"&gt;&lt;img alt="Proper Nouns" src="http://i.imgur.com/SC4XMHr.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here's an auxiliary verb + "to be" detector ("will be", "I've always been", "has never been"):&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/fRdatTW.png"&gt;&lt;img alt="Modal Verbs" src="http://i.imgur.com/fRdatTW.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here's a quote attributor:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/wQA8H0Q.png"&gt;&lt;img alt="Quotes" src="http://i.imgur.com/wQA8H0Q.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;There's even a MAGA and capitalization neuron:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/1QdT0MS.png"&gt;&lt;img alt="MAGA" src="http://i.imgur.com/1QdT0MS.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;And here are some of the proclamations the LSTM generates:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/YSVVWGp.png"&gt;&lt;img alt="Tweets" src="http://i.imgur.com/YSVVWGp.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Unfortunately, the LSTM merely learned to ramble like a madman.&lt;/p&gt;
+&lt;h1&gt;Recap&lt;/h1&gt;
+&lt;p&gt;That's it. To summarize, here's what you've learned:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/WYVlc6w.png"&gt;&lt;img alt="Candidate Memory" src="http://i.imgur.com/WYVlc6w.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Here's what you should save:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://i.imgur.com/DqqJZAD.png"&gt;&lt;img alt="Save" src="http://i.imgur.com/DqqJZAD.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;And now it's time for that donut. &lt;/p&gt;
+&lt;p&gt;Thanks to &lt;a href="https://github.com/crazydonkey200/tensorflow-char-rnn"&gt;Chen Liang&lt;/a&gt; for some of the TensorFlow code I used, Ben Hamner and Kaggle for the &lt;a href="https://www.kaggle.com/benhamner/clinton-trump-tweets"&gt;Trump dataset&lt;/a&gt;, and, of course, Schmidhuber and Hochreiter for their &lt;a href="http://www.bioinf.jku.at/publications/older/2604.pdf"&gt;original paper&lt;/a&gt;. If you want to explore the LSTMs yourself, feel free to &lt;a href="http://blog.echen.me/lstm-explorer"&gt;play around&lt;/a&gt;!&lt;/p&gt;
+&lt;script type="text/javascript"&gt;if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = '//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: 'center'," +
+        "    displayIndent: '0em'," +
+        "    showMathMenu: true," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }, linebreaks: { automatic: false, width: 'container' }" +
+        "    } " +
+        "}); ";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+&lt;/script&gt;</summary></entry><entry><title>Moving Beyond CTR: Better Recommendations Through Human Evaluation</title><link href="http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/" rel="alternate"></link><updated>2014-10-07T00:00:00+02:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2014-10-07:2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/</id><summary type="html">&lt;p&gt;Imagine you're building a recommendation algorithm for your new online site. How do you measure its quality, to make sure that it's sending users relevant and personalized content? Click-through rate may be your initial hope…but after a bit of thought, it's not clear that it's the best metric after all.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Take Google's search engine.&lt;/strong&gt; In many cases, improving the quality of search results will &lt;em&gt;decrease&lt;/em&gt; CTR! For example, the ideal scenario for queries like &lt;a href="https://www.google.com/search?q=when%20was%20barack%20obama%20born"&gt;When was Barack Obama born?&lt;/a&gt; is that users never have to click, since the question should be answered on the page itself.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Or take Twitter, who one day might want to recommend you interesting tweets.&lt;/strong&gt; Metrics like CTR, or even number of favorites and retweets, will probably optimize for showing quick one-liners and pictures of funny cats. But is a Reddit-like site what Twitter really wants to be? Twitter, for many people, started out as a news site, so users may prefer seeing links to deeper and more interesting content, even if they're less likely to click on each individual suggestion overall.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Or take eBay, who wants to help you find the products you want to buy.&lt;/strong&gt; Is CTR a good measure? Perhaps not: more clicks may  be an indication that you're having trouble finding what you're looking for. What about revenue? That might not be ideal either: from the user perspective, you want to make your purchases at the lowest possible price, and by optimizing for revenue, eBay may be turning you towards more expensive products that make you a less frequent customer in the long run.&lt;/p&gt;
@@ -271,7 +565,7 @@
 
   &lt;h2&gt;Overview&lt;/h2&gt;
 
-  &lt;p&gt;Before we delve into the details, here&amp;#8217;s an overview of how the system works.&lt;/p&gt;
+  &lt;p&gt;Before we dive into the details, here&amp;#8217;s an overview of how the system works.&lt;/p&gt;
 
   &lt;p&gt;(1) First, we monitor for which search queries are currently popular.&lt;/p&gt;
 
@@ -1348,36 +1642,6 @@
   &lt;/ul&gt;
 
   &lt;/div&gt;  
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Soda vs. Pop with Twitter</title><link href="http://blog.echen.me/2012/07/06/soda-vs-pop-with-twitter/" rel="alternate"></link><updated>2012-07-06T04:15:00+02:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2012-07-06:2012/07/06/soda-vs-pop-with-twitter/</id><summary type="html">
   &lt;div class="entry-content"&gt;&lt;p&gt;One of the great things about Twitter is that it&amp;#8217;s a global conversation anyone can join anytime. Eavesdropping on the world, what what!&lt;/p&gt;
 
@@ -2161,36 +2425,6 @@
 
   &lt;p&gt;And that&amp;#8217;s it.&lt;/p&gt;
   &lt;/div&gt;  
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Instant Interactive Visualization with d3 + ggplot2</title><link href="http://blog.echen.me/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/" rel="alternate"></link><updated>2012-03-05T04:15:00+01:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2012-03-05:2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/</id><summary type="html">
   &lt;div class="entry-content"&gt;&lt;p&gt;It&amp;#8217;s often easier to understand a chart than a table. So why is it still so hard to make a simple data graphic, and why am I still bombarded by mind-numbing reams of raw &lt;em&gt;numbers&lt;/em&gt;?&lt;/p&gt;
 
@@ -2217,7 +2451,6 @@
   &lt;p&gt;I&amp;#8217;m thinking of adding more kinds of charts, support for categorical variables, more interactivity (sliders to interact with other dimensions?!), and making the UI even easier (e.g., simplify column naming). In the meantime, the code is &lt;a href="https://github.com/echen/minifolds"&gt;here&lt;/a&gt; on Github, and tips and suggestions are welcome!&lt;/p&gt;
   &lt;/div&gt;  
 </summary></entry><entry><title>Movie Recommendations and More via MapReduce and Scalding</title><link href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/" rel="alternate"></link><updated>2012-02-09T04:15:00+01:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2012-02-09:2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/</id><summary type="html">
-  &lt;script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"&gt;&lt;/script&gt;  
   &lt;div class="entry-content"&gt;&lt;p&gt;&lt;em&gt;Scalding is an in-house MapReduce framework that Twitter recently open-sourced. Like &lt;a href="http://pig.apache.org/"&gt;Pig&lt;/a&gt;, it provides an abstraction on top of MapReduce that makes it easy to write big data jobs in a syntax that&amp;#8217;s simple and concise. Unlike Pig, Scalding is written in pure Scala &amp;#8211; which means all the power of Scala and the JVM is already built-in. No more UDFs, folks!&lt;/em&gt;&lt;/p&gt;
 
   &lt;p&gt;This is going to be an in-your-face introduction to &lt;a href="https://github.com/twitter/scalding"&gt;Scalding&lt;/a&gt;, Twitter&amp;#8217;s (Scala + Cascading) MapReduce framework.&lt;/p&gt;
@@ -2510,36 +2743,6 @@
 
   &lt;p&gt;@argyris, @avibryant, @posco: Thanks for it all. #awesomejobguys #loveit&lt;/p&gt;
   &lt;/div&gt;  
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Quick Introduction to ggplot2</title><link href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/" rel="alternate"></link><updated>2012-01-17T04:15:00+01:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2012-01-17:2012/01/17/quick-introduction-to-ggplot2/</id><summary type="html">
   &lt;div class="entry-content"&gt;&lt;p&gt;This is a bare-bones introduction to &lt;a href="http://had.co.nz/ggplot2/"&gt;ggplot2&lt;/a&gt;, a visualization package in R. It assumes no knowledge of R.&lt;/p&gt;
 
@@ -2922,36 +3125,6 @@
   &lt;/ul&gt;
 
   &lt;/div&gt;  
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Introduction to Conditional Random Fields</title><link href="http://blog.echen.me/2012/01/03/introduction-to-conditional-random-fields/" rel="alternate"></link><updated>2012-01-03T04:15:00+01:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2012-01-03:2012/01/03/introduction-to-conditional-random-fields/</id><summary type="html">
   &lt;div class="entry-content"&gt;&lt;p&gt;Imagine you have a sequence of snapshots from a day in Justin Bieber&amp;#8217;s life, and you want to label each image with the activity it represents (eating, sleeping, driving, etc.). How can you do this?&lt;/p&gt;
 
@@ -3137,36 +3310,6 @@
 
   &lt;p&gt;&lt;a href="http://dl.dropbox.com/u/10506/blog/crfs/crf-diagram.png"&gt;&lt;img src="http://dl.dropbox.com/u/10506/blog/crfs/crf-diagram.png" alt="CRF Diagram" /&gt;&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;
   
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Winning the Netflix Prize: A Summary</title><link href="http://blog.echen.me/2011/10/24/winning-the-netflix-prize-a-summary/" rel="alternate"></link><updated>2011-10-24T04:15:00+02:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2011-10-24:2011/10/24/winning-the-netflix-prize-a-summary/</id><summary type="html">
   &lt;div class="entry-content"&gt;&lt;p&gt;How was the &lt;a href="http://en.wikipedia.org/wiki/Netflix_Prize"&gt;Netflix Prize&lt;/a&gt; won? I went through a lot of the Netflix Prize papers a couple years ago, so I&amp;#8217;ll try to give an overview of the techniques that went into the winning solution here.&lt;/p&gt;
 
@@ -4341,36 +4484,6 @@
 
   &lt;p&gt;And that&amp;#8217;s it! In the spirit of these findings, I hope this article gets &lt;a href="http://blog.echen.me/2011/07/28/tweets-vs-likes-what-gets-shared-on-twitter-vs-facebook/?share=facebook&amp;amp;nb=1"&gt;liked&lt;/a&gt; a little and &lt;a href="https://twitter.com/share?original_referer=http%3A%2F%2Fblog.echen.me%2F2011%2F07%2F28%2Ftweets-vs-likes-what-gets-shared-on-twitter-vs-facebook%2F&amp;amp;source=tweetbutton&amp;amp;text=Tweets%20vs.%20Likes%3A%20What%20gets%20shared%20on%20Twitter%20vs.%20Facebook%3F%3A&amp;amp;url=http%3A%2F%2Fwp.me%2Fpy9AS-6P"&gt;tweeted&lt;/a&gt; lots and lots.&lt;/p&gt;
   &lt;/div&gt;  
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Introduction to Restricted Boltzmann Machines</title><link href="http://blog.echen.me/2011/07/18/introduction-to-restricted-boltzmann-machines/" rel="alternate"></link><updated>2011-07-18T04:15:00+02:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2011-07-18:2011/07/18/introduction-to-restricted-boltzmann-machines/</id><summary type="html">
   &lt;div class="entry-content"&gt;&lt;p&gt;Suppose you ask a bunch of users to rate a set of movies on a 0-100 scale. In classical &lt;a href="http://en.wikipedia.org/wiki/Factor_analysis"&gt;factor analysis&lt;/a&gt;, you could then try to explain each movie and user in terms of a set of latent &lt;em&gt;factors&lt;/em&gt;. For example, movies like Star Wars and Lord of the Rings might have strong associations with a latent science fiction and fantasy factor, and users who like Wall-E and Toy Story might have strong associations with a latent Pixar factor.&lt;/p&gt;
 
@@ -4597,36 +4710,6 @@
   &lt;/ul&gt;
 
   &lt;/div&gt;  
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Topic Modeling the Sarah Palin Emails</title><link href="http://blog.echen.me/2011/06/27/topic-modeling-the-sarah-palin-emails/" rel="alternate"></link><updated>2011-06-27T04:15:00+02:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2011-06-27:2011/06/27/topic-modeling-the-sarah-palin-emails/</id><summary type="html">
   &lt;div class="entry-content"&gt;&lt;h1&gt;LDA-based Email Browser&lt;/h1&gt;
 
@@ -4758,36 +4841,6 @@
 
   &lt;p&gt;I put the code on &lt;a href="https://github.com/echen/unsupervised-language-identification"&gt;my Github account&lt;/a&gt;, and a quick &lt;a href="http://babel-fett.heroku.com/"&gt;demo app&lt;/a&gt;, trained on trigrams from tweets with lang=&amp;#8221;en&amp;#8221; according to the Twitter API, is &lt;a href="http://babel-fett.heroku.com/"&gt;here&lt;/a&gt;.&lt;/p&gt;
   &lt;/div&gt;
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Choosing a Machine Learning Classifier</title><link href="http://blog.echen.me/2011/04/27/choosing-a-machine-learning-classifier/" rel="alternate"></link><updated>2011-04-27T04:15:00+02:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2011-04-27:2011/04/27/choosing-a-machine-learning-classifier/</id><summary type="html">
   &lt;div class="entry-content"&gt;&lt;p&gt;How do you know what machine learning algorithm to choose for your classification problem? Of course, if you really care about accuracy, your best bet is to test out a couple different ones (making sure to try different parameters within each algorithm as well), and select the best one by cross-validation. But if you&amp;#8217;re simply looking for a &amp;#8220;good enough&amp;#8221; algorithm for your problem, or a place to start, here are some general guidelines I&amp;#8217;ve found to work well over the years.&lt;/p&gt;
 
@@ -4916,36 +4969,6 @@
 
   &lt;p&gt;So when should you use LARS, as opposed to some other regularization method like lasso? There&amp;#8217;s not really a clear-cut answer, but LARS tends to give very similar results as both lasso and forward stagewise (in fact, slight modifications to LARS give you lasso and forward stagewise), so I tend to just use lasso when I do these kinds of things, since the justifications for lasso make a little more sense to me. In fact, I don&amp;#8217;t usually even think of LARS as a model selection method in its own right, but rather as a way to efficiently implement lasso (especially if you want to compute the full regularization path).&lt;/p&gt;
   &lt;/div&gt;
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Introduction to Cointegration and Pairs Trading</title><link href="http://blog.echen.me/2011/04/16/introduction-to-cointegration-and-pairs-trading/" rel="alternate"></link><updated>2011-04-16T04:15:00+02:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2011-04-16:2011/04/16/introduction-to-cointegration-and-pairs-trading/</id><summary type="html">
   &lt;div class="entry-content"&gt;&lt;h1&gt;Introduction&lt;/h1&gt;
 
@@ -5006,36 +5029,6 @@
 
   &lt;p&gt;So, just to summarize a bit, cointegration is an equilibrium relationship between time series that individually aren&amp;#8217;t in equilbrium (you can kind of contrast this with (Pearson) correlation, which describes a linear relationship), and it&amp;#8217;s useful because it allows us to incorporate both short-term dynamics (deviations from equilibrium) and long-run expectations (corrections to equilibrium).&lt;/p&gt;
   &lt;/div&gt;
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Counting Clusters</title><link href="http://blog.echen.me/2011/03/14/counting-clusters/" rel="alternate"></link><updated>2011-03-14T04:15:00+01:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2011-03-14:2011/03/14/counting-clusters/</id><summary type="html">
   
   &lt;div class="entry-content"&gt;&lt;p&gt;Given a set of datapoints, we often want to know how many clusters the datapoints form. The &lt;strong&gt;gap statistic&lt;/strong&gt; and the &lt;strong&gt;prediction strength&lt;/strong&gt; are two practical algorithms for choosing the number of clusters.&lt;/p&gt;
@@ -5152,36 +5145,6 @@
 
   &lt;p&gt;This is exactly like k-means in the EM formulation, except we replace the binary clustering formula with Gaussian kernels.&lt;/p&gt;
   &lt;/div&gt;
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Hacker News Analysis</title><link href="http://blog.echen.me/2011/03/14/hacker-news-analysis/" rel="alternate"></link><updated>2011-03-14T04:15:00+01:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2011-03-14:2011/03/14/hacker-news-analysis/</id><summary type="html">
   
   &lt;div class="entry-content"&gt;&lt;p&gt;I was playing around with the &lt;a href="http://api.ihackernews.com/?db"&gt;Hacker News database&lt;/a&gt; &lt;a href="http://ronnieroller.com/"&gt;Ronnie Roller&lt;/a&gt; made (thanks!), so I thought I&amp;#8217;d post some of the things I looked at.&lt;/p&gt;
@@ -5399,36 +5362,6 @@
   &lt;p&gt;As usual, model parameters are determined by minimizing the regularized squared error function through gradient descent.&lt;/p&gt;
   &lt;/div&gt;
 
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Netflix Prize Summary: Scalable Collaborative Filtering with Jointly Derived Neighborhood Interpolation Weights</title><link href="http://blog.echen.me/2011/03/14/netflix-prize-summary-scalable-collaborative-filtering-with-jointly-derived-neighborhood-interpolation-weights/" rel="alternate"></link><updated>2011-03-14T04:15:00+01:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2011-03-14:2011/03/14/netflix-prize-summary-scalable-collaborative-filtering-with-jointly-derived-neighborhood-interpolation-weights/</id><summary type="html">
   
   &lt;div class="entry-content"&gt;&lt;p&gt;(Way back when, I went through all the Netflix prize papers. I&amp;#8217;m now (very slowly) trying to clean up my notes and put them online. Eventually, I hope to have a more integrated tutorial, but here&amp;#8217;s a rough draft for now.)&lt;/p&gt;
@@ -5525,36 +5458,6 @@
 
   &lt;/div&gt;
 
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Prime Numbers and the Riemann Zeta Function</title><link href="http://blog.echen.me/2011/03/14/prime-numbers-and-the-riemann-zeta-function/" rel="alternate"></link><updated>2011-03-14T04:15:00+01:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2011-03-14:2011/03/14/prime-numbers-and-the-riemann-zeta-function/</id><summary type="html">
   
   &lt;div class="entry-content"&gt;&lt;p&gt;Lots of people know that the &lt;a href="http://en.wikipedia.org/wiki/Riemann_hypothesis"&gt;Riemann Hypothesis&lt;/a&gt; has &lt;em&gt;something&lt;/em&gt; to do with prime numbers, but most introductions fail to say what or why. I&amp;#8217;ll try to give one angle of explanation.&lt;/p&gt;
@@ -5673,36 +5576,6 @@
   &lt;p&gt;&lt;strong&gt;In Fourier-poetic terms&lt;/strong&gt;, when Flying Spaghetti Monster composed the music of the primes, he built the notes out of the zeroes of the Riemann zeta function. If the Riemann Hypothesis holds, he made all the non-trivial notes equally loud.&lt;/p&gt;
 
   &lt;/div&gt;
-&lt;script type= "text/javascript"&gt;
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-&lt;/script&gt;
 </summary></entry><entry><title>Topological Combinatorics and the Evasiveness Conjecture</title><link href="http://blog.echen.me/2011/03/14/topological-combinatorics-and-the-evasiveness-conjecture/" rel="alternate"></link><updated>2011-03-14T04:15:00+01:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2011-03-14:2011/03/14/topological-combinatorics-and-the-evasiveness-conjecture/</id><summary type="html">
   
   &lt;div class="entry-content"&gt;&lt;p&gt;The Kahn, Saks, and Sturtevant approach to the Evasiveness Conjecture (see the original paper &lt;a href="http://www.springerlink.com/index/R521072311641L41.pdf"&gt;here&lt;/a&gt;) is an epic application of pure mathematics to computer science. I&amp;#8217;ll give an overview of the approach here, and probably try to add some more information on the problem in other posts.&lt;/p&gt;

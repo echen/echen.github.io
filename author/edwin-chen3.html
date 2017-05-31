@@ -4,19 +4,21 @@
         <title>Edwin Chen's Blog - Edwin Chen</title>
         <meta charset="utf-8" />
 	      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="stylesheet" href="http://blog.echen.me/theme/css/main.css" type="text/css" />
+        <link rel="stylesheet" href="../theme/css/main.css" type="text/css" />
         <link href="http://blog.echen.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Edwin Chen's Blog Atom Feed" />
         <link href="http://blog.echen.me/feeds/all.rss.xml" type="application/rss+xml" rel="alternate" title="Edwin Chen's Blog RSS Feed" />
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>  
 
         <!--[if IE]>
                 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
 
         <!--[if lte IE 7]>
-                <link rel="stylesheet" type="text/css" media="all" href="http://blog.echen.me/css/ie.css"/>
-                <script src="http://blog.echen.me/js/IE8.js" type="text/javascript"></script><![endif]-->
+                <link rel="stylesheet" type="text/css" media="all" href="../css/ie.css"/>
+                <script src="../js/IE8.js" type="text/javascript"></script><![endif]-->
 
         <!--[if lt IE 7]>
-                <link rel="stylesheet" type="text/css" media="all" href="http://blog.echen.me/css/ie6.css"/><![endif]-->
+                <link rel="stylesheet" type="text/css" media="all" href="../css/ie6.css"/><![endif]-->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js" type="text/javascript"></script>
 
 
@@ -31,17 +33,405 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields</a></h1>
+                        <h1 class="entry-title"><a href="../2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2012-01-03T04:15:00+01:00">
-          on&nbsp;Tue 03 January 2012
-        </li>
 
-	</ul>
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>This is a bare-bones introduction to <a href="http://had.co.nz/ggplot2/">ggplot2</a>, a visualization package in R. It assumes no knowledge of R.</p>
+
+  <p>For a better-looking version of this post, see <a href="https://github.com/echen/ggplot2-tutorial">this Github repository</a>, which also contains some of the <a href="https://github.com/echen/ggplot2-tutorial/tree/master/data">example datasets</a> I use and a <a href="https://github.com/echen/ggplot2-tutorial/blob/master/ggplot2-tutorial.R">literate programming version</a> of this tutorial.</p>
+
+  <h1>Preview</h1>
+
+  <p>Let&#8217;s start with a preview of what ggplot2 can do.</p>
+
+  <p>Given Fisher&#8217;s <a href="http://en.wikipedia.org/wiki/Iris_flower_data_set">iris</a> data set and one simple command&#8230;</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>&#8230;we can produce this plot of sepal length vs. petal length, colored by species.</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-specied.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-specied.png" alt="Sepal vs. Petal, Colored by Species" /></a></p>
+
+  <h1>Installation</h1>
+
+  <p>You can download R <a href="http://cran.opensourceresources.org/">here</a>. After installation, you can launch R in interactive mode by either typing <code>R</code> on the command line or opening the standard GUI (which should have been included in the download).</p>
+
+  <h1>R Basics</h1>
+
+  <h2>Vectors</h2>
+
+  <p>Vectors are a core data structure in R, and are created with <code>c()</code>. Elements in a vector must be of the same type.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">numbers <span class="o">=</span> c<span class="p">(</span><span class="m">23</span><span class="p">,</span> <span class="m">13</span><span class="p">,</span> <span class="m">5</span><span class="p">,</span> <span class="m">7</span><span class="p">,</span> <span class="m">31</span><span class="p">)</span>
+  </span><span class="line">names <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;edwin&quot;</span><span class="p">,</span> <span class="s">&quot;alice&quot;</span><span class="p">,</span> <span class="s">&quot;bob&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Elements are indexed starting at 1, and are accessed with <code>[]</code> notation.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">numbers<span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="c1"># 23</span>
+  </span><span class="line">names<span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="c1"># edwin</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>Data frames</h2>
+
+  <p><a href="http://www.r-tutor.com/r-introduction/data-frame">Data frames</a> are like matrices, but with named columns of different types (similar to <a href="http://code.google.com/p/sqldf/">database tables</a>).</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">books <span class="o">=</span> data.frame<span class="p">(</span>
+  </span><span class="line">  title <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;harry potter&quot;</span><span class="p">,</span> <span class="s">&quot;war and peace&quot;</span><span class="p">,</span> <span class="s">&quot;lord of the rings&quot;</span><span class="p">),</span> <span class="c1"># column named &quot;title&quot;</span>
+  </span><span class="line">  author <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;rowling&quot;</span><span class="p">,</span> <span class="s">&quot;tolstoy&quot;</span><span class="p">,</span> <span class="s">&quot;tolkien&quot;</span><span class="p">),</span>
+  </span><span class="line">  num_pages <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;350&quot;</span><span class="p">,</span> <span class="s">&quot;875&quot;</span><span class="p">,</span> <span class="s">&quot;500&quot;</span><span class="p">)</span>
+  </span><span class="line"><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>You can access columns of a data frame with <code>$</code>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">books<span class="p">$</span>title <span class="c1"># c(&quot;harry potter&quot;, &quot;war and peace&quot;, &quot;lord of the rings&quot;)</span>
+  </span><span class="line">books<span class="p">$</span>author<span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="c1"># &quot;rowling&quot;</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>You can also create new columns with <code>$</code>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">books<span class="p">$</span>num_bought_today <span class="o">=</span> c<span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">5</span><span class="p">,</span> <span class="m">8</span><span class="p">)</span>
+  </span><span class="line">books<span class="p">$</span>num_bought_yesterday <span class="o">=</span> c<span class="p">(</span><span class="m">18</span><span class="p">,</span> <span class="m">13</span><span class="p">,</span> <span class="m">20</span><span class="p">)</span>
+  </span><span class="line">  
+  </span><span class="line">books<span class="p">$</span>total\_num\_bought <span class="o">=</span> books<span class="p">$</span>num_bought_today <span class="o">+</span> books<span class="p">$</span>num_bought_yesterday
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>read.table</h2>
+
+  <p>Suppose you want to import a TSV file into R as a data frame.</p>
+
+  <h3>tsv file without header</h3>
+
+  <p>For example, consider the <a href="https://github.com/echen/r-tutorial/blob/master/data/students.tsv"><code>data/students.tsv</code></a> file (with columns describing each student&#8217;s age, test score, and name).</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="m">13</span>   <span class="m">100</span> alice
+  </span><span class="line"><span class="m">14</span>   <span class="m">95</span>  bob
+  </span><span class="line"><span class="m">13</span>   <span class="m">82</span>  eve
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>We can import this file into R using <a href="http://stat.ethz.ch/R-manual/R-devel/library/utils/html/read.table.html"><code>read.table()</code></a>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">students <span class="o">=</span> read.table<span class="p">(</span><span class="s">&quot;data/students.tsv&quot;</span><span class="p">,</span>
+  </span><span class="line">  header <span class="o">=</span> <span class="k-Variable">F</span><span class="p">,</span> <span class="c1"># file does not contain a header (`F` is short for `FALSE`), so we must manually specify column names                    </span>
+  </span><span class="line">  sep <span class="o">=</span> <span class="s">&quot;\t&quot;</span><span class="p">,</span> <span class="c1"># file is tab-delimited        </span>
+  </span><span class="line">  col.names <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;age&quot;</span><span class="p">,</span> <span class="s">&quot;score&quot;</span><span class="p">,</span> <span class="s">&quot;name&quot;</span><span class="p">)</span> <span class="c1"># column names</span>
+  </span><span class="line"><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>We can now access the different columns in the data frame with <code>students$age</code>, <code>students$score</code>, and <code>students$name</code>.</p>
+
+  <h3>csv file with header</h3>
+
+  <p>For an example of a file in a different format, look at the <a href="https://github.com/echen/r-tutorial/blob/master/data/studentsWithHeader.tsv"><code>data/studentsWithHeader.tsv</code></a> file.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">age<span class="p">,</span>score<span class="p">,</span>name
+  </span><span class="line"><span class="m">13</span><span class="p">,</span><span class="m">100</span><span class="p">,</span>alice
+  </span><span class="line"><span class="m">14</span><span class="p">,</span><span class="m">95</span><span class="p">,</span>bob
+  </span><span class="line"><span class="m">13</span><span class="p">,</span><span class="m">82</span><span class="p">,</span>eve
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Here we have the same data, but now the file is comma-delimited and contains a header. We can import this file with</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">students <span class="o">=</span> read.table<span class="p">(</span><span class="s">&quot;data/students.tsv&quot;</span><span class="p">,</span>
+  </span><span class="line">  sep <span class="o">=</span> <span class="s">&quot;,&quot;</span><span class="p">,</span>
+  </span><span class="line">  header <span class="o">=</span> <span class="k-Variable">T</span>  <span class="c1"># first line contains column names, so we can immediately call `students$age`        </span>
+  </span><span class="line"><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>(Note: there is also a <code>read.csv</code> function that uses <code>sep = ","</code> by default.)</p>
+
+  <h2>help</h2>
+
+  <p>There are many more options that <code>read.table</code> can take. For a list of these, just type <code>help(read.table)</code> (or <code>?read.table</code>) at the prompt to access documentation.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># These work for other functions as well.</span>
+  </span><span class="line">help<span class="p">(</span>read.table<span class="p">)</span>
+  </span><span class="line">?read.table
+  </span></code></pre></td></tr></table></div>
+
+
+  <h1>ggplot2</h1>
+
+  <p>With these R basics in place, let&#8217;s dive into the ggplot2 package.</p>
+
+  <h2>Installation</h2>
+
+  <p>One of R&#8217;s greatest strengths is its excellent set of <a href="http://cran.r-project.org/web/packages/available_packages_by_name.html">packages</a>. To install a package, you can use the <code>install.packages()</code> function.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">install.packages<span class="p">(</span><span class="s">&quot;ggplot2&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>To load a package into your current R session, use <code>library()</code>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">library<span class="p">(</span>ggplot2<span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>Scatterplots with qplot()</h2>
+
+  <p>Let&#8217;s look at how to create a scatterplot in ggplot2. We&#8217;ll use the <code>iris</code> data frame that&#8217;s automatically loaded into R.</p>
+
+  <p>What does the data frame contain? We can use the <code>head</code> function to look at the first few rows.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">head<span class="p">(</span>iris<span class="p">)</span> <span class="c1"># by default, head displays the first 6 rows. see `?head`</span>
+  </span><span class="line">head<span class="p">(</span>iris<span class="p">,</span> n <span class="o">=</span> <span class="m">10</span><span class="p">)</span> <span class="c1"># we can also explicitly set the number of rows to display</span>
+  </span><span class="line">
+  </span><span class="line">Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+  </span><span class="line">         <span class="m">5.1</span>         <span class="m">3.5</span>          <span class="m">1.4</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">4.9</span>         <span class="m">3.0</span>          <span class="m">1.4</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">4.7</span>         <span class="m">3.2</span>          <span class="m">1.3</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">4.6</span>         <span class="m">3.1</span>          <span class="m">1.5</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">5.0</span>         <span class="m">3.6</span>          <span class="m">1.4</span>         <span class="m">0.2</span>  setosa
+  </span><span class="line">         <span class="m">5.4</span>         <span class="m">3.9</span>          <span class="m">1.7</span>         <span class="m">0.4</span>  setosa
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>(The data frame actually contains three types of species: setosa, versicolor, and virginica.)</p>
+
+  <p>Let&#8217;s plot <code>Sepal.Length</code> against <code>Petal.Length</code> using ggplot2&#8217;s <code>qplot()</code> function.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">)</span>
+  </span><span class="line"><span class="c1"># Plot Sepal.Length vs. Petal.Length, using data from the `iris` data frame.</span>
+  </span><span class="line"><span class="c1"># * First argument `Sepal.Length` goes on the x-axis.</span>
+  </span><span class="line"><span class="c1"># * Second argument `Petal.Length` goes on the y-axis.</span>
+  </span><span class="line"><span class="c1"># * `data = iris` means to look for this data in the `iris` data frame.    </span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p></p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal.png" alt="Sepal Length vs. Petal Length" /></a></p>
+
+  <p>To see where each species is located in this graph, we can color each point by adding a <code>color = Species</code> argument.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">)</span> <span class="c1"># dude!</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-specied.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-specied.png" alt="Sepal vs. Petal, Colored by Species" /></a></p>
+
+  <p>Similarly, we can let the size of each point denote sepal width, by adding a <code>size = Sepal.Width</code> argument.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">,</span> size <span class="o">=</span> Petal.Width<span class="p">)</span>
+  </span><span class="line"><span class="c1"># We see that Iris setosa flowers have the narrowest petals.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-sized.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-sized.png" alt="Sepal vs. Petal, Sized by Petal Width" /></a></p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">,</span> size <span class="o">=</span> Petal.Width<span class="p">,</span> alpha <span class="o">=</span> I<span class="p">(</span><span class="m">0.7</span><span class="p">))</span>
+  </span><span class="line"><span class="c1"># By setting the alpha of each point to 0.7, we reduce the effects of overplotting.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-alpha.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-alpha.png" alt="Sepal vs. Petal, with Transparency" /></a></p>
+
+  <p>Finally, let&#8217;s fix the axis labels and add a title to the plot.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> color <span class="o">=</span> Species<span class="p">,</span>
+  </span><span class="line">  xlab <span class="o">=</span> <span class="s">&quot;Sepal Length&quot;</span><span class="p">,</span> ylab <span class="o">=</span> <span class="s">&quot;Petal Length&quot;</span><span class="p">,</span>
+  </span><span class="line">  main <span class="o">=</span> <span class="s">&quot;Sepal vs. Petal Length in Fisher&#39;s Iris data&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-titled.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-titled.png" alt="Sepal vs. Petal, Titled" /></a></p>
+
+  <h2>Other common geoms</h2>
+
+  <p>In the scatterplot examples above, we implicitly used a <em>point</em> <strong>geom</strong>, the default when you supply two arguments to <code>qplot()</code>.</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># These two invocations are equivalent.</span>
+  </span><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;point&quot;</span><span class="p">)</span>
+  </span><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>But we can also easily use other types of geoms to create more kinds of plots.</p>
+
+  <h3>Barcharts: geom = &#8220;bar&#8221;</h3>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">movies <span class="o">=</span> data.frame<span class="p">(</span>
+  </span><span class="line">  director <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;spielberg&quot;</span><span class="p">,</span> <span class="s">&quot;spielberg&quot;</span><span class="p">,</span> <span class="s">&quot;spielberg&quot;</span><span class="p">,</span> <span class="s">&quot;jackson&quot;</span><span class="p">,</span> <span class="s">&quot;jackson&quot;</span><span class="p">),</span>
+  </span><span class="line">  movie <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;jaws&quot;</span><span class="p">,</span> <span class="s">&quot;avatar&quot;</span><span class="p">,</span> <span class="s">&quot;schindler&#39;s list&quot;</span><span class="p">,</span> <span class="s">&quot;lotr&quot;</span><span class="p">,</span> <span class="s">&quot;king kong&quot;</span><span class="p">),</span>
+  </span><span class="line">  minutes <span class="o">=</span> c<span class="p">(</span><span class="m">124</span><span class="p">,</span> <span class="m">163</span><span class="p">,</span> <span class="m">195</span><span class="p">,</span> <span class="m">600</span><span class="p">,</span> <span class="m">187</span><span class="p">)</span>
+  </span><span class="line"><span class="p">)</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1"># Plot the number of movies each director has.</span>
+  </span><span class="line">qplot<span class="p">(</span>director<span class="p">,</span> data <span class="o">=</span> movies<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;bar&quot;</span><span class="p">,</span> ylab <span class="o">=</span> <span class="s">&quot;# movies&quot;</span><span class="p">)</span>
+  </span><span class="line"><span class="c1"># By default, the height of each bar is simply a count.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/num-movies.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/num-movies.png" alt="# Movies" /></a></p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># But we can also supply a different weight.</span>
+  </span><span class="line"><span class="c1"># Here the height of each bar is the total running time of the director&#39;s movies.</span>
+  </span><span class="line">qplot<span class="p">(</span>director<span class="p">,</span> weight <span class="o">=</span> minutes<span class="p">,</span> data <span class="o">=</span> movies<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;bar&quot;</span><span class="p">,</span> ylab <span class="o">=</span> <span class="s">&quot;total length (min.)&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/total-length.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/total-length.png" alt="Total Running Time" /></a></p>
+
+  <h3>Line charts: geom = &#8220;line&#8221;</h3>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line">qplot<span class="p">(</span>Sepal.Length<span class="p">,</span> Petal.Length<span class="p">,</span> data <span class="o">=</span> iris<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;line&quot;</span><span class="p">,</span> color <span class="o">=</span> Species<span class="p">)</span>
+  </span><span class="line"><span class="c1"># Using a line geom doesn&#39;t really make sense here, but hey.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-lined.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/sepal-vs-petal-lined.png" alt="Sepal vs. Petal, Lined" /></a></p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># `Orange` is another built-in data frame that describes the growth of orange trees.</span>
+  </span><span class="line">qplot<span class="p">(</span>age<span class="p">,</span> circumference<span class="p">,</span> data <span class="o">=</span> Orange<span class="p">,</span> geom <span class="o">=</span> <span class="s">&quot;line&quot;</span><span class="p">,</span>
+  </span><span class="line">  colour <span class="o">=</span> Tree<span class="p">,</span>
+  </span><span class="line">  main <span class="o">=</span> <span class="s">&quot;How does orange tree circumference vary with age?&quot;</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/orange-tree-growth.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/orange-tree-growth.png" alt="Orange Tree Growth" /></a></p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># We can also plot both points and lines.</span>
+  </span><span class="line">qplot<span class="p">(</span>age<span class="p">,</span> circumference<span class="p">,</span> data <span class="o">=</span> Orange<span class="p">,</span> geom <span class="o">=</span> c<span class="p">(</span><span class="s">&quot;point&quot;</span><span class="p">,</span> <span class="s">&quot;line&quot;</span><span class="p">),</span> colour <span class="o">=</span> Tree<span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/r/ggplot2/orange-tree-pointed.png"><img src="http://dl.dropbox.com/u/10506/blog/r/ggplot2/orange-tree-pointed.png" alt="Orange Tree with Points" /></a></p>
+
+  <p>And that&#8217;s it with what I&#8217;ll cover.</p>
+
+  <h1>Next Steps</h1>
+
+  <p>I skipped over a lot of aspects of R and ggplot2 in this intro.</p>
+
+  <p>For example,</p>
+
+  <ul>
+  <li>There are many geoms (and other functionalities) in ggplot2 that I didn&#8217;t cover, e.g., <a href="http://had.co.nz/ggplot2/geom_boxplot.html">boxplots</a> and <a href="http://had.co.nz/ggplot2/geom_histogram.html">histograms</a>.</li>
+  <li>I didn&#8217;t talk about ggplot2&#8217;s layering system, or the <a href="http://www.amazon.com/Grammar-Graphics-Statistics-Computing/dp/0387245448">grammar of graphics</a> it&#8217;s based on.</li>
+  </ul>
+
+
+  <p>So I&#8217;ll end with some additional resources on R and ggplot2.</p>
+
+  <ul>
+  <li>I don&#8217;t use it myself, but <a href="http://rstudio.org/">RStudio</a> is a popular IDE for R.</li>
+  <li>The <a href="http://had.co.nz/ggplot2/">official ggplot2 documentation</a> is great and has lots of examples. There&#8217;s also an excellent <a href="http://www.amazon.com/ggplot2-Elegant-Graphics-Data-Analysis/dp/0387981403">book</a>.</li>
+  <li><a href="http://plyr.had.co.nz/">plyr</a> is another fantastic R package that&#8217;s also by Hadley Wickham (the author of ggplot2).</li>
+  <li>The <a href="http://cran.r-project.org/doc/manuals/R-intro.html">official R introduction</a> is okay, but definitely not great. I haven&#8217;t found any R tutorials I really like, but I&#8217;ve heard good things about <a href="http://www.amazon.com/Art-Programming-Statistical-Software-Design/dp/1593273843">The Art of R Programming</a>.</li>
+  </ul>
+
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="../2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields</a></h1>
+<div class="post-info">
 
 </div><!-- /.post-info -->
   <div class="entry-content"><p>Imagine you have a sequence of snapshots from a day in Justin Bieber&#8217;s life, and you want to label each image with the activity it represents (eating, sleeping, driving, etc.). How can you do this?</p>
@@ -228,36 +618,6 @@
 
   <p><a href="http://dl.dropbox.com/u/10506/blog/crfs/crf-diagram.png"><img src="http://dl.dropbox.com/u/10506/blog/crfs/crf-diagram.png" alt="CRF Diagram" /></a></p></div>
   
-<script type= "text/javascript">
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-</script>
 
                     </article>
                 </div>
@@ -270,17 +630,8 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary</a></h1>
+                        <h1 class="entry-title"><a href="../2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-10-24T04:15:00+02:00">
-          on&nbsp;Mon 24 October 2011
-        </li>
-
-	</ul>
 
 </div><!-- /.post-info -->
   <div class="entry-content"><p>How was the <a href="http://en.wikipedia.org/wiki/Netflix_Prize">Netflix Prize</a> won? I went through a lot of the Netflix Prize papers a couple years ago, so I&#8217;ll try to give an overview of the techniques that went into the winning solution here.</p>
@@ -451,17 +802,8 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like</a></h1>
+                        <h1 class="entry-title"><a href="../2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-09-29T04:15:00+02:00">
-          on&nbsp;Thu 29 September 2011
-        </li>
-
-	</ul>
 
 </div><!-- /.post-info -->
   <div class="entry-content"><p>What types of students go to which schools? There are, of course, the classic stereotypes:</p>
@@ -951,17 +1293,8 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post</a></h1>
+                        <h1 class="entry-title"><a href="../2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-09-07T04:15:00+02:00">
-          on&nbsp;Wed 07 September 2011
-        </li>
-
-	</ul>
 
 </div><!-- /.post-info -->
   <div class="entry-content"><p><strong>tl;dr</strong> See <a href="http://www.youtube.com/watch?v=cZ4Ntg4jQHw">this movie visualization</a> for a case study on how a post propagates through Quora.</p>
@@ -1084,171 +1417,11 @@
   </div>  
 
                     </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/08/22/introduction-to-latent-dirichlet-allocation/">Introduction to Latent Dirichlet Allocation</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-08-22T04:15:00+02:00">
-          on&nbsp;Mon 22 August 2011
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><h1>Introduction</h1>
-
-  <p>Suppose you have the following set of sentences:</p>
-
-  <ul>
-  <li>I like to eat broccoli and bananas.</li>
-  <li>I ate a banana and spinach smoothie for breakfast.</li>
-  <li>Chinchillas and kittens are cute.</li>
-  <li>My sister adopted a kitten yesterday.</li>
-  <li>Look at this cute hamster munching on a piece of broccoli.</li>
-  </ul>
-
-
-  <p>What is latent Dirichlet allocation? It&#8217;s a way of automatically discovering <strong>topics</strong> that these sentences contain. For example, given these sentences and asked for 2 topics, LDA might produce something like</p>
-
-  <ul>
-  <li><strong>Sentences 1 and 2</strong>: 100% Topic A</li>
-  <li><strong>Sentences 3 and 4</strong>: 100% Topic B</li>
-  <li><strong>Sentence 5</strong>: 60% Topic A, 40% Topic B</li>
-  <li><strong>Topic A</strong>: 30% broccoli, 15% bananas, 10% breakfast, 10% munching, &#8230; (at which point, you could interpret topic A to be about food)</li>
-  <li><strong>Topic B</strong>: 20% chinchillas, 20% kittens, 20% cute, 15% hamster, &#8230; (at which point, you could interpret topic B to be about cute animals)</li>
-  </ul>
-
-
-  <p>The question, of course, is: how does LDA perform this discovery?</p>
-
-  <h1>LDA Model</h1>
-
-  <p>In more detail, LDA represents documents as <strong>mixtures of topics</strong> that spit out words with certain probabilities. It assumes that documents are produced in the following fashion: when writing each document, you</p>
-
-  <ul>
-  <li>Decide on the number of words N the document will have (say, according to a Poisson distribution).</li>
-  <li>Choose a topic mixture for the document (according to a Dirichlet distribution over a fixed set of K topics). For example, assuming that we have the two food and cute animal topics above, you might choose the document to consist of 1/3 food and 2/3 cute animals.</li>
-  <li>Generate each word w_i in the document by:
-
-  <ul>
-  <li>First picking a topic (according to the multinomial distribution that you sampled above; for example, you might pick the food topic with 1/3 probability and the cute animals topic with 2/3 probability).</li>
-  <li>Using the topic to generate the word itself (according to the topic&#8217;s multinomial distribution). For example, if we selected the food topic, we might generate the word &#8220;broccoli&#8221; with 30% probability, &#8220;bananas&#8221; with 15% probability, and so on.</li>
-  </ul>
-  </li>
-  </ul>
-
-
-  <p>Assuming this generative model for a collection of documents, LDA then tries to backtrack from the documents to find a set of topics that are likely to have generated the collection.</p>
-
-  <h2>Example</h2>
-
-  <p>Let&#8217;s make an example. According to the above process, when generating some particular document D, you might</p>
-
-  <ul>
-  <li>Pick 5 to be the number of words in D.</li>
-  <li>Decide that D will be 1/2 about food and 1/2 about cute animals.</li>
-  <li>Pick the first word to come from the food topic, which then gives you the word &#8220;broccoli&#8221;.</li>
-  <li>Pick the second word to come from the cute animals topic, which gives you &#8220;panda&#8221;.</li>
-  <li>Pick the third word to come from the cute animals topic, giving you &#8220;adorable&#8221;.</li>
-  <li>Pick the fourth word to come from the food topic, giving you &#8220;cherries&#8221;.</li>
-  <li>Pick the fifth word to come from the food topic, giving you &#8220;eating&#8221;.</li>
-  </ul>
-
-
-  <p>So the document generated under the LDA model will be &#8220;broccoli panda adorable cherries eating&#8221; (note that LDA is a bag-of-words model).</p>
-
-  <h1>Learning</h1>
-
-  <p>So now suppose you have a set of documents. You&#8217;ve chosen some fixed number of K topics to discover, and want to use LDA to learn the topic representation of each document and the words associated to each topic. How do you do this? One way (known as collapsed Gibbs sampling) is the following:</p>
-
-  <ul>
-  <li>Go through each document, and randomly assign each word in the document to one of the K topics.</li>
-  <li>Notice that this random assignment already gives you both topic representations of all the documents and word distributions of all the topics (albeit not very good ones).</li>
-  <li>So to improve on them, for each document d&#8230;
-
-  <ul>
-  <li>Go through each word w in d&#8230;
-
-  <ul>
-  <li>And for each topic t, compute two things: 1) p(topic t | document d) = the proportion of words in document d that are currently assigned to topic t, and 2) p(word w | topic t) = the proportion of assignments to topic t over all documents that come from this word w. Reassign w a new topic, where we choose topic t with probability p(topic t | document d) * p(word w | topic t) (according to our generative model, this is essentially the probability that topic t generated word w, so it makes sense that we resample the current word&#8217;s topic with this probability). (Also, I&#8217;m glossing over a couple of things here, in particular the use of priors/pseudocounts in these probabilities.)</li>
-  <li>In other words, in this step, we&#8217;re assuming that all topic assignments except for the current word in question are correct, and then updating the assignment of the current word using our model of how documents are generated.</li>
-  </ul>
-  </li>
-  </ul>
-  </li>
-  <li>After repeating the previous step a large number of times, you&#8217;ll eventually reach a roughly steady state where your assignments are pretty good. So use these assignments to estimate the topic mixtures of each document (by counting the proportion of words assigned to each topic within that document) and the words associated to each topic (by counting the proportion of words assigned to each topic overall).</li>
-  </ul>
-
-
-  <h1>Layman&#8217;s Explanation</h1>
-
-  <p>In case the discussion above was a little eye-glazing, here&#8217;s another way to look at LDA in a different domain.</p>
-
-  <p>Suppose you&#8217;ve just moved to a new city. You&#8217;re a hipster and an anime fan, so you want to know where the other hipsters and anime geeks tend to hang out. Of course, as a hipster, you know you can&#8217;t just <em>ask</em>, so what do you do?</p>
-
-  <p>Here&#8217;s the scenario: you scope out a bunch of different establishments (<strong>documents</strong>) across town, making note of the people (<strong>words</strong>) hanging out in each of them (e.g., Alice hangs out at the mall and at the park, Bob hangs out at the movie theater and the park, and so on). Crucially, you don&#8217;t know the typical interest groups (<strong>topics</strong>) of each establishment, nor do you know the different interests of each person.</p>
-
-  <p>So you pick some number K of categories to learn (i.e., you want to learn the K most important kinds of categories people fall into), and start by making a guess as to why you see people where you do. For example, you initially guess that Alice is at the mall because people with interests in X like to hang out there; when you see her at the park, you guess it&#8217;s because her friends with interests in Y like to hang out there; when you see Bob at the movie theater, you randomly guess it&#8217;s because the Z people in this city really like to watch movies; and so on.</p>
-
-  <p>Of course, your random guesses are very likely to be incorrect (they&#8217;re random guesses, after all!), so you want to improve on them. One way of doing so is to:</p>
-
-  <ul>
-  <li>Pick a place and a person (e.g., Alice at the mall).</li>
-  <li>Why is Alice likely to be at the mall? Probably because other people at the mall with the same interests sent her a message telling her to come.</li>
-  <li>In other words, the more people with interests in X there are at the mall and the stronger Alice is associated with interest X (at all the other places she goes to), the more likely it is that Alice is at the mall because of interest X.</li>
-  <li>So make a new guess as to why Alice is at the mall, choosing an interest with some probability according to how likely you think it is.</li>
-  </ul>
-
-
-  <p>Go through each place and person over and over again. Your guesses keep getting better and better (after all, if you notice that lots of geeks hang out at the bookstore, and you suspect that Alice is pretty geeky herself, then it&#8217;s a good bet that Alice is at the bookstore because her geek friends told her to go there; and now that you have a better idea of why Alice is probably at the bookstore, you can use this knowledge in turn to improve your guesses as to why everyone else is where they are), and eventually you can stop updating. Then take a snapshot (or multiple snapshots) of your guesses, and use it to get all the information you want:</p>
-
-  <ul>
-  <li>For each category, you can count the people assigned to that category to figure out what people have this particular interest. By looking at the people themselves, you can interpret the category as well (e.g., if category X contains lots of tall people wearing jerseys and carrying around basketballs, you might interpret X as the &#8220;basketball players&#8221; group).</li>
-  <li>For each place P and interest category C, you can compute the proportions of people at P because of C (under the current set of assignments), and these give you a representation of P. For example, you might learn that the people who hang out at Barnes &amp; Noble consist of 10% hipsters, 50% anime fans, 10% jocks, and 30% college students.</li>
-  </ul>
-
-
-  <h1>Real-World Example</h1>
-
-  <p>Finally, I applied LDA to a set of Sarah Palin&#8217;s emails a little while ago (see <a href="http://blog.echen.me/2011/06/27/topic-modeling-the-sarah-palin-emails/">here</a> for the blog post, or <a href="http://sarah-palin.heroku.com/">here</a> for an app that allows you to browse through the emails by the LDA-learned categories), so let&#8217;s give a brief recap. Here are some of the topics that the algorithm learned:</p>
-
-  <ul>
-  <li><strong>Trig/Family/Inspiration</strong>: family, web, mail, god, son, from, congratulations, children, life, child, down, trig, baby, birth, love, you, syndrome, very, special, bless, old, husband, years, thank, best, &#8230;</li>
-  <li><strong>Wildlife/BP Corrosion</strong>: game, fish, moose, wildlife, hunting, bears, polar, bear, subsistence, management, area, board, hunt, wolves, control, department, year, use, wolf, habitat, hunters, caribou, program, denby, fishing, &#8230;</li>
-  <li><strong>Energy/Fuel/Oil/Mining:</strong> energy, fuel, costs, oil, alaskans, prices, cost, nome, now, high, being, home, public, power, mine, crisis, price, resource, need, community, fairbanks, rebate, use, mining, villages, &#8230;</li>
-  <li><strong>Gas</strong>: gas, oil, pipeline, agia, project, natural, north, producers, companies, tax, company, energy, development, slope, production, resources, line, gasline, transcanada, said, billion, plan, administration, million, industry, &#8230;</li>
-  <li><strong>Education/Waste</strong>: school, waste, education, students, schools, million, read, email, market, policy, student, year, high, news, states, program, first, report, business, management, bulletin, information, reports, 2008, quarter, &#8230;</li>
-  <li><strong>Presidential Campaign/Elections</strong>: mail, web, from, thank, you, box, mccain, sarah, very, good, great, john, hope, president, sincerely, wasilla, work, keep, make, add, family, republican, support, doing, p.o, &#8230;</li>
-  </ul>
-
-
-  <p>Here&#8217;s an example of an email which fell 99% into the Trig/Family/Inspiration category (particularly representative words are highlighted in blue):</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/palin-browser/trig-email.png"><img src="http://dl.dropbox.com/u/10506/blog/palin-browser/trig-email.png" alt="Trig Email" /></a></p>
-
-  <p>And here&#8217;s an excerpt from an email which fell 10% into the Presidential Campaign/Election category (in red) and 90% into the Wildlife/BP Corrosion category (in green):</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/palin-browser/wildlife-presidency-email.png"><img src="http://dl.dropbox.com/u/10506/blog/palin-browser/wildlife-presidency-email.png" alt="Wildlife-Presidency Email" /></a></p>
-  </div>  
-
-                    </article>
  
 <div class="paginator">
-            <div class="navButton"><a href="http://blog.echen.me/author/edwin-chen2.html">Prev</a></div>
+            <div class="navButton"><a href="../author/edwin-chen2.html">Prev</a></div>
     <div class="navButton">Page 3 / 7</div>
-        <div class="navButton"><a href="http://blog.echen.me/author/edwin-chen4.html" >Next</a></div>
+        <div class="navButton"><a href="../author/edwin-chen4.html" >Next</a></div>
 </div>
                 </div>
             </aside><!-- /#featured -->
@@ -1257,21 +1430,24 @@
   
 	      <div class="LaunchyardDetail">
 	        <p>
-	          <a style="text-align: left" class="title" href="http://blog.echen.me/">Edwin Chen</a>	          
+	          <a style="text-align: left" class="title" href="../">Edwin Chen</a>	          
 	          <br/>
 
 	        </p>
 	        
 	        <div id="about" style="text-align: left">              	          
 	          <p>
-	            Math/CS/linguistics at MIT, speech recognition at MSR, quant trading at Clarium, ads at Twitter, ML at Google.
+	            Math/linguistics at MIT, speech recognition at MSR, quant trading at Clarium, ads at Twitter, ML at Google.
+            </p>
+            <br />
+            <p>
+              I work on math, machine learning, human computation, and data. hello[at]echen.me
             </p>
             <br />	          
 	          <div style="text-align: center">
-              <a href="mailto:hello[at]echen.me">Email</a><br />
               <a href="https://twitter.com/#!/echen">Twitter</a><br/>
+              <a href="http://quora.com/edwin-chen-1">Quora</a><br />
               <a href="https://github.com/echen">Github</a><br/>
-              <a href="http://quora.com/edwin-chen-1">Quora</a><br/>              
               <a href="https://plus.google.com/113804726252165471503/">Google+</a><br/>
               <a href="http://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
               <br />
@@ -1281,21 +1457,21 @@
 
           <div id="recent_posts">
               <h3>Recent Posts</h3>
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2011/08/22/introduction-to-latent-dirichlet-allocation/">Introduction to Latent Dirichlet Allocation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2017/05/30/exploring-lstms/">Exploring LSTMs  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
             
           </div>
         </div>
