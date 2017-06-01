@@ -276,14 +276,28 @@
 <p>I'm not sure if this is the default kind of behavior LSTMs learn when copying information, or what other copying mechanisms are available as well.</p>
 <iframe src="http://blog.echen.me/lstm-explorer/#/network?file=copy_machine" style="width: 100%; height: 500px"></iframe>
 
+<h1>States and Gates</h1>
+<p>To really hone in and understand the purpose of the different states and gates in an LSTM, let's repeat the previous section with a small pivot.</p>
+<h2>Cell State and Hidden State (Memories)</h2>
+<p>We originally described the cell state as a long-term memory, and the hidden state as a way to pull out and focus these memories when needed.</p>
+<p>So when a memory is currently irrelevant, we expect the hidden state to turn off – and that's exactly what happens for this sequence copying neuron.</p>
+<p><a href="http://i.imgur.com/30LKz6j.png"><img alt="Copy Machine" src="http://i.imgur.com/30LKz6j.png" /></a></p>
+<h2>Forget Gate</h2>
+<p>The forget gate discards information from the cell state (0 means to completely forget, 1 means to completely remember), so we expect it to fully activate when it needs to remember something exactly, and to turn off when information is never going to be needed again.</p>
+<p>That's what we see with this "A" memorizing neuron: the forget gate is firing on all cylinders to remember that it's in an "A" state while it passes through the x's, and turns off once it's ready to generate the final "a".</p>
+<p><a href="http://i.imgur.com/6XTNTOl.png"><img alt="Forget Gate" src="http://i.imgur.com/6XTNTOl.png" /></a></p>
+<h2>Input Gate (Save Gate)</h2>
+<p>We described the job of the input gate (what I originally called the save gate) as deciding whether or not to save information from a new input. Thus, it should turn off at useless information.</p>
+<p>And that's what this selective counting neuron does: it counts the a's and b's, but ignores the irrelevant x's.</p>
+<p><a href="http://i.imgur.com/ccqdcn8.png"><img alt="Input Gate" src="http://i.imgur.com/ccqdcn8.png" /></a></p>
 <h1>Extensions</h1>
-<p>Let's recap a bit how you could have discovered LSTMs by yourself.</p>
+<p>Now let's recap how you could have discovered LSTMs by yourself.</p>
 <p>First, many of the problems we'd like to solve are sequential or temporal of some sort, so we should incorporate past learnings into our models. But we already know that the hidden layers of neural networks encode useful information, so why not use these hidden layers as the memories we pass from one time step to the next? <strong>And so we get RNNs.</strong></p>
 <p>But we know from our own behavior that we don't keep track of knowledge willy-nilly; when we read a new article about politics, we don't immediately believe whatever it tells us and incorporate it into our beliefs of the world. We selectively decide what information to save, what information to discard, and what pieces of information to use to make decisions the next time we read the news. Thus, we want to <em>learn</em> how to gather, update, and apply information – and why not learn these things through their own mini neural networks? <strong>And so we get LSTMs.</strong></p>
 <p>And now that we've gone through this process, we can come up with our own modifications.</p>
 <ul>
-<li>For example, maybe you think it's silly for LSTMs to distinguish between long-term and working memories – why not have one? Or maybe you find separate remember gates and save gates kind of redundant – anything we forget should be replaced by new information, and vice-versa. <strong>And so now you've come up with one popular LSTM variant, the <a href="https://arxiv.org/abs/1412.3555">GRU</a></strong>.</li>
-<li>Or maybe you think that when deciding what information to remember, save, and focus on, we shouldn't rely on our working memory alone – why not use our long-term memory as well? <strong>And so now you've discovered <a href="http://machinelearning.wustl.edu/mlpapers/paper_files/GersSS02.pdf">Peephole LSTMs</a></strong>.</li>
+<li>For example, maybe you think it's silly for LSTMs to distinguish between long-term and working memories – why not have one? Or maybe you find separate remember gates and save gates kind of redundant – anything we forget should be replaced by new information, and vice-versa. <strong>And now you've come up with one popular LSTM variant, the <a href="https://arxiv.org/abs/1412.3555">GRU</a></strong>.</li>
+<li>Or maybe you think that when deciding what information to remember, save, and focus on, we shouldn't rely on our working memory alone – why not use our long-term memory as well? <strong>And now you've discovered <a href="http://machinelearning.wustl.edu/mlpapers/paper_files/GersSS02.pdf">Peephole LSTMs</a></strong>.</li>
 </ul>
 <h1>Making Neural Nets Great Again</h1>
 <p>Let's look at one final example, using a 2-layer LSTM trained on Trump's tweets. Despite the <del>tiny</del> <em>big</em> dataset, it's enough to learn a lot of patterns.</p>
