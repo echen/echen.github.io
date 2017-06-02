@@ -5,7 +5,7 @@
 &lt;p&gt;Not in a good, jelly donut kind of way.&lt;/p&gt;
 &lt;p&gt;It turns out LSTMs are a fairly simple extension to neural networks, and they're behind a lot of the amazing achievements deep learning has made in the past few years. So I'll try to present them as intuitively as possible – in such a way that you could have discovered them yourself.&lt;/p&gt;
 &lt;p&gt;But first, a picture:&lt;/p&gt;
-&lt;p&gt;&lt;a href="http://i.imgur.com/lnBi8OZ.png"&gt;&lt;img alt="LSTM" src="http://i.imgur.com/lnBi8OZ.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="LSTM" src="http://i.imgur.com/lnBi8OZ.png" /&gt;&lt;/p&gt;
 &lt;p&gt;Aren't LSTMs beautiful? Let's go.&lt;/p&gt;
 &lt;p&gt;(Note: if you're already familiar with neural networks and LSTMs, skip to the middle – the first half of this post is a tutorial.)&lt;/p&gt;
 &lt;h1&gt;Neural Networks&lt;/h1&gt;
@@ -24,7 +24,7 @@
 &lt;li&gt;A &lt;strong&gt;neural network&lt;/strong&gt; with a single hidden layer takes as input a vector x, which we can think of as a set of neurons. &lt;/li&gt;
 &lt;li&gt;Each input neuron is connected to a hidden layer of neurons via a set of learned weights. &lt;/li&gt;
 &lt;li&gt;The jth hidden neuron outputs &lt;span class="math"&gt;\(h_j = \phi(\sum_i w_{ij} x_i)\)&lt;/span&gt;, where &lt;span class="math"&gt;\(\phi\)&lt;/span&gt; is an activation function. &lt;/li&gt;
-&lt;li&gt;The hidden layer is fully connected to an output layer, and the jth output neuron outputs &lt;span class="math"&gt;\(y_j = \sum_i u_{ij} h_i\)&lt;/span&gt;. If we need probabilities, we can transform the output layer via a &lt;a href="https://en.wikipedia.org/wiki/Softmax_function"&gt;softmax&lt;/a&gt; function.&lt;/li&gt;
+&lt;li&gt;The hidden layer is fully connected to an output layer, and the jth output neuron outputs &lt;span class="math"&gt;\(y_j = \sum_i v_{ij} h_i\)&lt;/span&gt;. If we need probabilities, we can transform the output layer via a &lt;a href="https://en.wikipedia.org/wiki/Softmax_function"&gt;softmax&lt;/a&gt; function.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;In matrix notation:&lt;/p&gt;
 &lt;div class="math"&gt;$$h = \phi(Wx)$$&lt;/div&gt;
@@ -37,7 +37,7 @@
 &lt;li&gt;Common activation functions for &lt;span class="math"&gt;\(\phi\)&lt;/span&gt; are the &lt;a href="https://en.wikipedia.org/wiki/Sigmoid_function"&gt;sigmoid function&lt;/a&gt;, &lt;span class="math"&gt;\(\sigma(x)\)&lt;/span&gt;, which squashes numbers into the range (0, 1); the &lt;a href="https://en.wikipedia.org/wiki/Hyperbolic_function#Standard_analytic_expressions"&gt;hyperbolic tangent&lt;/a&gt;, &lt;span class="math"&gt;\(tanh(x)\)&lt;/span&gt;, which squashes numbers into the range (-1, 1), and the &lt;a href="https://en.wikipedia.org/wiki/Rectifier_(neural_networks)"&gt;rectified linear unit&lt;/a&gt;, &lt;span class="math"&gt;\(ReLU(x) = max(0, x)\)&lt;/span&gt;.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;Here's a pictorial view:&lt;/p&gt;
-&lt;p&gt;&lt;a href="http://i.imgur.com/tFMQMOn.png"&gt;&lt;img alt="Neural Network" src="http://i.imgur.com/tFMQMOn.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Neural Network" src="http://i.imgur.com/tFMQMOn.png" /&gt;&lt;/p&gt;
 &lt;p&gt;(Note: to make the notation a little cleaner, I assume x and h each contain an extra bias neuron fixed at 1 for learning bias weights.)&lt;/p&gt;
 &lt;h1&gt;Remembering Information with RNNs&lt;/h1&gt;
 &lt;p&gt;Ignoring the sequential aspect of the movie images is pretty ML 101, though. If we see a scene of a beach, we should boost beach activities in future frames: an image of someone in the water should probably be labeled &lt;em&gt;swimming&lt;/em&gt;, not &lt;em&gt;bathing&lt;/em&gt;, and an image of someone lying with their eyes closed is probably &lt;em&gt;suntanning&lt;/em&gt;. If we remember that Bob just arrived at a supermarket, then even without any distinctive supermarket features, an image of Bob holding a slab of bacon should probably be categorized as &lt;em&gt;shopping&lt;/em&gt; instead of &lt;em&gt;cooking&lt;/em&gt;.&lt;/p&gt;
@@ -250,6 +250,7 @@
 &lt;p&gt;We described the job of the input gate (what I originally called the save gate) as deciding whether or not to save information from a new input. Thus, it should turn off at useless information.&lt;/p&gt;
 &lt;p&gt;And that's what this selective counting neuron does: it counts the a's and b's, but ignores the irrelevant x's.&lt;/p&gt;
 &lt;p&gt;&lt;a href="http://i.imgur.com/ccqdcn8.png"&gt;&lt;img alt="Input Gate" src="http://i.imgur.com/ccqdcn8.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;What's amazing is that nowhere in our LSTM equations did we specify that this is how the input (save), forget (remember), and output (focus) gates should work. The network just learned what's best.&lt;/p&gt;
 &lt;h1&gt;Extensions&lt;/h1&gt;
 &lt;p&gt;Now let's recap how you could have discovered LSTMs by yourself.&lt;/p&gt;
 &lt;p&gt;First, many of the problems we'd like to solve are sequential or temporal of some sort, so we should incorporate past learnings into our models. But we already know that the hidden layers of neural networks encode useful information, so why not use these hidden layers as the memories we pass from one time step to the next? &lt;strong&gt;And so we get RNNs.&lt;/strong&gt;&lt;/p&gt;
