@@ -43,13 +43,13 @@
 &lt;p&gt;Ignoring the sequential aspect of the movie images is pretty ML 101, though. If we see a scene of a beach, we should boost beach activities in future frames: an image of someone in the water should probably be labeled &lt;em&gt;swimming&lt;/em&gt;, not &lt;em&gt;bathing&lt;/em&gt;, and an image of someone lying with their eyes closed is probably &lt;em&gt;suntanning&lt;/em&gt;. If we remember that Bob just arrived at a supermarket, then even without any distinctive supermarket features, an image of Bob holding a slab of bacon should probably be categorized as &lt;em&gt;shopping&lt;/em&gt; instead of &lt;em&gt;cooking&lt;/em&gt;.&lt;/p&gt;
 &lt;p&gt;So what we'd like is to let our model track the state of the world:&lt;/p&gt;
 &lt;ol&gt;
-&lt;li&gt;&lt;strong&gt;After seeing each image, the model outputs a label and also updates its knowledge of the world.&lt;/strong&gt; For example, the model might learn to automatically discover and track information like location (are scenes currently in a house or beach?), time of day (if a scene contains an image of the moon, the model should remember that it's nighttime), and within-movie progress (is this image the first frame or the 100th?). Importantly, just as a neural network automatically discovers hidden patterns like edges, shapes, and faces without being fed them, our model should automatically discover useful information by itself.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;After seeing each image, the model outputs a label and also updates the knowledge it's been learning.&lt;/strong&gt; For example, the model might learn to automatically discover and track information like location (are scenes currently in a house or beach?), time of day (if a scene contains an image of the moon, the model should remember that it's nighttime), and within-movie progress (is this image the first frame or the 100th?). Importantly, just as a neural network automatically discovers hidden patterns like edges, shapes, and faces without being fed them, our model should automatically discover useful information by itself.&lt;/li&gt;
 &lt;li&gt;When given a new image, the model should &lt;strong&gt;incorporate the knowledge it's gathered&lt;/strong&gt; to do a better job.&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;This, then, is a &lt;strong&gt;recurrent neural network&lt;/strong&gt;. Instead of simply taking an image and returning an activity, an RNN also maintains internal memories about the world (weights assigned to different pieces of information) to help perform its classifications.&lt;/p&gt;
 &lt;h2&gt;Mathematically&lt;/h2&gt;
-&lt;p&gt;So let's add the notion of &lt;strong&gt;internal knowledge&lt;/strong&gt; to our equations, which we can think of as memories or pieces of information that the network maintains over time. &lt;/p&gt;
-&lt;p&gt;But this is easy: we know that the hidden layers of neural networks already encode useful information about their inputs, so why not use these layers as memory? This gives us our RNN equations:&lt;/p&gt;
+&lt;p&gt;So let's add the notion of &lt;strong&gt;internal knowledge&lt;/strong&gt; to our equations, which we can think of as pieces of information that the network maintains over time. &lt;/p&gt;
+&lt;p&gt;But this is easy: we know that the hidden layers of neural networks already encode useful information about their inputs, so why not use these layers as the memory passed from one time step to the next? This gives us our RNN equations:&lt;/p&gt;
 &lt;div class="math"&gt;$$h_t = \phi(Wx_t + Uh_{t-1})$$&lt;/div&gt;
 &lt;div class="math"&gt;$$y_t = Vh_t$$&lt;/div&gt;
 &lt;p&gt;Note that the hidden state computed at time &lt;span class="math"&gt;\(t\)&lt;/span&gt; (&lt;span class="math"&gt;\(h_t\)&lt;/span&gt;, our internal knowledge) is fed back at the next time step. (Also, I'll use concepts like hidden state, knowledge, memories, and beliefs to describe &lt;span class="math"&gt;\(h_t\)&lt;/span&gt; interchangeably.)&lt;/p&gt;
@@ -132,7 +132,8 @@
 &lt;li&gt;&lt;strong&gt;It even knows how to create tests.&lt;/strong&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;How does the model do this? Let's look at a few of the hidden states.&lt;/p&gt;
-&lt;p&gt;Here's a neuron that seems to track the code's &lt;em&gt;outer&lt;/em&gt; level of indentation (each character is colored by the neuron's state when reading the character as input, i.e., when trying to generate the next character; red cells are negative, and blue cells are positive):&lt;/p&gt;
+&lt;p&gt;Here's a neuron that seems to track the code's &lt;em&gt;outer&lt;/em&gt; level of indentation:&lt;/p&gt;
+&lt;p&gt;(As the LSTM moves through the sequence, its neurons fire at varying intensities. The picture represents one particular neuron, where each row is a sequence and characters are color-coded according to the neuron's intensity; dark blue shades indicate large, positive activations, and dark red shades indicate very negative activations.)&lt;/p&gt;
 &lt;p&gt;&lt;img alt="Outer Level of Indentation" src="http://i.imgur.com/szJnfAY.png" /&gt;&lt;/p&gt;
 &lt;p&gt;And here's a neuron that counts down the spaces between tabs:&lt;/p&gt;
 &lt;p&gt;&lt;img alt="Tab Spaces" src="http://i.imgur.com/EBbM9Kx.png" /&gt;&lt;/p&gt;
@@ -223,7 +224,7 @@
 &lt;p&gt;(i.e., a 3-character subsequence composed of a's, b's, and c's, followed by a delimiter "X", followed by the same subsequence).&lt;/p&gt;
 &lt;p&gt;I wasn't sure what "copy neurons" would look like, so in order to find neurons that were memorizing parts of the initial subsequence, I looked at their hidden states when reading the delimiter X. Since the network needs to encode the initial subsequence, its states should exhibit different patterns depending on what they're learning.&lt;/p&gt;
 &lt;p&gt;The graph below, for example, plots Neuron 5's hidden state when reading the "X" delimiter. The neuron is clearly able to distinguish sequences beginning with a "c" from those that don't.&lt;/p&gt;
-&lt;p&gt;&lt;img alt="Neuron 5" src="http://i.imgur.com/QdQXIVu.png" /&gt;]&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Neuron 5" src="http://i.imgur.com/QdQXIVu.png" /&gt;&lt;/p&gt;
 &lt;p&gt;For another example, here is Neuron 20's hidden state when reading the "X". It looks like it picks out sequences beginning with a "b".&lt;/p&gt;
 &lt;p&gt;&lt;img alt="Neuron 20 Hidden State" src="http://i.imgur.com/ud8NjEA.png" /&gt;&lt;/p&gt;
 &lt;p&gt;Interestingly, if we look at Neuron 20's &lt;em&gt;cell&lt;/em&gt; state, it almost seems to capture the entire 3-character subsequence by itself (no small feat given its one-dimensionality!):&lt;/p&gt;
@@ -244,8 +245,8 @@
 &lt;p&gt;&lt;a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;amp;layer=1&amp;amp;n=5"&gt;&lt;img alt="Copy Machine" src="http://i.imgur.com/30LKz6j.png" /&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;h2&gt;Forget Gate&lt;/h2&gt;
 &lt;p&gt;The forget gate discards information from the cell state (0 means to completely forget, 1 means to completely remember), so we expect it to fully activate when it needs to remember something exactly, and to turn off when information is never going to be needed again.&lt;/p&gt;
-&lt;p&gt;That's what we see with this "A" memorizing neuron: the forget gate is firing on all cylinders to remember that it's in an "A" state while it passes through the x's, and turns off once it's ready to generate the final "a".&lt;/p&gt;
-&lt;p&gt;&lt;a href="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&amp;amp;layer=1&amp;amp;n=8"&gt;&lt;img alt="Forget Gate" src="http://i.imgur.com/6XTNTOl.png" /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;That's what we see with this "A" memorizing neuron: the forget gate fires hard to remember that it's in an "A" state while it passes through the x's, and turns off once it's ready to generate the final "a".&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&amp;amp;layer=1&amp;amp;n=8"&gt;&lt;img alt="Forget Gate" src="http://i.imgur.com/vAMXZdN.png" /&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;h2&gt;Input Gate (Save Gate)&lt;/h2&gt;
 &lt;p&gt;We described the job of the input gate (what I originally called the save gate) as deciding whether or not to save information from a new input. Thus, it should turn off at useless information.&lt;/p&gt;
 &lt;p&gt;And that's what this selective counting neuron does: it counts the a's and b's, but ignores the irrelevant x's.&lt;/p&gt;
@@ -272,7 +273,7 @@
 &lt;p&gt;&lt;a href="http://i.imgur.com/wQA8H0Q.png"&gt;&lt;img alt="Quotes" src="http://i.imgur.com/wQA8H0Q.png" /&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;There's even a MAGA and capitalization neuron:&lt;/p&gt;
 &lt;p&gt;&lt;a href="http://i.imgur.com/1QdT0MS.png"&gt;&lt;img alt="MAGA" src="http://i.imgur.com/1QdT0MS.png" /&gt;&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;And here are some of the proclamations the LSTM generates (okay, one of these is a real tweet; I'll let you guess which):&lt;/p&gt;
+&lt;p&gt;And here are some of the proclamations the LSTM generates (okay, one of these is a real tweet):&lt;/p&gt;
 &lt;p&gt;&lt;a href="http://i.imgur.com/YSVVWGp.png"&gt;&lt;img alt="Tweets" src="http://i.imgur.com/YSVVWGp.png" /&gt;&lt;/a&gt;
 &lt;a href="http://i.imgur.com/rhw4lTb.png"&gt;&lt;img alt="Tweet" src="http://i.imgur.com/rhw4lTb.png" /&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;Unfortunately, the LSTM merely learned to ramble like a madman.&lt;/p&gt;
