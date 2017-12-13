@@ -195,7 +195,7 @@
 </pre></div>
 
 
-<p>We expect to find a hidden state neuron that counts the number of a's if we look as its internals. And we do:</p>
+<p>We expect to find a hidden state neuron that counts the number of a's if we look at its internals. And we do:</p>
 <p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Neuron #2 Hidden State" src="http://i.imgur.com/JEIhBeh.png" /></a></p>
 <p>I built a <a href="http://blog.echen.me/lstm-explorer">small web app</a> to play around with LSTMs, and <a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2">Neuron #2</a> seems to be counting both the number of a's it's seen, as well as the number of b's. (Remember that cells are shaded according to the neuron's activation, from dark red [-1] to dark blue [+1].)</p>
 <p>What about the cell state? It behaves similarly:</p>
@@ -780,9 +780,2163 @@
   </div>  
 
                     </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>A couple weeks ago, Facebook launched a <a href="http://www.kaggle.com/c/FacebookRecruiting/">link prediction contest</a> on Kaggle, with the goal of recommending missing edges in a social graph. <a href="http://blog.echen.me/2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">I love investigating social networks</a>, so I dug around a little, and since I did well enough to score one of the coveted prizes, I&#8217;ll share my approach here.</p>
+
+  <p>(For some background, the contest provided a training dataset of edges, a test set of nodes, and contestants were asked to predict missing outbound edges on the test set, using mean average precision as the evaluation metric.)</p>
+
+  <h1>Exploration</h1>
+
+  <p>What does the network look like? I wanted to play around with the data a bit first just to get a rough feel, so I made an <a href="http://link-prediction.herokuapp.com/network">app</a> to interact with the network around each node.</p>
+
+  <p>Here&#8217;s a sample:</p>
+
+  <p><a href="http://link-prediction.herokuapp.com/network"><img src="http://i.imgur.com/L2S5GC1.png" alt="1 Untrimmed Network" /></a></p>
+
+  <p>(Go ahead, click on the picture to <a href="http://link-prediction.herokuapp.com/network">play with the app yourself</a>. It&#8217;s pretty fun.)</p>
+
+  <p>The node in black is a selected node from the training set, and we perform a breadth-first walk of the graph out to a maximum distance of 3 to uncover the local network. Nodes are sized according to their distance from the center, and colored according to a chosen metric (a personalized PageRank in this case; more on this later).</p>
+
+  <p>We can see that the central node is friends with three other users (in red), two of whom have fairly large, disjoint networks.</p>
+
+  <p>There are quite a few dangling nodes (nodes at distance 3 with only one connection to the rest of the local network), though, so let&#8217;s remove these to reveal the core structure:</p>
+
+  <p><a href="http://link-prediction.herokuapp.com/network"><img src="http://i.imgur.com/w1kAj6x.png" alt="1 Untrimmed Network" /></a></p>
+
+  <p>And here&#8217;s an embedded version you can manipulate inline:</p>
+
+  <iframe width="600px" height="500px" src="http://link-prediction.herokuapp.com/network?for_embed=true"></iframe>
+
+
+  <p>Since the default view doesn&#8217;t encode the distinction between following and follower relationships, we can mouse over each node to see who it follows and who it&#8217;s followed by. Here, for example, is the following/follower network of one of the central node&#8217;s friends:</p>
+
+  <p><a href="http://i.imgur.com/38laphs.png"><img src="http://i.imgur.com/38laphs.png" alt="1 - Friend1" /></a></p>
+
+  <p>The moused over node is highlighted in black, its friends (users who both follow the node and are followed back in turn) are colored in purple, its followees are teal, and its followers in orange. We can also see that the node shares a friend with the central user (<a href="http://en.wikipedia.org/wiki/Triadic_closure">triadic closure</a>, <em>holla!</em>).</p>
+
+  <p>Here&#8217;s another network, this time of the friend at the bottom:</p>
+
+  <p><a href="http://i.imgur.com/bmJdrGT.png"><img src="http://i.imgur.com/bmJdrGT.png" alt="1 - Friend2" /></a></p>
+
+  <p>Interestingly, while the first friend had several only-followers (in orange), the second friend has none. (which suggests, perhaps, a node-level feature that measures how follow-hungry a user is&#8230;)</p>
+
+  <p>And here&#8217;s one more node, a little further out (maybe a celebrity, given it has nothing but followers?):</p>
+
+  <p><a href="http://i.imgur.com/vXXT1np.png"><img src="http://i.imgur.com/vXXT1np.png" alt="1 - Celebrity" /></a></p>
+
+  <h2>The Quiet One</h2>
+
+  <p>Let&#8217;s take a look at another graph, one whose local network is a little smaller:</p>
+
+  <p><a href="http://i.imgur.com/YDjamZK.png"><img src="http://i.imgur.com/YDjamZK.png" alt="4 Network" /></a></p>
+
+  <h2>A Social Butterfly</h2>
+
+  <p>And one more, whose local network is a little larger:</p>
+
+  <p><a href="http://i.imgur.com/0dPnb3V.png"><img src="http://i.imgur.com/0dPnb3V.png" alt="2 Network" /></a></p>
+
+  <p><a href="http://i.imgur.com/RSS8Ikh.png"><img src="http://i.imgur.com/RSS8Ikh.png" alt="2 Network - Friend" /></a></p>
+
+  <p>Again, I encourage everyone to play around with the app <a href="http://link-prediction.herokuapp.com/network">here</a>, and I&#8217;ll come back to the question of coloring each node later.</p>
+
+  <h1>Distributions</h1>
+
+  <p>Next, let&#8217;s take a more quantitative look at the graph.</p>
+
+  <p>Here&#8217;s the distribution of the number of followers of each node in the training set (cut off at 50 followers for a better fit &#8211; the maximum number of followers is 552), as well as the number of users each node is following (again, cut off at 50 &#8211; the maximum here is 1566)</p>
+
+  <p><a href="http://i.imgur.com/c5BfwaG.png"><img src="http://i.imgur.com/c5BfwaG.png" alt="Training Followers" /></a></p>
+
+  <p><a href="http://i.imgur.com/NLBHgy8.png"><img src="http://i.imgur.com/NLBHgy8.png" alt="Training Followees" /></a></p>
+
+  <p>Nothing terribly surprising, but that alone is good to verify. (For people tempted to mutter about power laws, I&#8217;ll hold you off with the bitter coldness of <a href="http://cscs.umich.edu/~crshalizi/weblog/491.html">baby Gauss&#8217;s tears</a>.)</p>
+
+  <p>Similarly, here are the same two graphs, but limited to the nodes in the test set alone:</p>
+
+  <p><a href="http://i.imgur.com/O6ogEYy.png"><img src="http://i.imgur.com/O6ogEYy.png" alt="Test Followers" /></a></p>
+
+  <p><a href="http://i.imgur.com/roUrV5I.png"><img src="http://i.imgur.com/roUrV5I.png" alt="Test Followees" /></a></p>
+
+  <p>Notice that there are relatively more test set users with 0 followees than in the full training set, and relatively fewer test set users with 0 followers. This information could be used to better simulate a validation set for model selection, though I didn&#8217;t end up doing this myself.</p>
+
+  <h1>Preliminary Probes</h1>
+
+  <p>Finally, let&#8217;s move on to the models themselves.</p>
+
+  <p>In order to quickly get up and running on a couple prediction algorithms, I started with some unsupervised approaches. For example, after building a new validation set* to test performance offline, I tried:</p>
+
+  <ul>
+  <li>Recommending users who follow you (but you don&#8217;t follow in return)</li>
+  <li>Recommending users similar to you (when representing users as sets of their followers, and using cosine similarity and Jaccard similarity as the similarity metric)</li>
+  <li>Recommending users based on a personalized PageRank score</li>
+  <li>Recommending users that the people you follow also follow</li>
+  </ul>
+
+
+  <p>And so on, combining the votes of these algorithms in a fairly ad-hoc way (e.g., by taking the majority vote or by ordering by the number of followers).</p>
+
+  <p>This worked quite well actually, but I&#8217;d been planning to move on to a more machine learned model-based approach from the beginning, so I did that next.</p>
+
+  <p>*My validation set was formed by deleting random edges from the full training set. A slightly better approach, as mentioned above, might have been to more accurately simulate the distribution of the official test set, but I didn&#8217;t end up trying this out myself.</p>
+
+  <h1>Candidate Selection</h1>
+
+  <p>In order to run a machine learning algorithm to recommend edges (which would take two nodes, a source and a candidate destination, and generate a score measuring the likelihood that the source would follow the destination), it&#8217;s necessary to prune the set of candidates to run the algorithm on.</p>
+
+  <p>I used two approaches for this filtering step, both based on random walks on the graph.</p>
+
+  <h2>Personalized PageRank</h2>
+
+  <p>The first approach was to calculate a personalized PageRank around each source node.</p>
+
+  <p>Briefly, a personalized PageRank is like standard PageRank, except that when randomly teleporting to a new node, the surfer always teleports back to the given source node being personalized (rather than to a node chosen uniformly at random, as in the classic PageRank algorithm).</p>
+
+  <p>That is, the random surfer in the personalized PageRank model works as follows:</p>
+
+  <ul>
+  <li>He starts at the source node $X$ that we want to calculate a personalized PageRank around.</li>
+  <li>At step $i$: with probability $p$, the surfer moves to a neighboring node chosen uniformly at random; with probability $1-p$, the surfer instead teleports back to the original source node $X$.</li>
+  <li>The limiting probability that the surfer is at node $N$ is then the personalized PageRank score of node $N$ around $X$.</li>
+  </ul>
+
+
+  <p>Here&#8217;s some Scala code that computes approximate personalized PageRank scores and takes the highest-scoring nodes as the candidates to feed into the machine learning model:</p>
+
+  <figcaption><span>Personalized PageRank</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  <span class="line-number">27</span>
+  <span class="line-number">28</span>
+  <span class="line-number">29</span>
+  <span class="line-number">30</span>
+  <span class="line-number">31</span>
+  <span class="line-number">32</span>
+  <span class="line-number">33</span>
+  <span class="line-number">34</span>
+  <span class="line-number">35</span>
+  <span class="line-number">36</span>
+  <span class="line-number">37</span>
+  <span class="line-number">38</span>
+  <span class="line-number">39</span>
+  <span class="line-number">40</span>
+  <span class="line-number">41</span>
+  <span class="line-number">42</span>
+  <span class="line-number">43</span>
+  <span class="line-number">44</span>
+  <span class="line-number">45</span>
+  <span class="line-number">46</span>
+  <span class="line-number">47</span>
+  <span class="line-number">48</span>
+  <span class="line-number">49</span>
+  <span class="line-number">50</span>
+  <span class="line-number">51</span>
+  <span class="line-number">52</span>
+  <span class="line-number">53</span>
+  <span class="line-number">54</span>
+  <span class="line-number">55</span>
+  <span class="line-number">56</span>
+  <span class="line-number">57</span>
+  <span class="line-number">58</span>
+  <span class="line-number">59</span>
+  <span class="line-number">60</span>
+  <span class="line-number">61</span>
+  <span class="line-number">62</span>
+  <span class="line-number">63</span>
+  <span class="line-number">64</span>
+  <span class="line-number">65</span>
+  <span class="line-number">66</span>
+  <span class="line-number">67</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Calculate a personalized PageRank around the given user, and return </span>
+  </span><span class="line"><span class="cm"> * a list of the nodes with the highest personalized PageRank scores.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * @return A list of (node, probability of landing at this node after</span>
+  </span><span class="line"><span class="cm"> *         running a personalized PageRank for K iterations) pairs.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">pageRank</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">List</span><span class="o">[(</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">)]</span> <span class="k">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="c1">// This map holds the probability of landing at each node, up to the </span>
+  </span><span class="line">  <span class="c1">// current iteration.</span>
+  </span><span class="line">  <span class="k">val</span> <span class="n">probs</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">]()</span>
+  </span><span class="line">  <span class="n">probs</span><span class="o">(</span><span class="n">user</span><span class="o">)</span> <span class="k">=</span> <span class="mi">1</span> <span class="c1">// We start at this user.</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="k">val</span> <span class="n">pageRankProbs</span> <span class="k">=</span> <span class="n">pageRankHelper</span><span class="o">(</span><span class="n">start</span><span class="o">,</span> <span class="n">probs</span><span class="o">,</span> <span class="nc">NumPagerankIterations</span><span class="o">)</span>
+  </span><span class="line">  <span class="n">pageRankProbs</span><span class="o">.</span><span class="n">toList</span>
+  </span><span class="line">               <span class="o">.</span><span class="n">sortBy</span> <span class="o">{</span> <span class="o">-</span><span class="k">_</span><span class="o">.</span><span class="n">_2</span> <span class="o">}</span>
+  </span><span class="line">               <span class="o">.</span><span class="n">filter</span> <span class="o">{</span> <span class="k">case</span> <span class="o">(</span><span class="n">node</span><span class="o">,</span> <span class="n">score</span><span class="o">)</span> <span class="k">=&gt;</span>
+  </span><span class="line">                  <span class="o">!</span><span class="n">getFollowings</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">contains</span><span class="o">(</span><span class="n">node</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="n">node</span> <span class="o">!=</span> <span class="n">user</span>
+  </span><span class="line">                <span class="o">}</span>
+  </span><span class="line">                <span class="o">.</span><span class="n">take</span><span class="o">(</span><span class="nc">MaxNodesToKeep</span><span class="o">)</span>
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Simulates running a personalized PageRank for one iteration.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * Parameters:</span>
+  </span><span class="line"><span class="cm"> * start - the start node to calculate the personalized PageRank around</span>
+  </span><span class="line"><span class="cm"> * probs - a map from nodes to the probability of being at that node at </span>
+  </span><span class="line"><span class="cm"> *         the start of the current iteration</span>
+  </span><span class="line"><span class="cm"> * numIterations - the number of iterations remaining</span>
+  </span><span class="line"><span class="cm"> * alpha - with probability alpha, we follow a neighbor; with probability</span>
+  </span><span class="line"><span class="cm"> *         1 - alpha, we teleport back to the start node</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * @return A map of node -&gt; probability of landing at that node after the</span>
+  </span><span class="line"><span class="cm"> *         specified number of iterations.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">pageRankHelper</span><span class="o">(</span><span class="n">start</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">probs</span><span class="k">:</span> <span class="kt">Map</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">],</span> <span class="n">numIterations</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span>
+  </span><span class="line">                   <span class="n">alpha</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">)</span><span class="k">:</span> <span class="kt">Map</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">numIterations</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">    <span class="n">probs</span>
+  </span><span class="line">  <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+  </span><span class="line">    <span class="c1">// Holds the updated set of probabilities, after this iteration.</span>
+  </span><span class="line">    <span class="k">val</span> <span class="n">probsPropagated</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">]()</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="c1">// With probability 1 - alpha, we teleport back to the start node.</span>
+  </span><span class="line">    <span class="n">probsPropagated</span><span class="o">(</span><span class="n">start</span><span class="o">)</span> <span class="k">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="c1">// Propagate the previous probabilities...</span>
+  </span><span class="line">    <span class="n">probs</span><span class="o">.</span><span class="n">foreach</span> <span class="o">{</span> <span class="k">case</span> <span class="o">(</span><span class="n">node</span><span class="o">,</span> <span class="n">prob</span><span class="o">)</span> <span class="k">=&gt;</span>
+  </span><span class="line">      <span class="k">val</span> <span class="n">forwards</span> <span class="k">=</span> <span class="n">getFollowings</span><span class="o">(</span><span class="n">node</span><span class="o">)</span>
+  </span><span class="line">      <span class="k">val</span> <span class="n">backwards</span> <span class="k">=</span> <span class="n">getFollowers</span><span class="o">(</span><span class="n">node</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line">      <span class="c1">// With probability alpha, we move to a follower...</span>
+  </span><span class="line">      <span class="c1">// And each node distributes its current probability equally to </span>
+  </span><span class="line">      <span class="c1">// its neighbors.</span>
+  </span><span class="line">      <span class="k">val</span> <span class="n">probToPropagate</span> <span class="k">=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">prob</span> <span class="o">/</span> <span class="o">(</span><span class="n">forwards</span><span class="o">.</span><span class="n">size</span> <span class="o">+</span> <span class="n">backwards</span><span class="o">.</span><span class="n">size</span><span class="o">)</span>
+  </span><span class="line">      <span class="o">(</span><span class="n">forwards</span><span class="o">.</span><span class="n">toList</span> <span class="o">++</span> <span class="n">backwards</span><span class="o">.</span><span class="n">toList</span><span class="o">).</span><span class="n">foreach</span> <span class="o">{</span> <span class="n">neighbor</span> <span class="k">=&gt;</span>
+  </span><span class="line">        <span class="k">if</span> <span class="o">(!</span><span class="n">probsPropagated</span><span class="o">.</span><span class="n">contains</span><span class="o">(</span><span class="n">neighbor</span><span class="o">))</span> <span class="o">{</span>
+  </span><span class="line">          <span class="n">probsPropagated</span><span class="o">(</span><span class="n">neighbor</span><span class="o">)</span> <span class="k">=</span> <span class="mi">0</span>
+  </span><span class="line">        <span class="o">}</span>
+  </span><span class="line">        <span class="n">probsPropagated</span><span class="o">(</span><span class="n">neighbor</span><span class="o">)</span> <span class="o">+=</span> <span class="n">probToPropagate</span>
+  </span><span class="line">      <span class="o">}</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="n">pageRankHelper</span><span class="o">(</span><span class="n">start</span><span class="o">,</span> <span class="n">probsPropagated</span><span class="o">,</span> <span class="n">numIterations</span> <span class="o">-</span> <span class="mi">1</span><span class="o">,</span> <span class="n">alpha</span><span class="o">)</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>Propagation Score</h2>
+
+  <p>Another approach I used, based on <a href="http://www.kaggle.com/c/FacebookRecruiting/forums/t/2082/0-711-is-the-new-0">a proposal by another contestant on the Kaggle forums</a>, works as follows:</p>
+
+  <ul>
+  <li>Start at a specified user node and give it some score.</li>
+  <li>In the first iteration, this user propagates its score equally to its neighbors.</li>
+  <li>In the second iteration, each user duplicates and keeps half of its score S. It then propagates S equally to its neighbors.</li>
+  <li>In subsequent iterations, the process is repeated, except that neighbors reached via a backwards link don&#8217;t duplicate and keep half of their score. (The idea is that we want the score to reach followees and not followers.)</li>
+  </ul>
+
+
+  <p>Here&#8217;s some Scala code to calculate these propagation scores:</p>
+
+  <figcaption><span>Propagation Score</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  <span class="line-number">27</span>
+  <span class="line-number">28</span>
+  <span class="line-number">29</span>
+  <span class="line-number">30</span>
+  <span class="line-number">31</span>
+  <span class="line-number">32</span>
+  <span class="line-number">33</span>
+  <span class="line-number">34</span>
+  <span class="line-number">35</span>
+  <span class="line-number">36</span>
+  <span class="line-number">37</span>
+  <span class="line-number">38</span>
+  <span class="line-number">39</span>
+  <span class="line-number">40</span>
+  <span class="line-number">41</span>
+  <span class="line-number">42</span>
+  <span class="line-number">43</span>
+  <span class="line-number">44</span>
+  <span class="line-number">45</span>
+  <span class="line-number">46</span>
+  <span class="line-number">47</span>
+  <span class="line-number">48</span>
+  <span class="line-number">49</span>
+  <span class="line-number">50</span>
+  <span class="line-number">51</span>
+  <span class="line-number">52</span>
+  <span class="line-number">53</span>
+  <span class="line-number">54</span>
+  <span class="line-number">55</span>
+  <span class="line-number">56</span>
+  <span class="line-number">57</span>
+  <span class="line-number">58</span>
+  <span class="line-number">59</span>
+  <span class="line-number">60</span>
+  <span class="line-number">61</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Calculate propagation scores around the current user.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * In the first propagation round, we</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * - Give the starting node N an initial score S.</span>
+  </span><span class="line"><span class="cm"> * - Propagate the score equally to each of N&#39;s neighbors (followers </span>
+  </span><span class="line"><span class="cm"> *   and followings).</span>
+  </span><span class="line"><span class="cm"> * - Each first-level neighbor then duplicates and keeps half of its score</span>
+  </span><span class="line"><span class="cm"> *   and then propagates the original again to its neighbors.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * In further rounds, neighbors then repeat the process, except that neighbors </span>
+  </span><span class="line"><span class="cm"> * traveled to via a backwards/follower link don&#39;t keep half of their score.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * @return a sorted list of (node, propagation score) pairs.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">propagate</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">List</span><span class="o">[(</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">)]</span> <span class="k">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="k">val</span> <span class="n">scores</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">]()</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="c1">// We propagate the score equally to all neighbors.</span>
+  </span><span class="line">  <span class="k">val</span> <span class="n">scoreToPropagate</span> <span class="k">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="o">(</span><span class="n">getFollowings</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">size</span> <span class="o">+</span> <span class="n">getFollowers</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">size</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="o">(</span><span class="n">getFollowings</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">toList</span> <span class="o">++</span> <span class="n">getFollowers</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">toList</span><span class="o">).</span><span class="n">foreach</span> <span class="o">{</span> <span class="n">x</span> <span class="k">=&gt;</span>
+  </span><span class="line">    <span class="c1">// Propagate the score...</span>
+  </span><span class="line">    <span class="n">continuePropagation</span><span class="o">(</span><span class="n">scores</span><span class="o">,</span> <span class="n">x</span><span class="o">,</span> <span class="n">scoreToPropagate</span><span class="o">,</span> <span class="mi">1</span><span class="o">)</span>
+  </span><span class="line">    <span class="c1">// ...and make sure it keeps half of it for itself.</span>
+  </span><span class="line">    <span class="n">scores</span><span class="o">(</span><span class="n">x</span><span class="o">)</span> <span class="k">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">getOrElse</span><span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="mi">0</span><span class="k">:</span> <span class="kt">Double</span><span class="o">)</span> <span class="o">+</span> <span class="n">scoreToPropagate</span> <span class="o">/</span> <span class="mi">2</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="n">scores</span><span class="o">.</span><span class="n">toList</span><span class="o">.</span><span class="n">sortBy</span> <span class="o">{</span> <span class="o">-</span><span class="k">_</span><span class="o">.</span><span class="n">_2</span> <span class="o">}</span>
+  </span><span class="line">               <span class="o">.</span><span class="n">filter</span> <span class="o">{</span> <span class="n">nodeAndScore</span> <span class="k">=&gt;</span>
+  </span><span class="line">                 <span class="k">val</span> <span class="n">node</span> <span class="k">=</span> <span class="n">nodeAndScore</span><span class="o">.</span><span class="n">_1</span>
+  </span><span class="line">                 <span class="o">!</span><span class="n">getFollowings</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">contains</span><span class="o">(</span><span class="n">node</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="n">node</span> <span class="o">!=</span> <span class="n">user</span>
+  </span><span class="line">                <span class="o">}</span>
+  </span><span class="line">                <span class="o">.</span><span class="n">take</span><span class="o">(</span><span class="nc">MaxNodesToKeep</span><span class="o">)</span>
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * In further rounds, neighbors repeat the process above, except that neighbors</span>
+  </span><span class="line"><span class="cm"> * traveled to via a backwards/follower link don&#39;t keep half of their score.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">continuePropagation</span><span class="o">(</span><span class="n">scores</span><span class="k">:</span> <span class="kt">Map</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Double</span><span class="o">],</span> <span class="n">user</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">score</span><span class="k">:</span> <span class="kt">Double</span><span class="o">,</span>
+  </span><span class="line">                        <span class="n">currIteration</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">currIteration</span> <span class="o">&lt;</span> <span class="nc">NumIterations</span> <span class="o">&amp;&amp;</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">    <span class="k">val</span> <span class="n">scoreToPropagate</span> <span class="k">=</span> <span class="n">score</span> <span class="o">/</span> <span class="o">(</span><span class="n">getFollowings</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">size</span> <span class="o">+</span> <span class="n">getFollowers</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">size</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="n">getFollowings</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">foreach</span> <span class="o">{</span> <span class="n">x</span> <span class="k">=&gt;</span>
+  </span><span class="line">      <span class="c1">// Propagate the score...        </span>
+  </span><span class="line">      <span class="n">continuePropagation</span><span class="o">(</span><span class="n">scores</span><span class="o">,</span> <span class="n">x</span><span class="o">,</span> <span class="n">scoreToPropagate</span><span class="o">,</span> <span class="n">currIteration</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span>
+  </span><span class="line">      <span class="c1">// ...and make sure it keeps half of it for itself.        </span>
+  </span><span class="line">      <span class="n">scores</span><span class="o">(</span><span class="n">x</span><span class="o">)</span> <span class="k">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">getOrElse</span><span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="mi">0</span><span class="k">:</span> <span class="kt">Double</span><span class="o">)</span> <span class="o">+</span> <span class="n">scoreToPropagate</span> <span class="o">/</span> <span class="mi">2</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="n">getFollowers</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">foreach</span> <span class="o">{</span> <span class="n">x</span> <span class="k">=&gt;</span>
+  </span><span class="line">      <span class="c1">// Propagate the score...</span>
+  </span><span class="line">      <span class="n">continuePropagation</span><span class="o">(</span><span class="n">scores</span><span class="o">,</span> <span class="n">x</span><span class="o">,</span> <span class="n">scoreToPropagate</span><span class="o">,</span> <span class="n">currIteration</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span>
+  </span><span class="line">      <span class="c1">// ...but backward links (except for the starting node&#39;s immediate</span>
+  </span><span class="line">      <span class="c1">// neighbors) don&#39;t keep any score for themselves.</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>I played around with tweaking some parameters in both approaches (e.g., weighting followers and followees differently), but the natural defaults (as used in the code above) ended up performing the best.</p>
+
+  <h1>Features</h1>
+
+  <p>After pruning the set of candidate destination nodes to a more feasible level, I fed pairs of (source, destination) nodes into a machine learning model. From each pair, I extracted around 30 features in total.</p>
+
+  <p>As mentioned above, one feature that worked quite well on its own was whether the destination node already follows the source.</p>
+
+  <p>I also used a wide set of similarity-based features, for example, the Jaccard similarity between the source and destination when both are represented as sets of their followers, when both are represented as sets of their followees, or when one is represented as a set of followers while the other is represented as a set of followees.</p>
+
+  <figcaption><span>Similarity Metrics</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  <span class="line-number">27</span>
+  <span class="line-number">28</span>
+  <span class="line-number">29</span>
+  <span class="line-number">30</span>
+  <span class="line-number">31</span>
+  <span class="line-number">32</span>
+  <span class="line-number">33</span>
+  <span class="line-number">34</span>
+  <span class="line-number">35</span>
+  <span class="line-number">36</span>
+  <span class="line-number">37</span>
+  <span class="line-number">38</span>
+  <span class="line-number">39</span>
+  <span class="line-number">40</span>
+  <span class="line-number">41</span>
+  <span class="line-number">42</span>
+  <span class="line-number">43</span>
+  <span class="line-number">44</span>
+  <span class="line-number">45</span>
+  <span class="line-number">46</span>
+  <span class="line-number">47</span>
+  <span class="line-number">48</span>
+  <span class="line-number">49</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="k">abstract</span> <span class="k">class</span> <span class="nc">SimilarityMetric</span><span class="o">[</span><span class="kt">T</span><span class="o">]</span> <span class="o">{</span>
+  </span><span class="line">  <span class="k">def</span> <span class="n">apply</span><span class="o">(</span><span class="n">set1</span><span class="k">:</span> <span class="kt">Set</span><span class="o">[</span><span class="kt">T</span><span class="o">],</span> <span class="n">set2</span><span class="k">:</span> <span class="kt">Set</span><span class="o">[</span><span class="kt">T</span><span class="o">])</span><span class="k">:</span> <span class="kt">Double</span><span class="o">;</span>
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="k">object</span> <span class="nc">JaccardSimilarity</span> <span class="k">extends</span> <span class="nc">SimilarityMetric</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="o">{</span>
+  </span><span class="line">  <span class="cm">/**</span>
+  </span><span class="line"><span class="cm">   * Returns the Jaccard similarity between two sets, 0 if both are empty.</span>
+  </span><span class="line"><span class="cm">   */</span>
+  </span><span class="line">  <span class="k">def</span> <span class="n">apply</span><span class="o">(</span><span class="n">set1</span><span class="k">:</span> <span class="kt">Set</span><span class="o">[</span><span class="kt">Int</span><span class="o">],</span> <span class="n">set2</span><span class="k">:</span> <span class="kt">Set</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">    <span class="k">val</span> <span class="n">union</span> <span class="k">=</span> <span class="o">(</span><span class="n">set1</span><span class="o">.</span><span class="n">union</span><span class="o">(</span><span class="n">set2</span><span class="o">)).</span><span class="n">size</span>
+  </span><span class="line">
+  </span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">union</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">      <span class="mi">0</span>
+  </span><span class="line">    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+  </span><span class="line">      <span class="o">(</span><span class="n">set1</span> <span class="o">&amp;</span> <span class="n">set2</span><span class="o">).</span><span class="n">size</span><span class="o">.</span><span class="n">toFloat</span> <span class="o">/</span> <span class="n">union</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="k">object</span> <span class="nc">CosineSimilarity</span> <span class="k">extends</span> <span class="nc">SimilarityMetric</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="o">{</span>
+  </span><span class="line">  <span class="cm">/**</span>
+  </span><span class="line"><span class="cm">   * Returns the cosine similarity between two sets, 0 if both are empty.</span>
+  </span><span class="line"><span class="cm">   */</span>
+  </span><span class="line">  <span class="k">def</span> <span class="n">apply</span><span class="o">(</span><span class="n">set1</span><span class="k">:</span> <span class="kt">Set</span><span class="o">[</span><span class="kt">Int</span><span class="o">],</span> <span class="n">set2</span><span class="k">:</span> <span class="kt">Set</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">set1</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">set2</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">      <span class="mi">0</span>
+  </span><span class="line">    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+  </span><span class="line">      <span class="o">(</span><span class="n">set1</span> <span class="o">&amp;</span> <span class="n">set2</span><span class="o">).</span><span class="n">size</span><span class="o">.</span><span class="n">toFloat</span> <span class="o">/</span> <span class="o">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="o">(</span><span class="n">set1</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">set2</span><span class="o">.</span><span class="n">size</span><span class="o">))</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line">  <span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// ************</span>
+  </span><span class="line"><span class="c1">// * FEATURES *</span>
+  </span><span class="line"><span class="c1">// ************</span>
+  </span><span class="line">
+  </span><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Returns the similarity between user1 and user2 when both are represented as</span>
+  </span><span class="line"><span class="cm"> * sets of followers.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">similarityByFollowers</span><span class="o">(</span><span class="n">user1</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">user2</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+  </span><span class="line">                         <span class="o">(</span><span class="k">implicit</span> <span class="n">similarity</span><span class="k">:</span> <span class="kt">SimilarityMetric</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="n">similarity</span><span class="o">.</span><span class="n">apply</span><span class="o">(</span><span class="n">getFollowersWithout</span><span class="o">(</span><span class="n">user1</span><span class="o">,</span> <span class="n">user2</span><span class="o">),</span>
+  </span><span class="line">                   <span class="n">getFollowersWithout</span><span class="o">(</span><span class="n">user2</span><span class="o">,</span> <span class="n">user1</span><span class="o">))</span>
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// etc.</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Along the same lines, I also computed a similarity score between the destination node and the source node&#8217;s followees, and several variations thereof.</p>
+
+  <figcaption><span>Extended Similarity Scores</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Iterate over each of user1&#39;s followings, compute their similarity with</span>
+  </span><span class="line"><span class="cm"> * user2 when both are represented as sets of followers, and return the </span>
+  </span><span class="line"><span class="cm"> * sum of these similarities.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">followerBasedSimilarityToFollowing</span><span class="o">(</span><span class="n">user1</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">user2</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+  </span><span class="line">  <span class="o">(</span><span class="k">implicit</span> <span class="n">similarity</span><span class="k">:</span> <span class="kt">SimilarityMetric</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">    <span class="n">getFollowingsWithout</span><span class="o">(</span><span class="n">user1</span><span class="o">,</span> <span class="n">user2</span><span class="o">)</span>
+  </span><span class="line">                        <span class="o">.</span><span class="n">map</span> <span class="o">{</span> <span class="n">similarityByFollowers</span><span class="o">(</span><span class="k">_</span><span class="o">,</span> <span class="n">user2</span><span class="o">)(</span><span class="n">similarity</span><span class="o">)</span> <span class="o">}</span>
+  </span><span class="line">                        <span class="o">.</span><span class="n">sum</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Other features included the number of followers and followees of each node, the ratio of these, the personalized PageRank and propagation scores themselves, the number of followers in common, and triangle/closure-type features (e.g., whether the source node is friends with a node X who in turn is a friend of the destination node).</p>
+
+  <p>If I had had more time, I would probably have tried weighted and more regularized versions of some of these features as well (e.g., downweighting nodes with large numbers of followers when computing cosine similarity scores based on followees, or shrinking the scores of nodes we have little information about).</p>
+
+  <h1>Feature Understanding</h1>
+
+  <p>But what are these features actually <em>doing</em>? Let&#8217;s use the same app I built before to take a look.</p>
+
+  <p>Here&#8217;s the local network of node 317 (different from the node above), where each node is colored by its personalized PageRank (higher scores are in darker red):</p>
+
+  <p><a href="http://i.imgur.com/0OpjUAK.png"><img src="http://i.imgur.com/0OpjUAK.png" alt="317 - Personalized PageRank" /></a></p>
+
+  <p>If we look at the following vs. follower relationships of the central node (recall that purple is friends, teal is followings, orange is followers):</p>
+
+  <p><a href="http://i.imgur.com/IPWrww9.png"><img src="http://i.imgur.com/IPWrww9.png" alt="317 - Personalized PageRank" /></a></p>
+
+  <p>&#8230;we can see that, as expected (because edges that represented both following and follower were double-weighted in my PageRank calculation), the darkest red nodes are those that are friends with the central node, while those in a following-only or follower-only relationship have a lower score.</p>
+
+  <p>How does the propagation score compare to personalized PageRank? Here, I colored each node according to the log ratio of its propagation score and personalized PageRank:</p>
+
+  <p><a href="http://i.imgur.com/aenZaq6.png"><img src="http://i.imgur.com/aenZaq6.png" alt="317 - Log Ratio" /></a></p>
+
+  <p>Comparing this coloring with the local follow/follower network:</p>
+
+  <p><a href="http://i.imgur.com/n6AZWyq.png"><img src="http://i.imgur.com/n6AZWyq.png" alt="317 - Local Network of Node" /></a></p>
+
+  <p>&#8230;we can see that followed nodes (in teal) receive a higher propagation weight than friend nodes (in purple), while follower nodes (in orange) receive almost no propagation score at all.</p>
+
+  <p>Going back to node 1, let&#8217;s look at a different metric. Here, each node is colored according to its Jaccard similarity with the source, when nodes are represented by the set of their followers:</p>
+
+  <p><a href="http://i.imgur.com/hVnnFAO.png"><img src="http://i.imgur.com/hVnnFAO.png" alt="1 - Similarity by Followers" /></a></p>
+
+  <p>We can see that, while the PageRank and propagation metrics tended to favor nodes <em>close</em> to the central node, the Jaccard similarity feature helps us explore nodes that are further out.</p>
+
+  <p>However, if we look the high-scoring nodes more closely, we see that they often have only a single connection to the rest of the network:</p>
+
+  <p><a href="http://i.imgur.com/mRArIFf.png"><img src="http://i.imgur.com/mRArIFf.png" alt="1 - Single Connection" /></a></p>
+
+  <p>In other words, their high Jaccard similarity is due to the fact that they don&#8217;t have many connections to begin with. This suggests that some regularization or shrinking is in order.</p>
+
+  <p>So here&#8217;s a regularized version of Jaccard similarity, where we downweight nodes with few connections:</p>
+
+  <p><a href="http://i.imgur.com/1fZWX45.png"><img src="http://i.imgur.com/1fZWX45.png" alt="1 - Regularized" /></a></p>
+
+  <p>We can see that the outlier nodes are much more muted this time around.</p>
+
+  <p>For a starker difference, compare the following two graphs of the Jaccard similarity metric around node 317 (the first graph is an unregularized version, the second is regularized):</p>
+
+  <p><a href="http://i.imgur.com/a7QWscH.png"><img src="http://i.imgur.com/a7QWscH.png" alt="317 - Unregularized" /></a></p>
+
+  <p><a href="http://i.imgur.com/MPwk5Bv.png"><img src="http://i.imgur.com/MPwk5Bv.png" alt="317 - Regularized" /></a></p>
+
+  <p>Notice, in particular, how the popular node in the top left and the popular nodes at the bottom have a much higher score when we regularize.</p>
+
+  <p>And again, there are other networks and features I haven&#8217;t mentioned here, so play around and discover them on the <a href="http://link-prediction.herokuapp.com/">app</a> itself.</p>
+
+  <h1>Models</h1>
+
+  <p>For the machine learning algorithms on top of my features, I experimented with two types of models: logistic regression (using both L1 and L2 regularization) and random forests. (If I had more time, I would probably have done some more parameter tuning and maybe tried gradient boosted trees as well.)</p>
+
+  <p>So what is a random forest? I wrote an <a href="http://www.quora.com/Random-Forests/How-do-random-forests-work-in-laymans-terms/answer/Edwin-Chen-1">old (layman&#8217;s) post</a> on it <a href="http://www.quora.com/Random-Forests/How-do-random-forests-work-in-laymans-terms/answer/Edwin-Chen-1">here</a>, but since nobody ever clicks on these links, let&#8217;s copy it over:</p>
+
+  <blockquote><p>Suppose you&#8217;re very indecisive, so whenever you want to watch a movie, you ask your friend Willow if she thinks you&#8217;ll like it. In order to answer, Willow first needs to figure out what movies you like, so you give her a bunch of movies and tell her whether you liked each one or not (i.e., you give her a labeled training set). Then, when you ask her if she thinks you&#8217;ll like movie X or not, she plays a 20 questions-like game with IMDB, asking questions like &#8220;Is X a romantic movie?&#8221;, &#8220;Does Johnny Depp star in X?&#8221;, and so on. She asks more informative questions first (i.e., she maximizes the information gain of each question), and gives you a yes/no answer at the end.</p><p>    Thus, Willow is a decision tree for your movie preferences.</p><p>    But Willow is only human, so she doesn&#8217;t always generalize your preferences very well (i.e., she overfits). In order to get more accurate recommendations, you&#8217;d like to ask a bunch of your friends, and watch movie X if most of them say they think you&#8217;ll like it. That is, instead of asking only Willow, you want to ask Woody, Apple, and Cartman as well, and they vote on whether you&#8217;ll like a movie (i.e., you build an ensemble classifier, aka a forest in this case).</p><p>    Now you don&#8217;t want each of your friends to do the same thing and give you the same answer, so you first give each of them slightly different data. After all, you&#8217;re not absolutely sure of your preferences yourself &#8211; you told Willow you loved Titanic, but maybe you were just happy that day because it was your birthday, so maybe some of your friends shouldn&#8217;t use the fact that you liked Titanic in making their recommendations. Or maybe you told her you loved Cinderella, but actually you *really really* loved it, so some of your friends should give Cinderella more weight. So instead of giving your friends the same data you gave Willow, you give them slightly perturbed versions. You don&#8217;t change your love/hate decisions, you just say you love/hate some movies a little more or less (you give each of your friends a bootstrapped version of your original training data). For example, whereas you told Willow that you liked Black Swan and Harry Potter and disliked Avatar, you tell Woody that you liked Black Swan so much you watched it twice, you disliked Avatar, and don&#8217;t mention Harry Potter at all.</p><p>    By using this ensemble, you hope that while each of your friends gives somewhat idiosyncratic recommendations (Willow thinks you like vampire movies more than you do, Woody thinks you like Pixar movies, and Cartman thinks you just hate everything), the errors get canceled out in the majority. Thus, your friends now form a bagged (bootstrap aggregated) forest of your movie preferences.</p><p>    There&#8217;s still one problem with your data, however. While you loved both Titanic and Inception, it wasn&#8217;t because you like movies that star Leonardio DiCaprio. Maybe you liked both movies for other reasons. Thus, you don&#8217;t want your friends to all base their recommendations on whether Leo is in a movie or not. So when each friend asks IMDB a question, only a random subset of the possible questions is allowed (i.e., when you&#8217;re building a decision tree, at each node you use some randomness in selecting the attribute to split on, say by randomly selecting an attribute or by selecting an attribute from a random subset). This means your friends aren&#8217;t allowed to ask whether Leonardo DiCaprio is in the movie whenever they want. So whereas previously you injected randomness at the data level, by perturbing your movie preferences slightly, now you&#8217;re injecting randomness at the model level, by making your friends ask different questions at different times.</p><p>    And so your friends now form a random forest.</p></blockquote>
+
+
+  <p>Moving on, I essentially trained <a href="http://scikit-learn.org/stable/">scikit-learn</a>&#8217;s classifiers on an equal split of true and false edges (sampled from the output of my pruning step, in order to match the distribution I&#8217;d get when applying my algorithm to the official test set), and compared performance on the validation set I made, with a small amount of parameter tuning:</p>
+
+  <figcaption><span>Random Forest</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  </pre></td><td class="code"><pre><code class="python"><span class="line"><span class="c">########################################</span>
+  </span><span class="line"><span class="c"># STEP 1: Read in the training examples.</span>
+  </span><span class="line"><span class="c">########################################</span>
+  </span><span class="line"><span class="n">truths</span> <span class="o">=</span> <span class="p">[]</span> <span class="c"># A truth is 1 (for a known true edge) or 0 (for a false edge).</span>
+  </span><span class="line"><span class="n">training_examples</span> <span class="o">=</span> <span class="p">[]</span> <span class="c"># Each training example is an array of features.</span>
+  </span><span class="line"><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">open</span><span class="p">(</span><span class="n">TRAINING_SET_WITH_FEATURES_FILENAME</span><span class="p">):</span>
+  </span><span class="line">  <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">)]</span>
+  </span><span class="line">  <span class="n">truth</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+  </span><span class="line">  <span class="n">training_example_features</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="n">truths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">truth</span><span class="p">)</span>
+  </span><span class="line">  <span class="n">training_examples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">training_example_features</span><span class="p">)</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c">#############################</span>
+  </span><span class="line"><span class="c"># STEP 2: Train a classifier.</span>
+  </span><span class="line"><span class="c">#############################</span>
+  </span><span class="line"><span class="n">rf</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">(</span><span class="n">n_estimators</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span> <span class="n">compute_importances</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">oob_score</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
+  </span><span class="line"><span class="n">rf</span> <span class="o">=</span> <span class="n">rf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training_examples</span><span class="p">,</span> <span class="n">truths</span><span class="p">)</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>So let&#8217;s look at the variable importance scores as determined by one of my random forest models, which (unsurprisingly) consistently outperformed logistic regression.</p>
+
+  <p><a href="http://i.imgur.com/7D5yi6G.png"><img src="http://i.imgur.com/7D5yi6G.png" alt="Random Forest Importance Scores" /></a></p>
+
+  <p>The random forest classifier here is one of my earlier models (using a slightly smaller subset of my full suite of features), where the targeting step consisted of taking the top 25 nodes with the highest propagation scores.</p>
+
+  <p>We can see that the most important variables are:</p>
+
+  <ul>
+  <li>Personalized PageRank scores. (I put in both normalized and unnormalized versions, where the normalized versions consisted of taking all the candidates for a particular source node, and scaling them so that the maximum personalized PageRank score was 1.)</li>
+  <li>Whether the destination node already follows the source.</li>
+  <li>How similar the source node is to the people the destination node is following, when each node is represented as a set of followers. (Note that this is more or less measuring how likely the destination is to follow the source, which we already saw is a good predictor of whether the source is likely to follow the destination.) Plus several variations on this theme (e.g., how similar the destination node is to the source node&#8217;s followers, when each node is represented as a set of followees).</li>
+  </ul>
+
+
+  <h1>Model Comparison</h1>
+
+  <p>How do all of these models compare to each other? Is the random forest model universally better than the logistic regression model, or are there some sets of users for which the logistic regression model actually performs better?</p>
+
+  <p>To enable these kinds of comparisons, I made <a href="http://link-prediction.herokuapp.com/comparison">a small module</a> that allows you to select two models and then visualize their sliced performance.</p>
+
+  <p><a href="http://link-prediction.herokuapp.com/comparison"><img src="http://i.imgur.com/ahNHp5z.png" alt="PageRank vs. Is Followed By" /></a></p>
+
+  <p>(Go ahead, <a href="http://link-prediction.herokuapp.com/comparison">play around</a>.)</p>
+
+  <p>Above, I bucketed all test nodes into buckets based on (the logarithm of) their number of followers, and compared the mean average precision of two algorithms: one that recommends nodes to follow using a personalized PageRank alone, and one that recommends nodes that are following the source user but are not followed back in return.</p>
+
+  <p>We see that except for the case of 0 followers (where the &#8220;is followed by&#8221; algorithm can do nothing), the personalized PageRank algorithm gets increasingly better in comparison: at first, the two algorithms have roughly equal performance, but as the source node gets more followers, the personalized PageRank algorithm dominates.</p>
+
+  <p>And here&#8217;s an embedded version you can interact with directly:</p>
+
+  <iframe width="600px" height="500px" src="http://link-prediction.herokuapp.com/comparison?for_embed=true"></iframe>
+
+
+  <p>Admittedly, building a slicer like this is probably overkill for a Kaggle competition, where the set of variables is fairly limited. But imagine having something similar for a real world model, where new algorithms are tried out every week and we can slice the performance by almost any dimension we can imagine (by geography, to make sure we don&#8217;t improve Australia at the expense of the UK; by user interests, to see where we could improve the performance of topic inference; by number of user logins, to make sure we don&#8217;t sacrifice the performance on new users for the gain of the core).</p>
+
+  <h1>Mathematicians do it with Matrices</h1>
+
+  <p>Let&#8217;s switch directions slightly and think about how we could rewrite our computations in a different, matrix-oriented style. (I didn&#8217;t do this in the competition &#8211; this is more a preview of another post I&#8217;m writing.)</p>
+
+  <h2>Personalized PageRank in Scalding</h2>
+
+  <p>Personalized PageRank, for example, is an obvious fit for a matrix rewrite. Here&#8217;s how it would look in <a href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Scalding</a>&#8217;s new Matrix library:</p>
+
+  <p>(For those who don&#8217;t know, Scalding is a Hadoop framework that Twitter released at the beginning of the year; see <a href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">my post on building a big data recommendation engine in Scalding</a> for an introduction.)</p>
+
+<div class="clearboth"></div>
+  <figcaption><span>Personalized PageRank, Matrix Style</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  <span class="line-number">27</span>
+  <span class="line-number">28</span>
+  <span class="line-number">29</span>
+  <span class="line-number">30</span>
+  <span class="line-number">31</span>
+  <span class="line-number">32</span>
+  <span class="line-number">33</span>
+  <span class="line-number">34</span>
+  <span class="line-number">35</span>
+  <span class="line-number">36</span>
+  <span class="line-number">37</span>
+  <span class="line-number">38</span>
+  <span class="line-number">39</span>
+  <span class="line-number">40</span>
+  <span class="line-number">41</span>
+  <span class="line-number">42</span>
+  <span class="line-number">43</span>
+  <span class="line-number">44</span>
+  <span class="line-number">45</span>
+  <span class="line-number">46</span>
+  <span class="line-number">47</span>
+  <span class="line-number">48</span>
+  <span class="line-number">49</span>
+  <span class="line-number">50</span>
+  <span class="line-number">51</span>
+  <span class="line-number">52</span>
+  <span class="line-number">53</span>
+  <span class="line-number">54</span>
+  <span class="line-number">55</span>
+  <span class="line-number">56</span>
+  <span class="line-number">57</span>
+  <span class="line-number">58</span>
+  <span class="line-number">59</span>
+  <span class="line-number">60</span>
+  <span class="line-number">61</span>
+  <span class="line-number">62</span>
+  <span class="line-number">63</span>
+  <span class="line-number">64</span>
+  <span class="line-number">65</span>
+  <span class="line-number">66</span>
+  <span class="line-number">67</span>
+  <span class="line-number">68</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="c1">// ***********************************************</span>
+  </span><span class="line"><span class="c1">// STEP 1. Load the adjacency graph into a matrix.</span>
+  </span><span class="line"><span class="c1">// ***********************************************</span>
+  </span><span class="line">
+  </span><span class="line"><span class="k">val</span> <span class="n">following</span> <span class="k">=</span> <span class="nc">Tsv</span><span class="o">(</span><span class="nc">GraphFilename</span><span class="o">,</span> <span class="o">(</span><span class="-Symbol">&#39;user1</span><span class="o">,</span> <span class="-Symbol">&#39;user2</span><span class="o">,</span> <span class="-Symbol">&#39;weight</span><span class="o">))</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// Binary matrix where cell (u1, u2) means that u1 follows u2.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">followingMatrix</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">following</span><span class="o">.</span><span class="n">toMatrix</span><span class="o">[</span><span class="kt">Int</span>,<span class="kt">Int</span>,<span class="kt">Double</span><span class="o">](</span><span class="-Symbol">&#39;user1</span><span class="o">,</span> <span class="-Symbol">&#39;user2</span><span class="o">,</span> <span class="-Symbol">&#39;weight</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// Binary matrix where cell (u1, u2) means that u1 is followed by u2.  </span>
+  </span><span class="line"><span class="k">val</span> <span class="n">followerMatrix</span> <span class="k">=</span> <span class="n">followingMatrix</span><span class="o">.</span><span class="n">transpose</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// Note: we could also form this adjacency matrix differently, by placing</span>
+  </span><span class="line"><span class="c1">// different weights on the following vs. follower edges.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">undirectedAdjacencyMatrix</span> <span class="k">=</span>
+  </span><span class="line">  <span class="o">(</span><span class="n">followingMatrix</span> <span class="o">+</span> <span class="n">followerMatrix</span><span class="o">).</span><span class="n">rowL1Normalize</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// Create a diagonal users matrix (to be used in the &quot;teleportation back</span>
+  </span><span class="line"><span class="c1">// home&quot; step).</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">usersMatrix</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">following</span><span class="o">.</span><span class="n">unique</span><span class="o">(</span><span class="-Symbol">&#39;user1</span><span class="o">)</span>
+  </span><span class="line">           <span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="-Symbol">&#39;user1</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="-Symbol">&#39;user2</span><span class="o">,</span> <span class="-Symbol">&#39;weight</span><span class="o">))</span> <span class="o">{</span> <span class="n">user1</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=&gt;</span> <span class="o">(</span><span class="n">user1</span><span class="o">,</span> <span class="mi">1</span><span class="o">)</span> <span class="o">}</span>
+  </span><span class="line">           <span class="o">.</span><span class="n">toMatrix</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Int</span>, <span class="kt">Double</span><span class="o">](</span><span class="-Symbol">&#39;user1</span><span class="o">,</span> <span class="-Symbol">&#39;user2</span><span class="o">,</span> <span class="-Symbol">&#39;weight</span><span class="o">)</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// ***************************************************</span>
+  </span><span class="line"><span class="c1">// STEP 2. Compute the personalized PageRank scores.</span>
+  </span><span class="line"><span class="c1">// See http://nlp.stanford.edu/projects/pagerank.shtml</span>
+  </span><span class="line"><span class="c1">// for more information on personalized PageRank.</span>
+  </span><span class="line"><span class="c1">// ***************************************************</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// Compute personalized PageRank by running for three iterations,</span>
+  </span><span class="line"><span class="c1">// and output the top candidates.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">pprScores</span> <span class="k">=</span> <span class="n">personalizedPageRank</span><span class="o">(</span><span class="n">usersMatrix</span><span class="o">,</span> <span class="n">undirectedAdjacencyMatrix</span><span class="o">,</span> <span class="n">usersMatrix</span><span class="o">,</span> <span class="mf">0.5</span><span class="o">,</span> <span class="mi">3</span><span class="o">)</span>
+  </span><span class="line"><span class="n">pprScores</span><span class="o">.</span><span class="n">topRowElems</span><span class="o">(</span><span class="n">numCandidates</span><span class="o">).</span><span class="n">write</span><span class="o">(</span><span class="nc">Tsv</span><span class="o">(</span><span class="nc">OutputFilename</span><span class="o">))</span>
+  </span><span class="line">
+  </span><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Performs a personalized PageRank iteration. The ith row contains the</span>
+  </span><span class="line"><span class="cm"> * personalized PageRank probabilities around node i.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * Note the interpretation: </span>
+  </span><span class="line"><span class="cm"> *   - with probability 1 - alpha, we go back to where we started.</span>
+  </span><span class="line"><span class="cm"> *   - with probability alpha, we go to a neighbor.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * Parameters:</span>
+  </span><span class="line"><span class="cm"> *   </span>
+  </span><span class="line"><span class="cm"> *   startMatrix - a (usually diagonal) matrix, where the ith row specifies</span>
+  </span><span class="line"><span class="cm"> *                 where the ith node teleports back to.</span>
+  </span><span class="line"><span class="cm"> *   adjacencyMatrix</span>
+  </span><span class="line"><span class="cm"> *   prevMatrix - a matrix whose ith row contains the personalized PageRank</span>
+  </span><span class="line"><span class="cm"> *                probabilities around the ith node.</span>
+  </span><span class="line"><span class="cm"> *   alpha - the probability of moving to a neighbor (as opposed to</span>
+  </span><span class="line"><span class="cm"> *           teleporting back to the start).</span>
+  </span><span class="line"><span class="cm"> *   numIterations - the number of personalized PageRank iterations to run. </span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">personalizedPageRank</span><span class="o">(</span><span class="n">startMatrix</span><span class="k">:</span> <span class="kt">Matrix</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Int</span>, <span class="kt">Double</span><span class="o">],</span>
+  </span><span class="line">                         <span class="n">adjacencyMatrix</span><span class="k">:</span> <span class="kt">Matrix</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Int</span>, <span class="kt">Double</span><span class="o">],</span>
+  </span><span class="line">                         <span class="n">prevMatrix</span><span class="k">:</span> <span class="kt">Matrix</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Int</span>, <span class="kt">Double</span><span class="o">],</span>
+  </span><span class="line">                         <span class="n">alpha</span><span class="k">:</span> <span class="kt">Double</span><span class="o">,</span>
+  </span><span class="line">                         <span class="n">numIterations</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">Matrix</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Int</span>, <span class="kt">Double</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+  </span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">numIterations</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+  </span><span class="line">      <span class="n">prevMatrix</span>
+  </span><span class="line">    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+  </span><span class="line">      <span class="k">val</span> <span class="n">updatedMatrix</span> <span class="k">=</span> <span class="n">startMatrix</span> <span class="o">*</span> <span class="o">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="o">)</span> <span class="o">+</span>
+  </span><span class="line">                          <span class="o">(</span><span class="n">prevMatrix</span> <span class="o">*</span> <span class="n">adjacencyMatrix</span><span class="o">)</span> <span class="o">*</span> <span class="n">alpha</span>
+  </span><span class="line">      <span class="n">personalizedPageRank</span><span class="o">(</span><span class="n">startMatrix</span><span class="o">,</span> <span class="n">adjacencyMatrix</span><span class="o">,</span> <span class="n">updatedMatrix</span><span class="o">,</span> <span class="n">alpha</span><span class="o">,</span> <span class="n">numIterations</span> <span class="o">-</span> <span class="mi">1</span><span class="o">)</span>
+  </span><span class="line">    <span class="o">}</span>
+  </span><span class="line"><span class="o">}</span>
+  </span></code></pre></td></tr></table></div>
+
+<div class="clearboth"></div>
+
+  <p>Not only is this matrix formulation a more natural way of expressing the algorithm, but since Scalding (by way of Cascading) supports both local and distributed modes, this code runs just as easily on a Hadoop cluster of thousands of machines (assuming our social network is orders of magnitude larger than the one in the contest) as on a sample of data in a laptop. Big data, big matrix style, BOOM.</p>
+
+  <h2>Cosine Similarity as L2-Normalized Multiplication</h2>
+
+  <p>Here&#8217;s another example. Calculating cosine similarity between all users is a natural fit for a matrix formulation since, after all, the cosine similarity between two vectors is just their L2-normalized dot product:</p>
+
+  <figcaption><span>Cosine Similarity, Matrix Style</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="c1">// A matrix where the cell (i, j) is 1 iff user i is followed by user j.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">followerMatrix</span> <span class="k">=</span> <span class="o">...</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// A matrix where cell (i, j) holds the cosine similarity between</span>
+  </span><span class="line"><span class="c1">// user i and user j, when both are represented as sets of their followers.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">followerBasedSimilarityMatrix</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">followerMatrix</span><span class="o">.</span><span class="n">rowL2Normalize</span> <span class="o">*</span> <span class="n">followerMatrix</span><span class="o">.</span><span class="n">rowL2Normalize</span><span class="o">.</span><span class="n">transpose</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h2>A Similarity Extension</h2>
+
+  <p>But let&#8217;s go one step further.</p>
+
+  <p>To change examples for ease of exposition: suppose you&#8217;ve bought a bunch of books on Amazon, and Amazon wants to recommend a new book you&#8217;ll like. Since Amazon knows similarities between all pairs of books, one natural way to generate this recommendation is to:</p>
+
+  <ol>
+  <li>Take every book B.</li>
+  <li>Calculate the similarity between B and each book you bought.</li>
+  <li>Sum up all these similarities to get your recommendation score for B.</li>
+  </ol>
+
+
+  <p>In other words, the recommendation score for book B on user U is:</p>
+
+  <p>DidUserBuy(U, Book 1) * SimilarityBetween(Book B, Book 1) + DidUserBuy(U, Book 2) * SimilarityBetween(Book B, Book2) + &#8230; + DidUserBuy(U, Book n) * SimilarityBetween(Book B, Book n)</p>
+
+  <p>This, too, is a dot product! So it can also be rewritten as a matrix multiplication:</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="c1">// A matrix where cell (i, j) holds the similarity between books i and j.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">bookSimilarityMatrix</span> <span class="k">=</span> <span class="o">...</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// A matrix where cell (i, j) is 1 if user i has bought book j, </span>
+  </span><span class="line"><span class="c1">// and 0 otherwise.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">userPurchaseMatrix</span> <span class="k">=</span> <span class="o">...</span>
+  </span><span class="line">
+  </span><span class="line"><span class="c1">// A matrix where cell (i, j) holds the recommendation score of</span>
+  </span><span class="line"><span class="c1">// book j to user i.</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">recommendationMatrix</span> <span class="k">=</span> <span class="n">userPurchaseMatrix</span> <span class="o">*</span> <span class="n">bookSimilarityMatrix</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Of course, there&#8217;s a natural analogy between this score and the feature I described a while back above, where I compute a similarity score between a destination node and a source node&#8217;s followees (when all nodes are represented as sets of followers):</p>
+
+  <figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  </pre></td><td class="code"><pre><code class="scala"><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * Iterate over each of user1&#39;s followings, compute their similarity</span>
+  </span><span class="line"><span class="cm"> * with user2 when both are represented as sets of followers, and return</span>
+  </span><span class="line"><span class="cm"> * the sum of these similarities.</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">def</span> <span class="n">followerBasedSimilarityToFollowings</span><span class="o">(</span><span class="n">user1</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">user2</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+  </span><span class="line">    <span class="o">(</span><span class="k">implicit</span> <span class="n">similarity</span><span class="k">:</span> <span class="kt">SimilarityMetric</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="o">{</span>
+  </span><span class="line">  <span class="n">getFollowingsWithout</span><span class="o">(</span><span class="n">user1</span><span class="o">,</span> <span class="n">user2</span><span class="o">)</span>
+  </span><span class="line">                      <span class="o">.</span><span class="n">map</span> <span class="o">{</span> <span class="n">similarityByFollowers</span><span class="o">(</span><span class="k">_</span><span class="o">,</span> <span class="n">user2</span><span class="o">)(</span><span class="n">similarity</span><span class="o">)</span> <span class="o">}</span>
+  </span><span class="line">                      <span class="o">.</span><span class="n">sum</span>
+  </span><span class="line"><span class="o">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="cm">/**</span>
+  </span><span class="line"><span class="cm"> * The matrix version of the above function.</span>
+  </span><span class="line"><span class="cm"> *</span>
+  </span><span class="line"><span class="cm"> * Why are these the same? Note that the above function simply computes:</span>
+  </span><span class="line"><span class="cm"> *   DoesUserFollow(User A, User 1) * Similarity(User 1, User B) + </span>
+  </span><span class="line"><span class="cm"> *     DoesUserFollow(User A, User 2) * Similarity(User 2, User B) + ... + </span>
+  </span><span class="line"><span class="cm"> *     DoesUserFollow(User A, User n) * Similarity(User n, User B)</span>
+  </span><span class="line"><span class="cm"> */</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">followingMatrix</span> <span class="k">=</span> <span class="o">...</span>
+  </span><span class="line"><span class="k">val</span> <span class="n">followerBasedSimilarityMatrix</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">followerMatrix</span><span class="o">.</span><span class="n">rowL2Normalize</span> <span class="o">*</span> <span class="n">followerMatrix</span><span class="o">.</span><span class="n">rowL2Normalize</span><span class="o">.</span><span class="n">transpose</span>
+  </span><span class="line">
+  </span><span class="line"><span class="k">val</span> <span class="n">followerBasedSimilarityToFollowingsMatrix</span> <span class="k">=</span>
+  </span><span class="line">  <span class="n">followingMatrix</span> <span class="o">*</span> <span class="n">followerBasedSimilarityMatrix</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>For people comfortable expressing their computations in a vector manner, writing your computations as matrix manipulations often makes experimenting with different algorithms much more fluid. Imagine, for example, that you want to switch from L1 normalization to L2 normalization, or that you want to express your objects as binary sets rather than weighted vectors. Both of these become simple one-line changes when you have vectors and matrices as first-class objects, but are much more tedious (<em>especially in a MapReduce land where this matrix library was designed to be applied!</em>) when you don&#8217;t.</p>
+
+  <h1>Finish Line</h1>
+
+  <p>By now, I think I&#8217;ve spent more time writing this post than on the contest itself, so let&#8217;s wrap up.</p>
+
+  <p>I often get asked what kinds of tools I like to use, so for this competition my kit consisted of:</p>
+
+  <ul>
+  <li>Scala, for code that needed to be fast (e.g., extracting features) or that I was going to run repeatedly (e.g., scoring my validation set).</li>
+  <li>Python, for my machine learning models, because <a href="http://scikit-learn.org/stable/">scikit-learn</a> is awesome.</li>
+  <li>Ruby, for quick one-off scripts.</li>
+  <li>R, for some data analysis and simple plotting.</li>
+  <li>Coffeescript and d3, for the interactive visualizations.</li>
+  </ul>
+
+
+  <p>Finally, I put up a <a href="https://github.com/echen/link-prediction">Github repository</a> containing some code, and here are a couple other posts I&#8217;ve written that people who like this entry might also enjoy:</p>
+
+  <ul>
+  <li><a href="http://blog.echen.me/2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information transmission in a social network</a>, a case study in how information propagates through a social graph.</li>
+  <li><a href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie recommendations in Scalding</a>, Twitter&#8217;s Scala-based Hadoop framework built on top of Cascading.</li>
+  <li><a href="http://blog.echen.me/2011/10/24/winning-the-netflix-prize-a-summary/">A summary of the algorithms behind the Netflix Prize</a>, another crowdsourced recommendation contest for predicting movie ratings.</li>
+  </ul>
+
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>One of the great things about Twitter is that it&#8217;s a global conversation anyone can join anytime. Eavesdropping on the world, what what!</p>
+
+  <p>Of course, it gets even better when you can <em>mine</em> all this chatter to study the way humans live and interact.</p>
+
+  <p>For example, <a href="http://blog.echen.me/2011/04/18/twifferences-between-californians-and-new-yorkers/">how do people in New York City differ from those in Silicon Valley?</a> We tend to think they&#8217;re more financially driven and restless with the world &#8211; is this true, and if so, <a href="http://blog.echen.me/2011/04/18/twifferences-between-californians-and-new-yorkers/">how much more</a>?</p>
+
+  <p>Or how does language change as you travel to different regions? Recall the classic soda vs. pop. vs. coke question: some people use the word &#8220;soda&#8221; to describe their soft drinks, others use &#8220;pop&#8221;, and still others use &#8220;coke&#8221;. Who says what where?</p>
+
+  <p>Let&#8217;s take a look.</p>
+
+  <p><a href="http://i.imgur.com/OgNjpqI.png"><img src="http://i.imgur.com/OgNjpqI.png" alt="United States" /></a></p>
+
+  <p>To make this map, I sampled geo-tagged tweets containing the words &#8220;soda&#8221;, &#8220;pop&#8221;, or &#8220;coke&#8221;, performed some state-of-the-art NLP technology to ensure the tweets were soft drink related (e.g., the tweets had to contain &#8220;drink soda&#8221; or &#8220;drink a pop&#8221;), and tried to filter out coke tweets that were specifically about the Coke brand (e.g., Coke Zero).</p>
+
+  <p>It&#8217;s a little cluttered, though, so let&#8217;s clean it up by aggregating nearby tweets.</p>
+
+  <p><a href="http://i.imgur.com/iWesmoA.png"><img src="http://i.imgur.com/iWesmoA.png" alt="United States Binned" /></a></p>
+
+  <p>Here, I bucketed all tweets within a 0.333 latitude/longitude radius, calculated the term distribution within each bucket, and colored each bucket with the word furthest from its overall mean. I also sized each point according to the (log-transformed) number of tweets in the bucket.</p>
+
+  <p>We can see that:</p>
+
+  <ul>
+  <li>The South is pretty Coke-heavy.</li>
+  <li>Soda belongs to the Northeast and far West.</li>
+  <li>Pop gets the mid-West, except for some interesting spots of blue around Wisconsin and the Illinois-Missouri border.</li>
+  </ul>
+
+
+  <p>For comparison, here&#8217;s another map based on a survey at <a href="http://www.popvssoda.com/">popvssoda.com</a>.</p>
+
+  <p><a href="http://i.imgur.com/5jAbC0G.png"><img src="http://i.imgur.com/5jAbC0G.png" alt="Pop vs. Soda Map" /></a></p>
+
+  <p>We can see similar patterns, though interestingly, our map has less Coke in the Southeast and less pop in the Northwest.</p>
+
+  <p>Finally, here&#8217;s a world map of the terms, bucketed again. Notice that &#8220;pop&#8221; seems to be prevalent only in parts of the United States and Canada.</p>
+
+  <p><a href="http://i.imgur.com/GewG65x.png"><img src="http://i.imgur.com/GewG65x.png" alt="World" /></a></p>
+
+  <p>As some astute readers noted, though, the seeming dominance of coke is probably due to the difficulty in distinguishing the generic use of coke for soft drinks in general from the particular use of coke for referring to the Coca-Cola brand.</p>
+
+  <p>So let&#8217;s instead look at a world map of a couple other soft drink terms (&#8220;fizzy drink&#8221;, &#8220;mineral&#8221;, and &#8220;tonic&#8221;):</p>
+
+  <p><a href="http://i.imgur.com/R0CASuw.png"><img src="http://i.imgur.com/R0CASuw.png" alt="Fizzy Drink vs. Mineral vs. Tonic" /></a></p>
+
+  <p>Notice that:</p>
+
+  <ul>
+  <li>&#8220;Fizzy drink&#8221; shows up for the UK, New Zealand, and Maine.</li>
+  <li>&#8220;Tonic&#8221; appears in Massachusetts.</li>
+  <li>While South Africa gets &#8220;fizzy drink&#8221;, Nigeria gets &#8220;mineral&#8221;.</li>
+  </ul>
+
+
+  <p>I&#8217;ve been getting a lot of questions lately about interesting things you can do with the Twitter API, so this was just one small project I&#8217;ve worked on to illustrate. <a href="http://www.cc.gatech.edu/~jeisenst/papers/emnlp2010.pdf">This paper</a> contains another awesome application of Twitter data to geographic language variation, and just for fun, here are a few other cute mini-projects:</p>
+
+  <p>What do people eat during the Super Bowl? (wings and beer, apparently)</p>
+
+  <p><a href="https://twitter.com/echen/status/166343879547822080"><img src="http://i.imgur.com/6D3D4OJ.png" alt="Superbowl Snacks" /></a></p>
+
+  <p>What do people want for Christmas, compared to what they actually get?</p>
+
+  <p><a href="https://twitter.com/echen/status/153683967315419136"><img src="http://i.imgur.com/rJmfMTA.png" alt="Christmas" /></a></p>
+
+  <p>What do guys and girls <em>really</em> say?</p>
+
+  <p><a href="https://twitter.com/echen/status/261667822793551873/photo/1"><img src="http://i.imgur.com/awPZdyj.png" alt="Shit Guys and Girls Say" /></a></p>
+
+  <p>When were people losing and gaining power during Hurricane Sandy? (<a href="http://blog.echen.me/hurricane-sandy-outages/">click</a> the image to interact)</p>
+
+  <p><a href="http://blog.echen.me/hurricane-sandy-outages/"><img src="http://i.imgur.com/6MzIHww.png" alt="Sandy Power Outages" /></a></p>
+
+  <p>How does information of a <em>geographic</em>-specific nature spread? (<a href="http://hurricanesandy.herokuapp.com/">click</a> the image to see a dynamic visualization of when and where tweets related to surviving Hurricane Sandy were shared)</p>
+
+  <p><a href="http://hurricanesandy.herokuapp.com/"><img src="http://i.imgur.com/x3Z2Kpe.png" alt="Hurricane Sandy Retweets" /></a></p>
+
+  <p>Can we use Twitter to measure presidential votes? (yes!)</p>
+
+  <p><a href="https://twitter.com/echen/status/265894918382305284/photo/1"><img src="http://i.imgur.com/D7GhNLR.png" alt="Electoral Map" /></a></p>
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>Imagine you&#8217;re a budding chef. A data-curious one, of course, so you start by taking a set of foods (pizza, salad, spaghetti, etc.) and ask 10 friends how much of each they ate in the past day.</p>
+
+  <p>Your goal: to find natural <em>groups</em> of foodies, so that you can better cater to each cluster&#8217;s tastes. For example, your fratboy friends might love <a href="https://twitter.com/#!/edchedch/status/166343879547822080">wings and beer</a>, your anime friends might love soba and sushi, your hipster friends probably dig tofu, and so on.</p>
+
+  <p>So how can you use the data you&#8217;ve gathered to discover different kinds of groups?</p>
+
+  <p><a href="http://i.imgur.com/sxBfR1R.png"><img src="http://i.imgur.com/sxBfR1R.png" alt="Clustering Example" /></a></p>
+
+  <p>One way is to use a standard clustering algorithm like <strong>k-means</strong> or <strong>Gaussian mixture modeling</strong> (see <a href="http://blog.echen.me/2011/03/19/counting-clusters/">this previous post</a> for a brief introduction). The problem is that these both assume a <em>fixed</em> number of clusters, which they need to be told to find. There are a couple methods for selecting the number of clusters to learn (e.g., the <a href="http://blog.echen.me/2011/03/19/counting-clusters/">gap and prediction strength statistics</a>), but the problem is a more fundamental one: most real-world data simply doesn&#8217;t have a fixed number of clusters.</p>
+
+  <p>That is, suppose we&#8217;ve asked 10 of our friends what they ate in the past day, and we want to find groups of eating preferences. There&#8217;s really an infinite number of foodie types (carnivore, vegan, snacker, Italian, healthy, fast food, heavy eaters, light eaters, and so on), but with only 10 friends, we simply don&#8217;t have enough data to detect them all. (Indeed, we&#8217;re limited to 10 clusters!) So whereas k-means starts with the incorrect assumption that there&#8217;s a fixed, finite number of clusters that our points come from, <em>no matter if we feed it more data</em>, what we&#8217;d really like is a method positing an infinite number of hidden clusters that naturally arise as we ask more friends about their food habits. (For example, with only 2 data points, we might not be able to tell the difference between vegans and vegetarians, but with 200 data points, we probably could.)</p>
+
+  <p>Luckily for us, this is precisely the purview of <strong>nonparametric Bayes</strong>.*</p>
+
+  <p>*Nonparametric Bayes refers to a class of techniques that allow some parameters to change with the data. In our case, for example, instead of fixing the number of clusters to be discovered, we allow it to grow as more data comes in.</p>
+
+  <h1>A Generative Story</h1>
+
+  <p>Let&#8217;s describe a generative model for finding clusters in any set of data. We assume an infinite set of latent groups, where each group is described by some set of parameters. For example, each group could be a Gaussian with a specified mean $\mu_i$ and standard deviation $\sigma_i$, and these group parameters themselves are assumed to come from some base distribution $G_0$. Data is then generated in the following manner:</p>
+
+  <ul>
+  <li>Select a cluster.</li>
+  <li>Sample from that cluster to generate a new point.</li>
+  </ul>
+
+
+  <p>(Note the resemblance to a <a href="http://en.wikipedia.org/wiki/Mixture_model">finite mixture model</a>.)</p>
+
+  <p>For example, suppose we ask 10 friends how many calories of pizza, salad, and rice they ate yesterday. Our groups could be:</p>
+
+  <ul>
+  <li>A Gaussian centered at (pizza = 5000, salad = 100, rice = 500) (i.e., a pizza lovers group).</li>
+  <li>A Gaussian centered at (pizza = 100, salad = 3000, rice = 1000) (maybe a vegan group).</li>
+  <li>A Gaussian centered at (pizza = 100, salad = 100, rice = 10000) (definitely Asian).</li>
+  <li>&#8230;</li>
+  </ul>
+
+
+  <p>When deciding what to eat when she woke up yesterday, Alice could have thought <em>girl, I&#8217;m in the mood for pizza</em> and her food consumption yesterday would have been a sample from the pizza Gaussian. Similarly, Bob could have spent the day in Chinatown, thereby sampling from the Asian Gaussian for his day&#8217;s meals. And so on.</p>
+
+  <p>The big question, then, is: how do we assign each friend to a group?</p>
+
+  <h1>Assigning Groups</h1>
+
+  <h2>Chinese Restaurant Process</h2>
+
+  <p>One way to assign friends to groups is to use a <strong>Chinese Restaurant Process</strong>. This works as follows: Imagine a restaurant where all your friends went to eat yesterday&#8230;</p>
+
+  <ul>
+  <li>Initially the restaurant is empty.</li>
+  <li>The first person to enter (Alice) sits down at a table (selects a group). She then orders food for the table (i.e., she selects parameters for the group); everyone else who joins the table will then be limited to eating from the food she ordered.</li>
+  <li>The second person to enter (Bob) sits down at a table. Which table does he sit at? With probability $\alpha / (1 + \alpha)$ he sits down at a new table (i.e., selects a new group) and orders food for the table; with probability $1 / (1 + \alpha)$ he sits with Alice and eats from the food she&#8217;s already ordered (i.e., he&#8217;s in the same group as Alice).</li>
+  <li>&#8230;</li>
+  <li>The (n+1)-st person sits down at a new table with probability $\alpha / (n + \alpha)$, and at table k with probability $n_k / (n + \alpha)$, where $n_k$ is the number of people currently sitting at table k.</li>
+  </ul>
+
+
+  <p>Note a couple things:</p>
+
+  <ul>
+  <li>The more people (data points) there are at a table (cluster), the more likely it is that people (new data points) will join it. In other words, our groups satisfy a <strong>rich get richer</strong> property.</li>
+  <li>There&#8217;s always a small probability that someone joins an entirely new table (i.e., a new group is formed).</li>
+  <li>The probability of a new group depends on $\alpha$. So we can think of $\alpha$ as a <strong>dispersion parameter</strong> that affects the dispersion of our datapoints. The lower alpha is, the more tightly clustered our data points; the higher it is, the more clusters we have in any finite set of points.</li>
+  </ul>
+
+
+  <p>(Also notice the resemblance between table selection probabilities and a Dirichlet distribution&#8230;)</p>
+
+  <p>Just to summarize, given n data points, the Chinese Restaurant Process specifies a distribution over partitions (table assignments) of these points. We can also generate parameters for each partition/table from a base distribution $G_0$ (for example, each table could represent a Gaussian whose mean and standard deviation are sampled from $G_0$), though to be clear, this is not part of the CRP itself.</p>
+
+  <h3>Code</h3>
+
+  <p>Since code makes everything better, here&#8217;s some Ruby to simulate a CRP:</p>
+
+  <figcaption><span>Chinese Restaurant Process </span><a href="https://github.com/echen/dirichlet-process/blob/master/chinese_restaurant_process.rb">chinese_restaurant_process.rb</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  <span class="line-number">27</span>
+  </pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="c1"># Generate table assignments for `num_customers` customers, according to</span>
+  </span><span class="line"><span class="c1"># a Chinese Restaurant Process with dispersion parameter `alpha`.</span>
+  </span><span class="line"><span class="c1">#</span>
+  </span><span class="line"><span class="c1"># returns an array of integer table assignments</span>
+  </span><span class="line"><span class="k">def</span> <span class="nf">chinese_restaurant_process</span><span class="p">(</span><span class="n">num_customers</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+  </span><span class="line"> <span class="k">return</span> <span class="o">[]</span> <span class="k">if</span> <span class="n">num_customers</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+  </span><span class="line">
+  </span><span class="line"> <span class="n">table_assignments</span> <span class="o">=</span> <span class="o">[</span><span class="mi">1</span><span class="o">]</span> <span class="c1"># first customer sits at table 1</span>
+  </span><span class="line"> <span class="n">next_open_table</span> <span class="o">=</span> <span class="mi">2</span> <span class="c1"># index of the next empty table</span>
+  </span><span class="line">
+  </span><span class="line"> <span class="c1"># Now generate table assignments for the rest of the customers.</span>
+  </span><span class="line"> <span class="mi">1</span><span class="o">.</span><span class="n">upto</span><span class="p">(</span><span class="n">num_customers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+  </span><span class="line">   <span class="k">if</span> <span class="nb">rand</span> <span class="o">&lt;</span> <span class="n">alpha</span><span class="o">.</span><span class="n">to_f</span> <span class="o">/</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span>
+  </span><span class="line">     <span class="c1"># Customer sits at new table.</span>
+  </span><span class="line">     <span class="n">table_assignments</span> <span class="o">&lt;&lt;</span> <span class="n">next_open_table</span>
+  </span><span class="line">     <span class="n">next_open_table</span> <span class="o">+=</span> <span class="mi">1</span>
+  </span><span class="line">   <span class="k">else</span>
+  </span><span class="line">     <span class="c1"># Customer sits at an existing table.</span>
+  </span><span class="line">     <span class="c1"># He chooses which table to sit at by giving equal weight to each</span>
+  </span><span class="line">     <span class="c1"># customer already sitting at a table. </span>
+  </span><span class="line">     <span class="n">which_table</span> <span class="o">=</span> <span class="n">table_assignments</span><span class="o">[</span><span class="nb">rand</span><span class="p">(</span><span class="n">table_assignments</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="o">]</span>
+  </span><span class="line">     <span class="n">table_assignments</span> <span class="o">&lt;&lt;</span> <span class="n">which_table</span>
+  </span><span class="line">   <span class="k">end</span>
+  </span><span class="line"> <span class="k">end</span>
+  </span><span class="line">
+  </span><span class="line"> <span class="n">table_assignments</span>
+  </span><span class="line"><span class="k">end</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>And here&#8217;s some sample output:</p>
+
+  <figcaption><span>Chinese Restaurant Process </span><a href="https://github.com/echen/dirichlet-process/blob/master/chinese_restaurant_process.rb">chinese_restaurant_process.rb</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  </pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="o">&gt;</span> <span class="n">chinese_restaurant_process</span><span class="p">(</span><span class="n">num_customers</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span> <span class="c1"># table assignments from run 1</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span> <span class="c1"># table assignments from run 2</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span> <span class="c1"># table assignments from run 3</span>
+  </span><span class="line">
+  </span><span class="line"><span class="o">&gt;</span> <span class="n">chinese_restaurant_process</span><span class="p">(</span><span class="n">num_customers</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span>
+  </span><span class="line">
+  </span><span class="line"><span class="o">&gt;</span> <span class="n">chinese_restaurant_process</span><span class="p">(</span><span class="n">num_customers</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">8</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Notice that as we increase $\alpha$, so too does the number of distinct tables increase.</p>
+
+  <h2>Polya Urn Model</h2>
+
+  <p>Another method for assigning friends to groups is to follow the <strong>Polya Urn Model</strong>. This is basically the same model as the Chinese Restaurant Process, just with a different metaphor.</p>
+
+  <ul>
+  <li>We start with an urn containing $\alpha G_0(x)$ balls of &#8220;color&#8221; $x$, for each possible value of $x$. ($G_0$ is our base distribution, and $G_0(x)$ is the probability of sampling $x$ from $G_0$). Note that these are possibly fractional balls.</li>
+  <li>At each time step, draw a ball from the urn, note its color, and then drop both the original ball plus a new ball of the same color back into the urn.</li>
+  </ul>
+
+
+  <p>Note the connection between this process and the CRP: balls correspond to people (i.e., data points), colors correspond to table assignments (i.e., clusters), alpha is again a dispersion parameter (put differently, a prior), colors satisfy a rich-get-richer property (since colors with many balls are more likely to get drawn), and so on. (Again, there&#8217;s also a connection between this urn model and <a href="http://en.wikipedia.org/wiki/Dirichlet_distribution#P.C3.B3lya.27s_urn">the urn model for the (finite) Dirichlet distribution</a>&#8230;)</p>
+
+  <p>To be precise, the difference between the CRP and the Polya Urn Model is that the CRP specifies only a distribution over <em>partitions</em> (i.e., table assignments), but doesn&#8217;t assign parameters to each group, whereas the Polya Urn Model does both.</p>
+
+  <h3>Code</h3>
+
+  <p>Again, here&#8217;s some code for simulating a Polya Urn Model:</p>
+
+  <figcaption><span>Polya Urn Model </span><a href="https://github.com/echen/dirichlet-process/blob/master/polya_urn_model.rb">polya_urn_model.rb</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  </pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="c1"># Draw `num_balls` colored balls according to a Polya Urn Model</span>
+  </span><span class="line"><span class="c1"># with a specified base color distribution and dispersion parameter</span>
+  </span><span class="line"><span class="c1"># `alpha`.</span>
+  </span><span class="line"><span class="c1">#</span>
+  </span><span class="line"><span class="c1"># returns an array of ball colors</span>
+  </span><span class="line"><span class="k">def</span> <span class="nf">polya_urn_model</span><span class="p">(</span><span class="n">base_color_distribution</span><span class="p">,</span> <span class="n">num_balls</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+  </span><span class="line">  <span class="k">return</span> <span class="o">[]</span> <span class="k">if</span> <span class="n">num_balls</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="n">balls_in_urn</span> <span class="o">=</span> <span class="o">[]</span>
+  </span><span class="line">  <span class="mi">0</span><span class="o">.</span><span class="n">upto</span><span class="p">(</span><span class="n">num_balls</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+  </span><span class="line">    <span class="k">if</span> <span class="nb">rand</span> <span class="o">&lt;</span> <span class="n">alpha</span><span class="o">.</span><span class="n">to_f</span> <span class="o">/</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">+</span> <span class="n">balls_in_urn</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+  </span><span class="line">      <span class="c1"># Draw a new color, put a ball of this color in the urn.</span>
+  </span><span class="line">      <span class="n">new_color</span> <span class="o">=</span> <span class="n">base_color_distribution</span><span class="o">.</span><span class="n">call</span>
+  </span><span class="line">      <span class="n">balls_in_urn</span> <span class="o">&lt;&lt;</span> <span class="n">new_color</span>
+  </span><span class="line">    <span class="k">else</span>
+  </span><span class="line">      <span class="c1"># Draw a ball from the urn, add another ball of the same color.</span>
+  </span><span class="line">      <span class="n">ball</span> <span class="o">=</span> <span class="n">balls_in_urn</span><span class="o">[</span><span class="nb">rand</span><span class="p">(</span><span class="n">balls_in_urn</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="o">]</span>
+  </span><span class="line">      <span class="n">balls_in_urn</span> <span class="o">&lt;&lt;</span> <span class="n">ball</span>
+  </span><span class="line">    <span class="k">end</span>
+  </span><span class="line">  <span class="k">end</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="n">balls_in_urn</span>
+  </span><span class="line"><span class="k">end</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>And here&#8217;s some sample output, using a uniform distribution over the unit interval as the color distribution to sample from:</p>
+
+  <figcaption><span>Polya Urn Model </span><a href="https://github.com/echen/dirichlet-process/blob/master/polya_urn_model.rb">polya_urn_model.rb</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  </pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="o">&gt;</span> <span class="n">unit_uniform</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="p">(</span><span class="nb">rand</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">to_i</span> <span class="o">/</span> <span class="mi">100</span><span class="o">.</span><span class="mi">0</span> <span class="p">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="o">&gt;</span> <span class="n">polya_urn_model</span><span class="p">(</span><span class="n">unit_uniform</span><span class="p">,</span> <span class="n">num_balls</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+  </span><span class="line"><span class="mi">0</span><span class="o">.</span><span class="mi">27</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">89</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">89</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">89</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">73</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">98</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">43</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">98</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">89</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">53</span> <span class="c1"># colors in the urn from run 1</span>
+  </span><span class="line"><span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">46</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">85</span> <span class="c1"># colors in the urn from run 2</span>
+  </span><span class="line"><span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">87</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">87</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">87</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span> <span class="c1"># colors in the urn from run 3</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h3>Code, Take 2</h3>
+
+  <p>Here&#8217;s the same code for a Polya Urn Model, but in R:</p>
+
+  <figcaption><span>Polya Urn Model </span><a href="https://github.com/echen/dirichlet-process/blob/master/polya_urn_model.R">polya_urn_model.R</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># Return a vector of `num_balls` ball colors according to a Polya Urn Model</span>
+  </span><span class="line"><span class="c1"># with dispersion `alpha`, sampling from a specified base color distribution.</span>
+  </span><span class="line">polya_urn_model <span class="o">=</span> <span class="kr">function</span><span class="p">(</span>base_color_distribution<span class="p">,</span> num_balls<span class="p">,</span> alpha<span class="p">)</span> <span class="p">{</span>
+  </span><span class="line">  balls <span class="o">=</span> c<span class="p">()</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="kr">for</span> <span class="p">(</span>i in <span class="m">1</span>:num_balls<span class="p">)</span> <span class="p">{</span>
+  </span><span class="line">    <span class="kr">if</span> <span class="p">(</span>runif<span class="p">(</span><span class="m">1</span><span class="p">)</span> <span class="o">&lt;</span> alpha <span class="o">/</span> <span class="p">(</span>alpha <span class="o">+</span> length<span class="p">(</span>balls<span class="p">)))</span> <span class="p">{</span>
+  </span><span class="line">      <span class="c1"># Add a new ball color.</span>
+  </span><span class="line">      new_color <span class="o">=</span> base_color_distribution<span class="p">()</span>
+  </span><span class="line">      balls <span class="o">=</span> c<span class="p">(</span>balls<span class="p">,</span> new_color<span class="p">)</span>
+  </span><span class="line">    <span class="p">}</span> <span class="kr">else</span> <span class="p">{</span>
+  </span><span class="line">      <span class="c1"># Pick out a ball from the urn, and add back a</span>
+  </span><span class="line">      <span class="c1"># ball of the same color.</span>
+  </span><span class="line">      ball <span class="o">=</span> balls<span class="p">[</span>sample<span class="p">(</span><span class="m">1</span>:length<span class="p">(</span>balls<span class="p">),</span> <span class="m">1</span><span class="p">)]</span>
+  </span><span class="line">      balls <span class="o">=</span> c<span class="p">(</span>balls<span class="p">,</span> ball<span class="p">)</span>
+  </span><span class="line">    <span class="p">}</span>
+  </span><span class="line">  <span class="p">}</span>
+  </span><span class="line">
+  </span><span class="line">  balls
+  </span><span class="line"><span class="p">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Here are some sample density plots of the colors in the urn, when using a unit normal as the base color distribution:</p>
+
+  <p><a href="http://i.imgur.com/4aOd7TI.png"><img src="http://i.imgur.com/4aOd7TI.png" alt="Polya Urn Model, Alpha = 1" /></a></p>
+
+  <p><a href="http://i.imgur.com/vTLeppf.png"><img src="http://i.imgur.com/vTLeppf.png" alt="Polya Urn Model, Alpha = 5" /></a></p>
+
+  <p><a href="http://i.imgur.com/SQPZY95.png"><img src="http://i.imgur.com/SQPZY95.png" alt="Polya Urn Model, Alpha = 25" /></a></p>
+
+  <p><a href="http://i.imgur.com/PFmE0q3.png"><img src="http://i.imgur.com/PFmE0q3.png" alt="Polya Urn Model, Alpha = 50" /></a></p>
+
+  <p>Notice that as alpha increases (i.e., we sample more new ball colors from our base; i.e., as we place more weight on our prior), the colors in the urn tend to a unit normal (our base color distribution).</p>
+
+  <p>And here are some sample plots of points generated by the urn, for varying values of alpha:</p>
+
+  <ul>
+  <li>Each color in the urn is sampled from a uniform distribution over [0,10]x[0,10] (i.e., a [0, 10] square).</li>
+  <li>Each group is a Gaussian with standard deviation 0.1 and mean equal to its associated color, and these Gaussian groups generate points.</li>
+  </ul>
+
+
+  <p><a href="http://i.imgur.com/QdRnCbn.png"><img src="http://i.imgur.com/QdRnCbn.png" alt="Alpha 0.1" /></a></p>
+
+  <p><a href="http://i.imgur.com/n0CLgfs.png"><img src="http://i.imgur.com/n0CLgfs.png" alt="Alpha 0.2" /></a></p>
+
+  <p><a href="http://i.imgur.com/yp9XINd.png"><img src="http://i.imgur.com/yp9XINd.png" alt="Alpha 0.3" /></a></p>
+
+  <p><a href="http://i.imgur.com/MkoA8kP.png"><img src="http://i.imgur.com/MkoA8kP.png" alt="Alpha 0.5" /></a></p>
+
+  <p><a href="http://i.imgur.com/UEmRqQU.png"><img src="http://i.imgur.com/UEmRqQU.png" alt="Alpha 1.0" /></a></p>
+
+  <p>Notice that the points clump together in fewer clusters for low values of alpha, but become more dispersed as alpha increases.</p>
+
+  <h2>Stick-Breaking Process</h2>
+
+  <p>Imagine running either the Chinese Restaurant Process or the Polya Urn Model without stop. For each group $i$, this gives a proportion $w_i$ of points that fall into group $i$.</p>
+
+  <p>So instead of running the CRP or Polya Urn model to figure out these proportions, can we simply generate them directly?</p>
+
+  <p>This is exactly what the Stick-Breaking Process does:</p>
+
+  <ul>
+  <li>Start with a stick of length one.</li>
+  <li>Generate a random variable $\beta_1 \sim Beta(1, \alpha)$. By the definition of the <a href="http://en.wikipedia.org/wiki/Beta_distribution">Beta distribution</a>, this will be a real number between 0 and 1, with expected value $1 / (1 + \alpha)$. Break off the stick at $\beta_1$; $w_1$ is then the length of the stick on the left.</li>
+  <li>Now take the stick to the right, and generate $\beta_2 \sim Beta(1, \alpha)$. Break off the stick $\beta_2$ into the stick. Again, $w_2$ is the length of the stick to the left, i.e., $w_2 = (1 - \beta_1) \beta_2$.</li>
+  <li>And so on.</li>
+  </ul>
+
+
+  <p>Thus, the Stick-Breaking process is simply the CRP or Polya Urn Model from a different point of view. For example, assigning customers to table 1 according to the Chinese Restaurant Process is equivalent to assigning customers to table 1 with probability $w_1$.</p>
+
+  <h3>Code</h3>
+
+  <p>Here&#8217;s some R code for simulating a Stick-Breaking process:</p>
+
+  <figcaption><span>Stick-Breaking Process </span><a href="https://github.com/echen/dirichlet-process/blob/master/stick_breaking_process.R">stick_breaking_process.R</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># Return a vector of weights drawn from a stick-breaking process</span>
+  </span><span class="line"><span class="c1"># with dispersion `alpha`.</span>
+  </span><span class="line"><span class="c1">#</span>
+  </span><span class="line"><span class="c1"># Recall that the kth weight is</span>
+  </span><span class="line"><span class="c1">#   \beta_k = (1 - \beta_1) * (1 - \beta_2) * ... * (1 - \beta_{k-1}) * beta_k</span>
+  </span><span class="line"><span class="c1"># where each $\\beta\_i$ is drawn from a Beta distribution</span>
+  </span><span class="line"><span class="c1">#   \beta_i ~ Beta(1, \alpha)</span>
+  </span><span class="line">stick_breaking_process <span class="o">=</span> <span class="kr">function</span><span class="p">(</span>num_weights<span class="p">,</span> alpha<span class="p">)</span> <span class="p">{</span>
+  </span><span class="line">  betas <span class="o">=</span> rbeta<span class="p">(</span>num_weights<span class="p">,</span> <span class="m">1</span><span class="p">,</span> alpha<span class="p">)</span>
+  </span><span class="line">  remaining_stick_lengths <span class="o">=</span> c<span class="p">(</span><span class="m">1</span><span class="p">,</span> cumprod<span class="p">(</span><span class="m">1</span> <span class="o">-</span> betas<span class="p">))[</span><span class="m">1</span>:num_weights<span class="p">]</span>
+  </span><span class="line">  weights <span class="o">=</span> remaining_stick_lengths <span class="o">*</span> betas
+  </span><span class="line">  weights
+  </span><span class="line"><span class="p">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>And here&#8217;s some sample output:</p>
+
+  <p><a href="http://i.imgur.com/8gzowzf.png"><img src="http://i.imgur.com/8gzowzf.png" alt="Stick-Breaking Process, alpha = 1" /></a></p>
+
+  <p><a href="http://i.imgur.com/yM0Wckw.png"><img src="http://i.imgur.com/yM0Wckw.png" alt="Stick-Breaking Process, alpha = 3" /></a></p>
+
+  <p><a href="http://i.imgur.com/8tATMw6.png"><img src="http://i.imgur.com/8tATMw6.png" alt="Stick-Breaking Process, alpha = 5" /></a></p>
+
+  <p>Notice that for low values of alpha, the stick weights are concentrated on the first few weights (meaning our data points are concentrated on a few clusters), while the weights become more evenly dispersed as we increase alpha (meaning we posit more clusters in our data points).</p>
+
+  <h2>Dirichlet Process</h2>
+
+  <p>Suppose we run a Polya Urn Model several times, where we sample colors from a base distribution $G_0$. Each run produces a distribution of colors in the urn (say, 5% blue balls, 3% red balls, 2% pink balls, etc.), and the distribution will be different each time (for example, 5% blue balls in run 1, but 1% blue balls in run 2).</p>
+
+  <p>For example, let&#8217;s look again at the plots from above, where I generated samples from a Polya Urn Model with the standard unit normal as the base distribution:</p>
+
+  <p><a href="http://i.imgur.com/4aOd7TI.png"><img src="http://i.imgur.com/4aOd7TI.png" alt="Polya Urn Model, Alpha = 1" /></a></p>
+
+  <p><a href="http://i.imgur.com/vTLeppf.png"><img src="http://i.imgur.com/vTLeppf.png" alt="Polya Urn Model, Alpha = 5" /></a></p>
+
+  <p><a href="http://i.imgur.com/SQPZY95.png"><img src="http://i.imgur.com/SQPZY95.png" alt="Polya Urn Model, Alpha = 25" /></a></p>
+
+  <p><a href="http://i.imgur.com/PFmE0q3.png"><img src="http://i.imgur.com/PFmE0q3.png" alt="Polya Urn Model, Alpha = 50" /></a></p>
+
+  <p>Each run of the Polya Urn Model produces a slighly different distribution, though each is &#8220;centered&#8221; in some fashion around the standard Gaussian I used as base. In other words, the Polya Urn Model gives us a <strong>distribution over distributions</strong> (we get a distribution of ball colors, and this distribution of colors changes each time) &#8211; and so we finally get to the Dirichlet Process.</p>
+
+  <p>Formally, given a base distribution $G_0$ and a dispersion parameter $\alpha$, a sample from the Dirichlet Process $DP(G_0, \alpha)$ is a distribution $G \sim DP(G_0, \alpha)$. This sample $G$ can be thought of as a distribution of colors in a single simulation of the Polya Urn Model; sampling from $G$ gives us the balls in the urn.</p>
+
+  <p>So here&#8217;s the connection between the Chinese Restaurant Process, the Polya Urn Model, the Stick-Breaking Process, and the Dirichlet Process:</p>
+
+  <ul>
+  <li><strong>Dirichlet Process</strong>: Suppose we want samples $x_i \sim G$, where $G$ is a distribution sampled from the Dirichlet Process $G \sim DP(G_0, \alpha)$.</li>
+  <li><strong>Polya Urn Model</strong>: One way to generate these values $x_i$ would be to take a Polya Urn Model with color distribution $G_0$ and dispersion $\alpha$. ($x_i$ would be the color of the ith ball in the urn.)</li>
+  <li><strong>Chinese Restaurant Process</strong>: Another way to generate $x_i$ would be to first assign tables to customers according to a Chinese Restaurant Process with dispersion $\alpha$. Every customer at the nth table would then be given the same value (color) sampled from $G_0$. ($x_i$ would be the value given to the ith customer; $x_i$ can also be thought of as the food at table $i$, or as the parameters of table $i$.)</li>
+  <li><strong>Stick-Breaking Process</strong>: Finally, we could generate weights $w_k$ according to a Stick-Breaking Process with dispersion $\alpha$. Next, we would give each weight $w_k$ a value (or color) $v_k$ sampled from $G_0$. Finally, we would assign $x_i$ to value (color) $v_k$ with probability $w_k$.</li>
+  </ul>
+
+
+  <h1>Recap</h1>
+
+  <p>Let&#8217;s summarize what we&#8217;ve discussed so far.</p>
+
+  <p>We have a bunch of data points $p_i$ that we want to cluster, and we&#8217;ve described four essentially equivalent generative models that allow us to describe how each cluster and point could have arisen.</p>
+
+  <p>In the <strong>Chinese Restaurant Process</strong>:</p>
+
+  <ul>
+  <li>We generate table assignments $g_1, \ldots, g_n \sim CRP(\alpha)$ according to a Chinese Restaurant Process. ($g_i$ is the table assigned to datapoint $i$.)</li>
+  <li>We generate table parameters $\phi_1, \ldots, \phi_m \sim G_0$ according to the base distribution $G_0$, where $\phi_k$ is the parameter for the kth distinct group.</li>
+  <li>Given table assignments and table parameters, we generate each datapoint $p_i \sim F(\phi_{g_i})$ from a distribution $F$ with the specified table parameters. (For example, $F$ could be a Gaussian, and $\phi_i$ could be a parameter vector specifying the mean and standard deviation).</li>
+  </ul>
+
+
+  <p>In the <strong>Polya Urn Model</strong>:</p>
+
+  <ul>
+  <li>We generate colors $\phi_1, \ldots, \phi_n \sim Polya(G_0, \alpha)$ according to a Polya Urn Model. ($\phi_i$ is the color of the ith ball.)</li>
+  <li>Given ball colors, we generate each datapoint $p_i \sim F(\phi_i)$.</li>
+  </ul>
+
+
+  <p>In the <strong>Stick-Breaking Process</strong>:</p>
+
+  <ul>
+  <li>We generate group probabilities (stick lengths) $w_1, \ldots, w_{\infty} \sim Stick(\alpha)$ according to a Stick-Breaking process.</li>
+  <li>We generate group parameters $\phi_1, \ldots, \phi_{\infty} \sim G_0$ from $G_0$, where $\phi_k$ is the parameter for the kth distinct group.</li>
+  <li>We generate group assignments $g_1, \ldots, g_n \sim Multinomial(w_1, \ldots, w_{\infty})$ for each datapoint.</li>
+  <li>Given group assignments and group parameters, we generate each datapoint $p_i \sim F(\phi_{g_i})$.</li>
+  </ul>
+
+
+  <p>In the <strong>Dirichlet Process</strong>:</p>
+
+  <ul>
+  <li>We generate a distribution $G \sim DP(G_0, \alpha)$ from a Dirichlet Process with base distribution $G_0$ and dispersion parameter $\alpha$.</li>
+  <li>We generate group-level parameters $x_i \sim G$ from $G$, where $x_i$ is the group parameter for the ith datapoint. (Note: this is not the same as $\phi_i$. $x_i$ is the parameter associated to the group that the ith datapoint belongs to, whereas $\phi_k$ is the parameter of the kth distinct group.)</li>
+  <li>Given group-level parameters $x_i$, we generate each datapoint $p_i \sim F(x_i)$.</li>
+  </ul>
+
+
+  <p>Also, remember that each model naturally allows the number of clusters to grow as more points come in.</p>
+
+  <h1>Inference in the Dirichlet Process Mixture</h1>
+
+  <p>So we&#8217;ve described a generative model that allows us to calculate the probability of any particular set of group assignments to data points, but we haven&#8217;t described how to actually learn a good set of group assignments.</p>
+
+  <p>Let&#8217;s briefly do this now. Very roughly, the <strong>Gibbs sampling</strong> approach works as follows:</p>
+
+  <ul>
+  <li>Take the set of data points, and randomly initialize group assignments.</li>
+  <li>Pick a point. Fix the group assignments of all the other points, and assign the chosen point a new group (which can be either an existing cluster or a new cluster) with a CRP-ish probability (as described in the models above) that depends on the group assignments and values of all the other points.</li>
+  <li>We will eventually converge on a good set of group assignments, so repeat the previous step until happy.</li>
+  </ul>
+
+
+  <p>For more details, <a href="http://www.cs.toronto.edu/~radford/ftp/mixmc.pdf">this paper</a> provides a good description. Philip Resnick and Eric Hardisty also have a friendlier, more general description of Gibbs sampling (plus an application to naive Bayes) <a href="http://www.cs.umd.edu/~hardisty/papers/gsfu.pdf">here</a>.</p>
+
+  <h1>Fast Food Application: Clustering the McDonald&#8217;s Menu</h1>
+
+  <p>Finally, let&#8217;s show an application of the Dirichlet Process Mixture. Unfortunately, I didn&#8217;t have a data set of people&#8217;s food habits offhand, so instead I took <a href="http://nutrition.mcdonalds.com/nutritionexchange/nutritionfacts.pdf">this list</a> of McDonald&#8217;s foods and nutrition facts.</p>
+
+  <p>After normalizing each item to have an equal number of calories, and representing each item as a vector of <strong>(total fat, cholesterol, sodium, dietary fiber, sugars, protein, vitamin A, vitamin C, calcium, iron, calories from fat, satured fat, trans fat, carbohydrates)</strong>, I ran <a href="http://scikit-learn.sourceforge.net/dev/index.html">scikit-learn</a>&#8217;s <a href="http://scikit-learn.sourceforge.net/dev/modules/mixture.html">Dirichlet Process Gaussian Mixture Model</a> to cluster McDonald&#8217;s menu based on nutritional value.</p>
+
+  <p>First, how does the number of clusters inferred by the Dirichlet Process mixture vary as we feed in more (randomly ordered) points?</p>
+
+  <p><a href="http://i.imgur.com/36Pxuq3.png"><img src="http://i.imgur.com/36Pxuq3.png" alt="Growth of Number of Clusters" /></a></p>
+
+  <p>As expected, the Dirichlet Process model discovers more and more clusters as more and more food items arrive. (And indeed, the number of clusters appears to grow logarithmically, which can in fact be proved.)</p>
+
+  <p>How many clusters does the mixture model infer from the entire dataset? Running the Gibbs sampler several times, we find that the number of clusters tends around 11:</p>
+
+  <p><a href="http://i.imgur.com/qbkq1uo.png"><img src="http://i.imgur.com/qbkq1uo.png" alt="Number of clusters" /></a></p>
+
+  <p>Let&#8217;s dive into one of these clusterings.</p>
+
+  <p><strong>Cluster 1 (Desserts)</strong></p>
+
+  <p>Looking at a sample of foods from the first cluster, we find a lot of desserts and dessert-y drinks:</p>
+
+  <ul>
+  <li>Caramel Mocha</li>
+  <li>Frappe Caramel</li>
+  <li>Iced Hazelnut Latte</li>
+  <li>Iced Coffee</li>
+  <li>Strawberry Triple Thick Shake</li>
+  <li>Snack Size McFlurry</li>
+  <li>Hot Caramel Sundae</li>
+  <li>Baked Hot Apple Pie</li>
+  <li>Cinnamon Melts</li>
+  <li>Kiddie Cone</li>
+  <li>Strawberry Sundae</li>
+  </ul>
+
+
+  <p>We can also look at the nutritional profile of some foods from this cluster (after <a href="http://en.wikipedia.org/wiki/Standard_score">z-scaling</a> each nutrition dimension to have mean 0 and standard deviation 1):</p>
+
+  <p><a href="http://i.imgur.com/oM1aPCE.png"><img src="http://i.imgur.com/oM1aPCE.png" alt="Cluster 1" /></a></p>
+
+  <p>We see that foods in this cluster tend to be high in trans fat and low in vitamins, protein, fiber, and sodium.</p>
+
+  <p><strong>Cluster 2 (Sauces)</strong></p>
+
+  <p>Here&#8217;s a sample from the second cluster, which contains a lot of sauces:</p>
+
+  <ul>
+  <li>Hot Mustard Sauce</li>
+  <li>Spicy Buffalo Sauce</li>
+  <li>Newman&#8217;s Own Low Fat Balsamic Vinaigrette</li>
+  </ul>
+
+
+  <p>And looking at the nutritional profile of points in this cluster, we see that it&#8217;s heavy in sodium and fat:</p>
+
+  <p><a href="http://i.imgur.com/3bOYEBz.png"><img src="http://i.imgur.com/3bOYEBz.png" alt="Cluster 2" /></a></p>
+
+  <p><strong>Cluster 3 (Burgers, Crispy Foods, High-Cholesterol)</strong></p>
+
+  <p>The third cluster is very burgery:</p>
+
+  <ul>
+  <li>Hamburger</li>
+  <li>Cheeseburger</li>
+  <li>Filet-O-Fish</li>
+  <li>Quarter Pounder with Cheese</li>
+  <li>Premium Grilled Chicken Club Sandwich</li>
+  <li>Ranch Snack Wrap</li>
+  <li>Premium Asian Salad with Crispy Chicken</li>
+  <li>Butter Garlic Croutons</li>
+  <li>Sausage McMuffin</li>
+  <li>Sausage McGriddles</li>
+  </ul>
+
+
+  <p>It&#8217;s also high in fat and sodium, and low in carbs and sugar</p>
+
+  <p><a href="http://i.imgur.com/XdoVfXG.png"><img src="http://i.imgur.com/XdoVfXG.png" alt="Cluster 3" /></a></p>
+
+  <p><strong>Cluster 4 (Creamy Sauces)</strong></p>
+
+  <p>Interestingly, even though we already found a cluster of sauces above, we discover another one as well. These sauces appear to be much more cream-based:</p>
+
+  <ul>
+  <li>Creamy Ranch Sauce</li>
+  <li>Newman&#8217;s Own Creamy Caesar Dressing</li>
+  <li>Coffee Cream</li>
+  <li>Iced Coffee with Sugar Free Vanilla Syrup</li>
+  </ul>
+
+
+  <p>Nutritionally, these sauces are higher in calories from fat, and much lower in sodium:</p>
+
+  <p><a href="http://i.imgur.com/4gQzyLO.png"><img src="http://i.imgur.com/4gQzyLO.png" alt="Cluster 4" /></a></p>
+
+  <p><strong>Cluster 5 (Salads)</strong></p>
+
+  <p>Here&#8217;s a salad cluster. A lot of salads also appeared in the third cluster (along with hamburgers and McMuffins), but that&#8217;s because those salads also all contained crispy chicken. The salads in this cluster are either crisp-free or have their chicken grilled instead:</p>
+
+  <ul>
+  <li>Premium Southwest Salad with Grilled Chicken</li>
+  <li>Premium Caesar Salad with Grilled Chicken</li>
+  <li>Side Salad</li>
+  <li>Premium Asian Salad without Chicken</li>
+  <li>Premium Bacon Ranch Salad without Chicken</li>
+  </ul>
+
+
+  <p>This is reflected in the higher content of iron, vitamin A, and fiber:</p>
+
+  <p><a href="http://i.imgur.com/hqkpKz5.png"><img src="http://i.imgur.com/hqkpKz5.pngg" alt="Cluster 5" /></a></p>
+
+  <p><strong>Cluster 6 (More Sauces)</strong></p>
+
+  <p>Again, we find another cluster of sauces:</p>
+
+  <ul>
+  <li>Ketchup Packet</li>
+  <li>Barbeque Sauce</li>
+  <li>Chipotle Barbeque Sauce</li>
+  </ul>
+
+
+  <p>These are still high in sodium, but much lower in fat compared to the other sauce clusters:</p>
+
+  <p><a href="http://i.imgur.com/i2Y2M6u.png"><img src="http://i.imgur.com/i2Y2M6u.png" alt="Cluster 6" /></a></p>
+
+  <p><strong>Cluster 7 (Fruit and Maple Oatmeal)</strong></p>
+
+  <p>Amusingly, fruit and maple oatmeal is in a cluster by itself:</p>
+
+  <ul>
+  <li>Fruit &amp; Maple Oatmeal</li>
+  </ul>
+
+
+  <p><a href="http://i.imgur.com/qoyNFK4.png"><img src="http://i.imgur.com/qoyNFK4.png" alt="Cluster 7" /></a></p>
+
+  <p><strong>Cluster 8 (Sugary Drinks)</strong></p>
+
+  <p>We also get a cluster of sugary drinks:</p>
+
+  <ul>
+  <li>Strawberry Banana Smoothie</li>
+  <li>Wild Berry Smoothie</li>
+  <li>Iced Nonfat Vanilla Latte</li>
+  <li>Nonfat Hazelnut</li>
+  <li>Nonfat Vanilla Cappuccino</li>
+  <li>Nonfat Caramel Cappuccino</li>
+  <li>Sweet Tea</li>
+  <li>Frozen Strawberry Lemonade</li>
+  <li>Coca-Cola</li>
+  <li>Minute Maid Orange Juice</li>
+  </ul>
+
+
+  <p>In addition to high sugar content, this cluster is also high in carbohydrates and calcium, and low in fat.</p>
+
+  <p><a href="http://i.imgur.com/MNdKmrr.png"><img src="http://i.imgur.com/MNdKmrr.png" alt="Cluster 8" /></a></p>
+
+  <p><strong>Cluster 9 (Breakfast Foods)</strong></p>
+
+  <p>Here&#8217;s a cluster of high-cholesterol breakfast foods:</p>
+
+  <ul>
+  <li>Sausage McMuffin with Egg</li>
+  <li>Sausage Burrito</li>
+  <li>Egg McMuffin</li>
+  <li>Bacon, Egg &amp; Cheese Biscuit</li>
+  <li>McSkillet Burrito with Sausage</li>
+  <li>Big Breakfast with Hotcakes</li>
+  </ul>
+
+
+  <p><a href="http://i.imgur.com/m67oVsY.png"><img src="http://i.imgur.com/m67oVsY.png" alt="Cluster 9" /></a></p>
+
+  <p><strong>Cluster 10 (Coffee Drinks)</strong></p>
+
+  <p>We find a group of coffee drinks next:</p>
+
+  <ul>
+  <li>Nonfat Cappuccino</li>
+  <li>Nonfat Latte</li>
+  <li>Nonfat Latte with Sugar Free Vanilla Syrup</li>
+  <li>Iced Nonfat Latte</li>
+  </ul>
+
+
+  <p>These are much higher in calcium and protein, and lower in sugar, than the other drink cluster above:</p>
+
+  <p><a href="http://i.imgur.com/UB8i5j4.png"><img src="http://i.imgur.com/UB8i5j4.png" alt="Cluster 11" /></a></p>
+
+  <p><strong>Cluster 11 (Apples)</strong></p>
+
+  <p>Here&#8217;s a cluster of apples:</p>
+
+  <ul>
+  <li>Apple Dippers with Low Fat Caramel Dip</li>
+  <li>Apple Slices</li>
+  </ul>
+
+
+  <p>Vitamin C, check.</p>
+
+  <p><a href="http://i.imgur.com/w6VBaBt.png"><img src="http://i.imgur.com/w6VBaBt.png" alt="Cluster 10" /></a></p>
+
+  <p>And finally, here&#8217;s an overview of all the clusters at once (using a different clustering run):</p>
+
+  <p><a href="http://i.imgur.com/RJ6FuGH.png"><img src="http://i.imgur.com/RJ6FuGH.png" alt="All Clusters" /></a></p>
+
+  <h1>No More!</h1>
+
+  <p>I&#8217;ll end with a couple notes:</p>
+
+  <ul>
+  <li>Kevin Knight has a <a href="http://www.isi.edu/natural-language/people/bayes-with-tears.pdf">hilarious introduction</a> to Bayesian inference that describes some applications of nonparametric Bayesian techniques to computational linguistics (though I don&#8217;t think he ever quite says &#8220;nonparametric Bayes&#8221; directly).</li>
+  <li>In the Chinese Restaurant Process, each customer sits at a single table. The <a href="http://en.wikipedia.org/wiki/Chinese_restaurant_process#The_Indian_buffet_process">Indian Buffet Process</a> is an extension that allows customers to sample food from multiple tables (i.e., belong to multiple clusters).</li>
+  <li>The Chinese Restaurant Process, the Polya Urn Model, and the Stick-Breaking Process are all <em>sequential</em> models for generating groups: to figure out table parameters in the CRP, for example, you wait for customer 1 to come in, then customer 2, then customer 3, and so on. The equivalent Dirichlet Process, on the other hand, is a <em>parallel</em> model for generating groups: just sample $G \sim DP(G_0, alpha)$, and then all your group parameters can be independently generated by sampling from $G$ at once. This duality is an instance of a more general phenomenon known as <a href="http://en.wikipedia.org/wiki/De_Finetti's_theorem">de Finetti&#8217;s theorem</a>.</li>
+  </ul>
+
+
+  <p>And that&#8217;s it.</p>
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>It&#8217;s often easier to understand a chart than a table. So why is it still so hard to make a simple data graphic, and why am I still bombarded by mind-numbing reams of raw <em>numbers</em>?</p>
+
+  <p>(Yeah, I love <a href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">ggplot2</a> to death. But sometimes I want a little more interaction, and sometimes all I want is to drag-and-drop and be done.)</p>
+
+  <p>So I&#8217;ve been experimenting with <a href="http://minifolds.herokuapp.com/graphs/1?x=health&amp;y=speed&amp;size=intelligence&amp;color=age&amp;group=height">a small, ggplot2-inspired d3 app</a>.</p>
+
+  <p>Simply drop a file, and bam! Instant scatterplot:</p>
+
+  <p><a href="http://minifolds.herokuapp.com/graphs/1?x=health&amp;y=speed"><img src="http://i.imgur.com/Dakasn5.png" alt="Swiss Roll B&amp;W" /></a></p>
+
+  <p>But wait &#8211; that&#8217;s only 2 dimensions. You can add some more through color, size, and groups:</p>
+
+  <p><a href="http://minifolds.herokuapp.com/graphs/1?x=health&amp;y=speed&amp;size=intelligence&amp;color=age&amp;group=height"><img src="http://i.imgur.com/f6iCgHw.png" alt="Swiss Roll Edit" /></a></p>
+
+  <p>(Click <a href="http://minifolds.herokuapp.com/graphs/1?x=health&amp;y=speed&amp;size=intelligence&amp;color=age&amp;group=height">here</a> to play with the data yourself.)</p>
+
+  <p>And you can easily switch which variables are getting plotted, and see all the information associated with each point.</p>
+
+  <p><a href="http://minifolds.herokuapp.com/graphs/1?x=weight&amp;y=speed&amp;size=health&amp;color=age&amp;group=height"><img src="http://i.imgur.com/7W7OZwZ.png" alt="Swiss Roll Pivot" /></a></p>
+
+  <p>(Same dataset, different aesthetic assignments.)</p>
+
+  <p>I&#8217;m thinking of adding more kinds of charts, support for categorical variables, more interactivity (sliders to interact with other dimensions?!), and making the UI even easier (e.g., simplify column naming). In the meantime, the code is <a href="https://github.com/echen/minifolds">here</a> on Github, and tips and suggestions are welcome!</p>
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p><em>Scalding is an in-house MapReduce framework that Twitter recently open-sourced. Like <a href="http://pig.apache.org/">Pig</a>, it provides an abstraction on top of MapReduce that makes it easy to write big data jobs in a syntax that&#8217;s simple and concise. Unlike Pig, Scalding is written in pure Scala &#8211; which means all the power of Scala and the JVM is already built-in. No more UDFs, folks!</em></p>
+
+  <p>This is going to be an in-your-face introduction to <a href="https://github.com/twitter/scalding">Scalding</a>, Twitter&#8217;s (Scala + Cascading) MapReduce framework.</p>
+
+  <p>In 140: instead of forcing you to write raw <code>map</code> and <code>reduce</code> functions, Scalding allows you to write <em>natural</em> code like</p>
+  
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="Example.scala" data-gist-hide-footer="true"></code>
+
+  <p>Not much different from the Ruby you&#8217;d write to compute tweet distributions over <em>small</em> data? <strong>Exactly.</strong></p>
+
+  <p>Two notes before we begin:</p>
+
+  <ul>
+  <li><a href="https://github.com/echen/scaldingale">This Github repository</a> contains all the code used.</li>
+  <li>For a gentler introduction to Scalding, see <a href="https://github.com/twitter/scalding/wiki/Getting-Started">this Getting Started guide</a> on the Scalding wiki.</li>
+  </ul>
+
+
+  <h1>Movie Similarities</h1>
+
+  <p>Imagine you run an online movie business, and you want to generate movie recommendations. You have a rating system (people can rate movies with 1 to 5 stars), and we&#8217;ll assume for simplicity that all of the ratings are stored in a TSV file somewhere.</p>
+
+  <p>Let&#8217;s start by reading the ratings into a Scalding job.</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities1.scala" data-gist-hide-footer="true"></code>
+
+  <p>You want to calculate how similar pairs of movies are, so that if someone watches <em>The Lion King</em>, you can recommend films like <em>Toy Story</em>. So how should you define the similarity between two movies?</p>
+
+  <p>One way is to use their <strong>correlation</strong>:</p>
+
+  <ul>
+  <li>For every pair of movies A and B, find all the people who rated both A and B.</li>
+  <li>Use these ratings to form a Movie A vector and a Movie B vector.</li>
+  <li>Calculate the correlation between these two vectors.</li>
+  <li>Whenever someone watches a movie, you can then recommend the movies most correlated with it.</li>
+  </ul>
+
+
+  <p>Let&#8217;s start with the first two steps.</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities2.scala" data-gist-hide-footer="true"></code>
+
+  <p>Before using these rating pairs to calculate correlation, let&#8217;s stop for a bit.</p>
+
+  <p>Since we&#8217;re explicitly thinking of movies as <strong>vectors</strong> of ratings, it&#8217;s natural to compute some very vector-y things like norms and dot products, as well as the length of each vector and the sum over all elements in each vector. So let&#8217;s compute these:</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities3.scala" data-gist-hide-footer="true"></code>
+
+  <p>To summarize, each row in <code>vectorCalcs</code> now contains the following fields:</p>
+
+  <ul>
+  <li><strong>movie, movie2</strong></li>
+  <li><strong>numRaters, numRaters2</strong>: the total number of people who rated each movie</li>
+  <li><strong>size</strong>: the number of people who rated both movie and movie2</li>
+  <li><strong>dotProduct</strong>: dot product between the movie vector (a vector of ratings) and the movie2 vector (also a vector of ratings)</li>
+  <li><strong>ratingSum, rating2sum</strong>: sum over all elements in each ratings vector</li>
+  <li><strong>ratingNormSq, rating2Normsq</strong>: squared norm of each vector</li>
+  </ul>
+
+
+  <p>So let&#8217;s go back to calculating the correlation between movie and movie2. We could, of course, calculate correlation in the standard way: find the covariance between the movie and movie2 ratings, and divide by their standard deviations.</p>
+
+  <p>But recall that we can also write correlation in the following form:</p>
+
+  <p>$Corr(X, Y) = \frac{n \sum xy - \sum x \sum y}{\sqrt{n \sum x^2 - (\sum x)^2} \sqrt{n \sum y^2 - (\sum y)^2}}$</p>
+
+  <p>(See the <a href="http://en.wikipedia.org/wiki/Correlation_and_dependence">Wikipedia page</a> on correlation.)</p>
+
+  <p>Notice that every one of the elements in this formula is a field in <code>vectorCalcs</code>! So instead of using the standard calculation, we can use this form instead:</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities4.scala" data-gist-hide-footer="true"></code>
+
+
+  <p>And that&#8217;s it! To see the full code, check out the Github repository <a href="https://github.com/echen/scaldingale">here</a>.</p>
+
+  <h1>Book Similarities</h1>
+
+  <p>Let&#8217;s run this code over some real data. Unfortunately, I didn&#8217;t have a clean source of movie ratings available, so instead I used <a href="http://www.informatik.uni-freiburg.de/~cziegler/BX/">this dataset</a> of 1 million book ratings.</p>
+
+  <p>I ran a quick command, using the handy <a href="https://github.com/twitter/scalding/wiki/Scald.rb">scald.rb script</a> that Scalding provides&#8230;</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="scald.rb" data-gist-hide-footer="true"></code>
+
+
+
+  <p>&#8230;and here&#8217;s a sample of the top output I got:</p>
+
+  <p><a href="http://i.imgur.com/e6wpQOt.png"><img src="http://i.imgur.com/e6wpQOt.png" alt="Top Book-Crossing Pairs" /></a></p>
+
+  <p>As we&#8217;d expect, we see that</p>
+
+  <ul>
+  <li><em>Harry Potter</em> books are similar to other <em>Harry Potter</em> books</li>
+  <li><em>Lord of the Rings</em> books are similar to other <em>Lord of the Rings</em> books</li>
+  <li>Tom Clancy is similar to John Grisham</li>
+  <li>Chick lit (<em>Summer Sisters</em>, by Judy Blume) is similar to chick lit (<em>Bridget Jones</em>)</li>
+  </ul>
+
+
+  <p>Just for fun, let&#8217;s also look at books similar to <em>The Great Gatsby</em>:</p>
+
+  <p><a href="http://i.imgur.com/FFzySua.png"><img src="http://i.imgur.com/FFzySua.png" alt="Great Gatsby" /></a></p>
+
+  <p>(Schoolboy memories, exactly.)</p>
+
+  <h1>More Similarity Measures</h1>
+
+  <p>Of course, there are lots of other similarity measures we could use besides correlation.</p>
+
+  <h2>Cosine Similarity</h2>
+
+  <p><a href="http://en.wikipedia.org/wiki/Cosine_similarity">Cosine similarity</a> is a another common vector-based similarity measure.</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities5.scala" data-gist-hide-footer="true"></code>
+
+
+
+  <h2>Correlation, Take II</h2>
+
+  <p>We can also also add a <em>regularized</em> correlation, by (say) adding N virtual movie pairs that have zero correlation. This helps avoid noise if some movie pairs have very few raters in common (for example, <em>The Great Gatsby</em> had an unlikely raw correlation of 1 with many other books, due simply to the fact that those book pairs had very few ratings).</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities6.scala" data-gist-hide-footer="true"></code>
+
+
+
+  <h2>Jaccard Similarity</h2>
+
+  <p>Recall that <a href="http://blog.echen.me/blog/2011/10/24/winning-the-netflix-prize-a-summary/">one of the lessons of the Netflix prize</a> was that implicit data can be quite useful &#8211; the mere fact that you rate a James Bond movie, even if you rate it quite horribly, suggests that you&#8217;d probably be interested in similar action films. So we can also ignore the value itself of each rating and use a <em>set</em>-based similarity measure like <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard similarity</a>.</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities7.scala" data-gist-hide-footer="true"></code>
+  
+
+  <h2>Incorporation</h2>
+
+  <p>Finally, let&#8217;s add all these similarity measures to our output.</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities8.scala" data-gist-hide-footer="true"></code>
+  
+
+  <h1>Book Similarities Revisited</h1>
+
+  <p>Let&#8217;s take another look at the book similarities above, now that we have these new fields.</p>
+
+  <p>Here are some of the top Book-Crossing pairs, sorted by their shrunk correlation:</p>
+
+  <p><a href="http://i.imgur.com/aR4xIBL.png"><img src="http://i.imgur.com/aR4xIBL.png" alt="Top Book-Crossing Pairs" /></a></p>
+
+  <p>Notice how regularization affects things: the <em>Dark Tower</em> pair has a pretty high raw correlation, but relatively few ratings (reducing our confidence in the raw correlation), so it ends up below the others.</p>
+
+  <p>And here are books similar to <em>The Great Gatsby</em>, this time ordered by cosine similarity:</p>
+
+  <p><a href="http://i.imgur.com/lzZdXU5.png"><img src="http://i.imgur.com/lzZdXU5.png" alt="Great Gatsby" /></a></p>
+
+  <h1>Input Abstraction</h1>
+
+  <p>So our code right now is tied to our specific <code>ratings.tsv</code> input. But what if we change the way we store our ratings, or what if we want to generate similarities for something entirely different?</p>
+
+  <p>Let&#8217;s abstract away our input. We&#8217;ll create a <a href="https://github.com/echen/scaldingale/blob/master/VectorSimilarities.scala">VectorSimilarities class</a> that represents input data in the following format:</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="VectorSimilarities.scala" data-gist-hide-footer="true"></code>
+  
+
+
+  <p>Whenever we want to define a new input format, we simply subclass <code>VectorSimilarities</code> and provide a concrete implementation of the <code>input</code> method.</p>
+
+  <h2>Book-Crossings</h2>
+
+  <p>For example, here&#8217;s a class I could have used to generate the book recommendations above:</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="BookCrossing.scala" data-gist-hide-footer="true"></code>
+  
+
+
+  <p>The input method simply reads from a TSV file and lets the <code>VectorSimilarities</code> superclass do all the work. Instant recommendations, BOOM.</p>
+
+  <h2>Song Similarities with Twitter + iTunes</h2>
+
+  <p>But why limit ourselves to books? We do, after all, have Twitter at our fingertips&#8230;</p>
+
+  <blockquote class="twitter-tweet"><p>rated Born This Way by Lady GaGa 5 stars <a href="http://t.co/wTYAwWqm" title="http://itun.es/iSg92N">itun.es/iSg92N</a> <a href="https://twitter.com/search/%2523iTunes">#iTunes</a></p>&mdash; gggf (@GalMusic92) <a href="https://twitter.com/GalMusic92/status/167267017865428996" data-datetime="2012-02-08T15:22:19+00:00">February 8, 2012</a></blockquote>
+
+
+  <script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+  <p>Since iTunes lets you send a tweet whenever you rate a song, we can use these to generate music recommendations!</p>
+
+  <p>Again, we create a new class that overrides the abstract <code>input</code> defined in <code>VectorSimilarities</code>&#8230;</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="iTunes.scala" data-gist-hide-footer="true"></code>
+  
+
+
+  <p>&#8230;and snap! Here are some songs you might like if you recently listened to <strong>Beyoncé</strong>:</p>
+
+  <p><a href="http://i.imgur.com/8E8q4y1.png"><img src="http://i.imgur.com/8E8q4y1.png" alt="Jason Mraz" /></a></p>
+
+  <p>And some recommended songs if you like <strong>Lady Gaga</strong>:</p>
+
+  <p><a href="http://i.imgur.com/AUPR87F.png"><img src="http://i.imgur.com/AUPR87F.png" alt="Lady Gaga" /></a></p>
+
+  <p>GG Pandora.</p>
+
+  <h2>Location Similarities with Foursquare Check-ins</h2>
+
+  <p>But what if we don&#8217;t have explicit ratings? For example, we could be a news site that wants to generate article recommendations, and maybe we only have user <em>visits</em> on each story.</p>
+
+  <p>Or what if we want to generate restaurant or tourist recommendations, when all we know is who visits each location?</p>
+
+  <blockquote class="twitter-tweet"><p>I&#8217;m at Empire State Building (350 5th Ave., btwn 33rd & 34th St., New York) <a href="http://t.co/q6tXzf3n" title="http://4sq.com/zZ5xGd">4sq.com/zZ5xGd</a></p>&mdash; Simon Ackerman (@SimonAckerman) <a href="https://twitter.com/SimonAckerman/status/167232054247956481" data-datetime="2012-02-08T13:03:23+00:00">February 8, 2012</a></blockquote>
+
+
+  <script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+  <p>Let&#8217;s finally make Foursquare check-ins useful. (I kid, I kid.)</p>
+
+  <p>Instead of using an explicit rating given to us, we can simply generate a dummy rating of 1 for each check-in. Correlation doesn&#8217;t make sense any more, but we can still pay attention to a measure like Jaccard simiilarity.</p>
+
+  <p>So we simply create a new class that scrapes tweets for Foursquare check-in information&#8230;</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="Foursquare.scala" data-gist-hide-footer="true"></code>
+  
+
+
+  <p>&#8230;and bam! Here are locations similar to the <strong>Empire State Building</strong>:</p>
+
+  <p><a href="http://i.imgur.com/BkcbCnB.png"><img src="http://i.imgur.com/BkcbCnB.png" alt="Empire State Building" /></a></p>
+
+  <p>Here are places you might want to check out, if you check-in at <strong>Bergdorf Goodman</strong>:</p>
+
+  <p><a href="http://i.imgur.com/1IZBlUS.png"><img src="http://i.imgur.com/1IZBlUS.png" alt="Bergdorf Goodman" /></a></p>
+
+  <p>And here&#8217;s where to go after the <strong>Statue of Liberty</strong>:</p>
+
+  <p><a href="http://i.imgur.com/SktVYlM.png"><img src="http://i.imgur.com/SktVYlM.png" alt="Statue of Liberty" /></a></p>
+
+  <p>Power of Twitter, yo.</p>
+
+  <h1>RottenTomatoes Similarities</h1>
+
+  <p>UPDATE: I found some movie data after all&#8230;</p>
+
+  <blockquote class="twitter-tweet"><p>My review for &#8216;How to Train Your Dragon&#8217; on Rotten Tomatoes: 4 1/2 stars &gt;<a href="http://t.co/YTOKWLEt" title="http://bit.ly/xtw3d3">bit.ly/xtw3d3</a></p>&mdash; Benjamin West (@BenTheWest) <a href="https://twitter.com/BenTheWest/status/171772890121895936" data-datetime="2012-02-21T01:47:03+00:00">February 21, 2012</a></blockquote>
+
+
+  <p>So let&#8217;s use RottenTomatoes tweets to recommend movies! Here&#8217;s the code for a class that searches for RottenTomatoes tweets:</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="RottenTomatoes.scala" data-gist-hide-footer="true"></code>
+  
+
+  <p>And here are the most similar movies discovered:</p>
+
+  <p><a href="http://i.imgur.com/QwWgZqP.png"><img src="http://i.imgur.com/QwWgZqP.png" alt="Top RottenTomatoes Movies" /></a></p>
+
+  <p>We see that</p>
+
+  <ul>
+  <li><em>Lord of the Rings</em>, <em>Harry Potter</em>, and <em>Star Wars</em> movies are similar to other <em>Lord of the Rings</em>, <em>Harry Potter</em>, and <em>Star Wars</em> movies</li>
+  <li>Big science fiction blockbusters (<em>Avatar</em>) are similar to big science fiction blockbusters (<em>Inception</em>)</li>
+  <li>People who like one Justin Timberlake movie (<em>Bad Teacher</em>) also like other Justin Timberlake Movies (<em>In Time</em>). Similarly with Michael Fassbender (<em>A Dangerous Method</em>, <em>Shame</em>)</li>
+  <li>Art house movies (<em>The Tree of Life</em>) stick together (<em>Tinker Tailor Soldier Spy</em>)</li>
+  </ul>
+
+
+  <p>Let&#8217;s also look at the movies with the most <em>negative</em> correlation:</p>
+
+  <p><a href="http://i.imgur.com/Ln7ZZrZ.png"><img src="http://i.imgur.com/Ln7ZZrZ.png" alt="Negative RottenTomatoes Movies" /></a></p>
+
+  <p>(The more you like loud and dirty popcorn movies (<em>Thor</em>) and vamp romance (<em>Twilight</em>), the less you like arthouse? SGTM.)</p>
+
+  <h1>Next Steps</h1>
+
+  <p>Hopefully I gave you a taste of the awesomeness of Scalding. To learn even more:</p>
+
+  <ul>
+  <li>Check out <a href="https://github.com/twitter/scalding">Scalding on Github</a>.</li>
+  <li>Read <a href="https://github.com/twitter/scalding/wiki/Getting-Started">this Getting Started Guide</a> on the Scalding wiki.</li>
+  <li>Run through <a href="https://github.com/twitter/scalding/tree/master/tutorial">this code-based introduction</a>, complete with Scalding jobs that you can run in local mode.</li>
+  <li>Browse <a href="https://github.com/twitter/scalding/wiki/API-Reference">the API reference</a>, which also contains many code snippets illustrating different Scalding functions (e.g., <code>map</code>, <code>filter</code>, <code>flatMap</code>, <code>groupBy</code>, <code>count</code>, <code>join</code>).</li>
+  <li>And all the code for this post is <a href="https://github.com/echen/scaldingale">here</a>.</li>
+  </ul>
+
+
+  <p>Watch out for more documentation soon, and you should most definitely <a href="https://twitter.com/#!/scalding">follow @Scalding</a> on Twitter for updates or to ask any questions.</p>
+
+  <h1>Mad Props</h1>
+
+  <p>And finally, a huge shoutout to <a href="https://twitter.com/argyris">Argyris Zymnis</a>, <a href="https://twitter.com/avibryant">Avi Bryant</a>, and <a href="https://twitter.com/posco">Oscar Boykin</a>, the mastermind hackers who have spent (and continue spending!) unimaginable hours making Scalding a joy to use.</p>
+
+  <p>@argyris, @avibryant, @posco: Thanks for it all. #awesomejobguys #loveit</p>
+  </div>  
+
+                    </article>
  
 <div class="paginator">
-    <div class="navButton">Page 1 / 7</div>
+    <div class="navButton">Page 1 / 4</div>
         <div class="navButton"><a href="./index2.html" >Next</a></div>
 </div>
                 </div>
@@ -799,19 +2953,21 @@
 	        
 	        <div id="about" style="text-align: left">              	          
 	          <p>
-	            Math/linguistics at MIT, speech recognition at MSR, quant trading at Clarium, ads at Twitter, ML at Google.
+	            Human/AI. Ex: math and linguistics at MIT, speech recognition at MSR, quant trading at Clarium, ads at Twitter, ML at Google.
             </p>
             <br />
             <p>
-              I work on math, machine learning, human computation, and data. hello[at]echen.me
+              I work on math, machine learning, human computation, and visualization. Say hello!
+            <p>            
+            <br />
+            <p>
+              hello[&aelig;]echen.me
             </p>
             <br />	          
 	          <div style="text-align: center">
-              <a href="https://twitter.com/#!/echen">Twitter</a><br/>
               <a href="http://quora.com/edwin-chen-1">Quora</a><br />
+              <a href="https://twitter.com/#!/echen">Twitter</a><br/>
               <a href="https://github.com/echen">Github</a><br/>
-              <a href="https://plus.google.com/113804726252165471503/">Google+</a><br/>
-              <a href="http://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
               <br />
               <a href="http://blog.echen.me/feeds/all.atom.xml">Atom</a> / <a href="http://blog.echen.me/feeds/all.rss.xml">RSS</a>
             </div>
