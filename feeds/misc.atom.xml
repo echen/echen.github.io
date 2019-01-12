@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom"><title>Edwin Chen's Blog</title><link href="http://blog.echen.me/" rel="alternate"></link><link href="http://blog.echen.me/feeds/misc.atom.xml" rel="self"></link><id>http://blog.echen.me/</id><updated>2017-05-30T00:00:00+02:00</updated><entry><title>Exploring LSTMs</title><link href="http://blog.echen.me/2017/05/30/exploring-lstms/" rel="alternate"></link><updated>2017-05-30T00:00:00+02:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2017-05-30:2017/05/30/exploring-lstms/</id><summary type="html">&lt;script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"&gt;&lt;/script&gt;
 
-&lt;p&gt;LSTMs are a fairly simple extension to neural networks, and they're behind a lot of the amazing achievements deep learning has made in the past few years. So I'll try to present them as intuitively as possible – in such a way that you could have discovered them yourself.&lt;/p&gt;
+&lt;p&gt;LSTMs are behind a lot of the amazing achievements deep learning has made in the past few years, and they're a fairly simple extension to neural networks under the right view. So I'll try to present them as intuitively as possible – in such a way that you could have discovered them yourself.&lt;/p&gt;
 &lt;p&gt;But first, a picture:&lt;/p&gt;
 &lt;p&gt;&lt;img alt="LSTM" src="http://i.imgur.com/lnBi8OZ.png" /&gt;&lt;/p&gt;
 &lt;p&gt;Aren't LSTMs beautiful? Let's go.&lt;/p&gt;
