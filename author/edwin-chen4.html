@@ -4,26 +4,28 @@
         <title>Edwin Chen's Blog - Edwin Chen</title>
         <meta charset="utf-8" />
 	      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="stylesheet" href="http://blog.echen.me/theme/css/main.css" type="text/css" />
+        <link rel="stylesheet" href="../theme/css/main.css" type="text/css" />
         <link href="http://blog.echen.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Edwin Chen's Blog Atom Feed" />
         <link href="http://blog.echen.me/feeds/all.rss.xml" type="application/rss+xml" rel="alternate" title="Edwin Chen's Blog RSS Feed" />
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
 
         <!--[if IE]>
                 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
 
         <!--[if lte IE 7]>
-                <link rel="stylesheet" type="text/css" media="all" href="http://blog.echen.me/css/ie.css"/>
-                <script src="http://blog.echen.me/js/IE8.js" type="text/javascript"></script><![endif]-->
+                <link rel="stylesheet" type="text/css" media="all" href="../css/ie.css"/>
+                <script src="../js/IE8.js" type="text/javascript"></script><![endif]-->
 
         <!--[if lt IE 7]>
-                <link rel="stylesheet" type="text/css" media="all" href="http://blog.echen.me/css/ie6.css"/><![endif]-->
+                <link rel="stylesheet" type="text/css" media="all" href="../css/ie6.css"/><![endif]-->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js" type="text/javascript"></script>
 
 
 </head>
 
 <body id="index" class="home">
-	
+
         
         
 
@@ -31,823 +33,24 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/07/28/tweets-vs-likes-what-gets-shared-on-twitter-vs-facebook/">Tweets vs. Likes: What gets shared on Twitter vs. Facebook?</a></h1>
+                        <h1 class="entry-title"><a href="../2011/03/14/topological-combinatorics-and-the-evasiveness-conjecture/">Topological Combinatorics and the Evasiveness Conjecture</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-07-28T04:15:00+02:00">
-          on&nbsp;Thu 28 July 2011
-        </li>
-
-	</ul>
 
 </div><!-- /.post-info -->
-  <div class="entry-content"><p>It always strikes me as curious that some posts get a lot of love on Twitter, while others get many more shares on Facebook:</p>
+  
+  <div class="entry-content"><p>The Kahn, Saks, and Sturtevant approach to the Evasiveness Conjecture (see the original paper <a href="http://www.springerlink.com/index/R521072311641L41.pdf">here</a>) is an epic application of pure mathematics to computer science. I&#8217;ll give an overview of the approach here, and probably try to add some more information on the problem in other posts.</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/twitter-beats-fb.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/twitter-beats-fb.png" alt="Twitter Beats FB" /></a></p>
+  <p><strong>tl;dr</strong> The KSS approach provides an algebraic-topological attack to a combinatorial hypothesis, and reduces a graph complexity problem to a problem of contractibility and (not) finding fixed points.</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/fb-beats-twitter.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/fb-beats-twitter.png" alt="FB Beats Twitter" /></a></p>
+  <p>First, the Evasiveness Conjecture states that any (non-trivial) monotone graph property is evasive. In other words, if you&#8217;re trying to figure out whether an undirected n-vertex graph satisfies a certain property (e.g., whether the graph contains a triangle or is connected), and this property is monotone (meaning that if you add more edges to the graph, then it still satisfies the property), then if all you&#8217;re allowed to do is ask questions of the form &#8220;Is edge (i, j) in the graph?&#8221;, then you need to query for every single edge before you can determine whether the graph satisfies the property or not. For example, if you want to figure out whether a graph G contains a clique of size 5, then you need to know whether each of the n(n-1)/2 possible edges is in the graph or not before you can answer for certain.</p>
 
-  <p>What accounts for this difference? Some of it is surely site-dependent: maybe one blogger has a Facebook page but not a Twitter account, while another has these roles reversed. But even on sites maintained by a single author, tweet-to-likes ratios can vary widely from post to post.</p>
+  <p>Next, given any monotone graph property on n-vertex graphs, we can associate it with a simplicial complex S (basically, an n-dimensional structure formed by gluing together a bunch of hypertriangles), by taking the complex to be the set of all n-vertex graphs that don&#8217;t satisfy the property.</p>
 
-  <p>So what kinds of articles tend to be more popular on Twitter, and which spread more easily on Facebook? To take a stab at an answer, I scraped data from a couple of websites over the weekend.</p>
+  <p>Kahn, Saks, and Sturtevant then prove that if a monotone graph property is not evasive, then its associated simplicial complex is contractible, and thus (by the Lefschetz Fixed-Point theorem) any auto-simplicial map on the complex (a function from the complex to itself that preserves faces) has a fixed point.</p>
 
-  <p><strong>tl;dr</strong> Twitter is still for the <em>techies</em>: articles where the number of tweets greatly outnumber FB likes tend to revolve around software companies and programming. Facebook, on the other hand, appeals to <em>everyone else</em>: yeah, to the masses, and to non-software technical folks in general as well.</p>
-
-  <h1>FlowingData</h1>
-
-  <p>The first site I looked at was Nathan Yau&#8217;s awesome <a href="http://www.flowingdata.com">FlowingData</a> website on data visualization. To see which articles are more popular on Facebook and which are more popular on Twitter, let&#8217;s sort all the FlowingData articles by their # tweets / # likes ratio.</p>
-
-  <p>Here are the 10 posts with the lowest tweets-to-likes ratio (i.e., the posts that were especially popular with Facebook users):</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-facebook2.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-facebook2-small.png" alt="FlowingData Facebook" /></a></p>
-
-  <ul>
-  <li><a href="http://flowingdata.com/2011/01/30/what-your-state-is-the-worst-at-united-states-of-shame/">What your state is the worst at – United States of shame</a></li>
-  <li><a href="http://flowingdata.com/2011/05/13/plush-statistical-distribution-pillows/">Plush statistical distribution pillows</a></li>
-  <li><a href="http://flowingdata.com/2011/03/22/are-gas-prices-really-that-high/">Are gas prices really that high?</a></li>
-  <li><a href="http://flowingdata.com/2011/01/21/hey-jude-flowchart/">Hey Jude flowchart</a></li>
-  <li><a href="http://flowingdata.com/2011/04/28/womens-dress-sizes-demystified/">Women’s dress sizes demystified</a></li>
-  <li><a href="http://flowingdata.com/2011/02/22/america-is-not-the-best-at-everything/">America is not the best at everything</a></li>
-  <li><a href="http://flowingdata.com/2011/06/10/what-you-need-to-get-together/">What you need to get together</a></li>
-  <li><a href="http://flowingdata.com/2011/01/27/dexters-victims-through-season-five/">Dexter’s victims through season five</a></li>
-  <li><a href="http://flowingdata.com/2011/05/06/correlating-dog/">Correlating dog</a></li>
-  <li><a href="http://flowingdata.com/2011/02/14/valentines-day-importance/">Valentine’s Day importance</a></li>
-  </ul>
-
-
-  <p>And here are the 10 posts with the highest tweets-to-like ratio (i.e., the posts especially popular with Twitter users):</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-twitter.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-twitter-small.png" alt="FlowingData Twitter" /></a></p>
-
-  <ul>
-  <li><a href="http://flowingdata.com/2011/01/04/delicious-mass-exodus/">Delicious mass exodus</a></li>
-  <li><a href="http://flowingdata.com/2011/05/25/pew-research-raw-survey-data-now-available/">Pew Research raw survey data now available</a></li>
-  <li><a href="http://flowingdata.com/2011/02/03/stock-market-predictions-with-twitter/">Stock market predictions with Twitter</a></li>
-  <li><a href="http://flowingdata.com/2011/01/25/growth-and-usage-of-foursquare-in-2010/">Growth and usage of foursquare in 2010</a></li>
-  <li><a href="http://flowingdata.com/2011/02/17/sunlight-labs-opens-up-real-time-congress-api/">Sunlight Labs opens up Real Time Congress API</a></li>
-  <li><a href="http://flowingdata.com/2011/03/25/open-source-data-science-toolkit/">Open-source Data Science Toolkit</a></li>
-  <li><a href="http://flowingdata.com/2011/01/24/explore-your-linkedin-network-visually-with-inmaps/">Explore your LinkedIn network visually with InMaps</a></li>
-  <li><a href="http://flowingdata.com/2011/05/03/perceived-vs-actual-country-rankings/">Perceived vs. actual country rankings</a></li>
-  <li><a href="http://flowingdata.com/2011/04/20/see-what-you-and-others-tweet-about-with-the-topic-explorer/">See what you and others tweet about with the Topic Explorer</a></li>
-  <li><a href="http://flowingdata.com/2011/04/24/history-of-detainees-at-guantnamo/">History of detainees at Guantánamo</a></li>
-  </ul>
-
-
-  <p>Notice any differences between the two?</p>
-
-  <ul>
-  <li>Instant gratification infographics, cuteness, comics, and pop culture get liked on Facebook.</li>
-  <li>APIs, datasets, visualizations related to techie sites (Delicious, foursquare, Twitter, LinkedIn), and picture-less articles get tweeted instead.</li>
-  </ul>
-
-
-  <p>Interestingly, it also looks like the colors in the top 10 Facebook articles tend to the red end of the spectrum, while the colors in the top 10 Twitter articles tend to the blue end of the spectrum. Does this pattern hold if we look at more data? Here&#8217;s a meta-visualization of the FlowingData articles, sorted by articles popular on Facebook in the top left to articles popular on Twitter in the bottom right (see <a href="http://flowingdata-melted.heroku.com/">here</a> for some interactivity and more details):</p>
-
-  <p><a href="http://flowingdata-melted.heroku.com/"><img src="http://dl.dropbox.com/u/10506/blog/flowingdata-metaviz/flowingdata-metaviz.png" alt="FlowingData MetaViz" /></a></p>
-
-  <p>It does indeed look like the images at the top (the articles popular on Facebook) are more pink, while the images at the bottom (the articles popular on Twitter) are more blue (though it would be nice to quantify this in some way)!</p>
-
-  <p>Furthermore, we can easily see from the grid that articles with no visualizations (represented by lorem ipsum text in the grid) cluster at the bottom. Grabbing some actual numbers, we find that 32% of articles with at least one picture have more shares on Facebook than on Twitter, compared to only 4% of articles with no picture at all.</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-viz-effect.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-viz-effect.png" alt="Effect of a visualization" /></a></p>
-
-  <p>Finally, let&#8217;s break down the percentage of articles with more Facebook shares by category.</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-categories.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-categories.png" alt="FlowingData Categories" /></a></p>
-
-  <p>(I filtered the categories so that each category in the plot above contains at least 5 articles.)</p>
-
-  <p>What do we find?</p>
-
-  <ul>
-  <li>Articles in the Software, Online Applications, News, and Data sources categories (yawn) get 100% of their shares from Twitter.</li>
-  <li>Articles tagged with <a href="http://flowingdata.com/category/projects/data-underload/">Data Underload</a> (which seems to contain short and sweet visualizations of everyday things), <a href="http://flowingdata.com/category/miscellaneous-data/">Miscellaneous</a> (which contains lots of comics or comic-like visualizations), and <a href="http://flowingdata.com/category/visualization/infographics/">Infographics</a> get the most shares on Facebook.</li>
-  <li>This category breakdown matches precisely what we saw in the top 10 examples above.</li>
-  </ul>
-
-
-  <h1>New Scientist</h1>
-
-  <p>When looking at FlowingData, we saw that Twitter users are much bigger on sharing technical articles. But is this true for technical articles in general, or only for programming-related posts? (In my experience with Twitter, I haven&#8217;t seen many people from math and the non-computer sciences.)</p>
-
-  <p>To answer, I took articles from the <a href="http://www.newscientist.com/search?rbsection1=Physics+%26+Math&amp;sortby=rbpubdate">Physics &amp; Math</a> and <a href="http://www.newscientist.com/search?rbsection1=tech&amp;sortby=rbpubdate">Technology</a> sections of <a href="http://www.newscientist.com">New Scientist</a>, and</p>
-
-  <ul>
-  <li>Calculated the percentage of shares each article received on Twitter (i.e., # tweets / (# tweets + # likes)).</li>
-  <li>Grouped articles by their number of tweets rounded to the nearest multiple of 25 (bin #1 contains articles close to 25 tweets, bin #2 contains articles close to 50 tweets, etc.).</li>
-  <li>Calculated the median percentage of shares on Twitter for each bin.</li>
-  </ul>
-
-
-  <p>Here&#8217;s a graph of the result:</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/tech_vs_physicsmath.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/tech_vs_physicsmath.png" alt="Technology vs. Physics &amp; Math" /></a></p>
-
-  <p>Notice that:</p>
-
-  <ul>
-  <li>The technology articles get consistently more shares from Twitter than the physics and math articles do.</li>
-  <li>Twitter accounts for the majority of the technology shares.</li>
-  <li>Facebook accounts for the majority of the physics and math shares.</li>
-  </ul>
-
-
-  <p>So this suggests that Twitter really is for computer technology in particular, not technical matters in general (though it would be nice to look at areas other than physics and math as well).</p>
-
-  <h1>Quora</h1>
-
-  <p>To get some additional evidence on the computer science vs. math/physics divide, I</p>
-
-  <ul>
-  <li>Scraped about 350 profiles of followers from each of the Computer Science, Software Engineering, Mathematics, and Physics categories on Quora;</li>
-  <li>Checked each user to see whether they link to their Facebook and Twitter accounts on their profile.</li>
-  </ul>
-
-
-  <p>Here&#8217;s the ratio of the number of people linking to their Facebook account to the number of people linking to their Twitter account, sliced by topic:</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/math-physics-vs-cs-software.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/math-physics-vs-cs-software.png" alt="Math/Physics vs. CS/Software" /></a></p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/math-physics-vs-cs-software-collapsed.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/math-physics-vs-cs-software-collapsed.png" alt="Math/Physics vs. CS/Software, Collapsed" /></a></p>
-
-  <p>We find exactly what we expect from the New Scientist data: people following the math and physics categories have noticeably smaller Twitter / Facebook ratios compared to people following the computer science and software engineering categories (i.e., compared to computer scientists and software engineers, mathematicians and physicists are more likely to be on Facebook than on Twitter). What&#8217;s more, this difference is in fact significant: the graphs display individual 90% confidence intervals (which overlap not at all or only slightly), and we do indeed get significance at the 95% level if we look at the differences between categories.</p>
-
-  <p>This corroborates the New Scientist evidence that Twitter gets the computer technology shares, while Facebook gets the math and physics shares.</p>
-
-  <h1>XKCD</h1>
-
-  <p>Finally, let&#8217;s take a look at which XKCD comics are especially popular on Facebook vs. Twitter.</p>
-
-  <p>Here are the 10 comics with the highest likes-to-tweets ratio (i.e., the comics especially popular on Facebook):</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/xkcd-facebook.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/xkcd-facebook-small.png" alt="XKCD Facebook" /></a></p>
-
-  <ul>
-  <li><a href="http://xkcd.com/846/">Dental Nerve</a></li>
-  <li><a href="http://xkcd.com/861/">Wisdom Teeth</a></li>
-  <li><a href="http://xkcd.com/876/">Trapped</a></li>
-  <li><a href="http://xkcd.com/849/">Complex Conjugate</a></li>
-  <li><a href="http://xkcd.com/854/">Learning to Cook</a></li>
-  <li><a href="http://xkcd.com/840/">Serious</a></li>
-  <li><a href="http://xkcd.com/839/">Explorers</a></li>
-  <li><a href="http://xkcd.com/815/">Mu</a></li>
-  <li><a href="http://xkcd.com/809/">Los Alamos</a></li>
-  <li><a href="http://xkcd.com/911/">Magic School Bus</a></li>
-  </ul>
-
-
-  <p>Here are the 10 comics with the highest tweets-to-likes ratio (i.e., the comics especially popular on Twitter):</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/xkcd-twitter.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/xkcd-twitter-small.png" alt="XKCD Twitter" /></a></p>
-
-  <ul>
-  <li><a href="http://xkcd.com/869/">Server Attention Span</a></li>
-  <li><a href="http://xkcd.com/818/">Illness</a></li>
-  <li><a href="http://xkcd.com/865/">Nanobots</a></li>
-  <li><a href="http://xkcd.com/912/">Manual Override</a></li>
-  <li><a href="http://xkcd.com/908/">The Cloud</a></li>
-  <li><a href="http://xkcd.com/810/">Constructive</a></li>
-  <li><a href="http://xkcd.com/887/">Future Timeline</a></li>
-  <li><a href="http://xkcd.com/844/">Good Code</a></li>
-  <li><a href="http://xkcd.com/801/">Golden Hammer</a></li>
-  <li><a href="http://xkcd.com/906/">Advertising Discovery</a></li>
-  <li><a href="http://xkcd.com/802/">Online Communities 2</a></li>
-  </ul>
-
-
-  <p>Note that the XKCD comics popular on Facebook have more of a layman flavor, while the XKCD comics popular on Twitter are much more programming-related:</p>
-
-  <ul>
-  <li>Of the XKCD comics popular on Twitter, one&#8217;s about server attention spans, another&#8217;s about IPv6 addresses, a third is about GNU info pages, another deals with cloud computing, a fifth talks about Java, and the last is about a bunch of techie sites. (This is just like what we saw with the FlowingData visualizations.)</li>
-  <li>Facebook, on the other hand, gets Ke$ha and Magic School Bus.</li>
-  <li>And while both top 10&#8217;s contain a flowchart, the one popular on FB is about <em>cooking</em>, while the one popular on Twitter is about <em>code</em>!</li>
-  <li>What&#8217;s more, if we look at the few technical-ish comics that are more popular on Facebook (the complex conjugate, mu, and Los Alamos comics), we see that they&#8217;re about physics and math, not programming (which matches our findings from the New Scientist articles).</li>
-  </ul>
-
-
-  <h1>Lesson</h1>
-
-  <p>So why should you care? Here&#8217;s one takeaway:</p>
-
-  <ul>
-  <li>If you&#8217;re blogging about technology, programming, and computer science, Twitter is your friend.</li>
-  <li>But if you&#8217;re blogging about anything else, be it math/physics or pop culture, don&#8217;t rely on a Twitter account alone; your shares are more likely to propagate on Facebook, so make sure to have a Facebook page as well.</li>
-  </ul>
-
-
-  <h1>What&#8217;s Next?</h1>
-
-  <p>The three websites I looked at are all fairly tech-oriented, so it would be nice to gather data from other kinds of websites as well.</p>
-
-  <p>And now that we have an idea how Twitter and Facebook compare, the next burning question is surely: <a href="http://finalbossform.com/post/7214184180/google-is-fast-becoming-the-leading-social">what do people share on Google+?!</a></p>
-
-  <h1>Addendum</h1>
-
-  <p>Let&#8217;s consider the following thought experiment. Suppose you come across the most unpopular article ever written. What will its FB vs. Twitter shares look like? Although no <em>real</em> person will ever share this article, I think Twitter has many more spambots (who tweet out any and every link) than FB does, so maybe unpopular articles will have more tweets than likes by default. Conversely, suppose you come across the most popular article ever written, which everybody wants to share. Then since FB has many more users than Twitter does, maybe popular articles will tend to have more likes than tweets anyways.</p>
-
-  <p>Thus, in order to find out which types of articles are <em>especially</em> popular on FB vs. Twitter, instead of looking at tweets-to-likes ratios directly, we could try to remove this baseline popularity effect. (Taking ratios instead of raw number of tweets or raw number of likes is one kind of normalization; this is another.)</p>
-
-  <p>So does this scenario (or something similar to it) actually play out in practice?</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-overall-popularity-vs-fb.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-overall-popularity-vs-fb.png" alt="Overall Popularity vs. Facebook" /></a></p>
-
-  <p>Here I&#8217;ve plotted the overall popularity of a post (the total number of shares it received on either Twitter or FB) against the percentage of shares on Facebook alone, and we can see that as a post&#8217;s popularity grows, more and more shares do indeed tend to come from Facebook rather than Twitter.</p>
-
-  <p>Also, see the posts at the lower end of the popularity scale that are only getting shares on Twitter? Let&#8217;s take a look at the five most unpopular of these:</p>
-
-  <ul>
-  <li><a href="http://flowingdata.com/2011/03/31/flowingdata-is-brought-to-you-by-8/">Flowing Data is brought to you by&#8230; (March 2011 edition)</a> (11 tweets, 0 likes)</li>
-  <li><a href="http://flowingdata.com/2011/07/05/flowingdata-is-brought-to-you-by-11/">Flowing Data is brought to you by&#8230; (July 2011 edition)</a> (14 tweets, 0 likes)</li>
-  <li><a href="http://flowingdata.com/2011/06/06/flowingdata-is-brought-to-you-by-10/">Flowing Data is brought to you by&#8230; (June 2011 edition)</a> (17 tweets, 0 likes)</li>
-  <li><a href="http://flowingdata.com/2011/05/09/flowingdata-is-brought-to-you-by-9/">Flowing Data is brought to you by&#8230; (May 2011 edition)</a> (18 tweets, 0 likes)</li>
-  <li><a href="http://flowingdata.com/2011/02/28/flowingdata-is-brought-to-you-by-7/">Flowing Data is brought to you by&#8230; (May 2011 edition)</a> (12 tweets, 1 like)</li>
-  </ul>
-
-
-  <p>Notice that they&#8217;re all shoutouts to FlowingData&#8217;s sponsors! There&#8217;s pretty much no reason any <em>real</em> person would share these on Twitter or Facebook, and indeed, checking Twitter to see who actually tweeted out these links, we see that the tweeters are bots:</p>
-
-  <ul>
-  <li><a href="https://twitter.com/#!/myVisualization/status/77685824224894976">https://twitter.com/#!/myVisualization/status/77685824224894976</a></li>
-  <li><a href="https://twitter.com/#!/InfographicTwts/status/67668615142457344">https://twitter.com/#!/InfographicTwts/status/6766861514245734</a></li>
-  <li><a href="https://twitter.com/#!/guysgoogle/status/77644902510493696">https://twitter.com/#!/guysgoogle/status/77644902510493696</a></li>
-  <li><a href="https://twitter.com/#!/WhereIsYourData/status/77631743292735488">https://twitter.com/#!/WhereIsYourData/status/77631743292735488</a></li>
-  </ul>
-
-
-  <p>Now let&#8217;s switch to a slightly different view of the above scenario, where I plot number of tweets against number of likes:</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-tweets-vs-likes.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/flowingdata-tweets-vs-likes.png" alt="FlowingData Tweets vs. Likes" /></a></p>
-
-  <p>We see that as popularity on Twitter increases, so too does popularity on Facebook &#8211; but at a slightly faster rate. (The form of the blue line plotted is roughly $\log(likes) = -3.87 + 1.70 \log(tweets)$.)</p>
-
-  <p>So instead of looking at the ratios above, to figure out which articles are popular on FB vs. Twitter, we could look at the residuals of the above plot. Posts with large positive residuals would be posts that are especially popular on FB, and posts with negative residuals would be posts that are especially popular on Twitter.</p>
-
-  <p>In practice, however, there wasn&#8217;t much difference between looking at residuals vs. ratios directly when using the datasets I had, so to keep things simple in the main discussion above, I stuck to ratios alone. Still, it&#8217;s another option which might be useful when looking at different questions or different sources of data, so just for completeness, here&#8217;s what the FlowingData results look like if we use residuals instead.</p>
-
-  <p>The 10 articles with the highest residuals (i.e., the articles most popular on Facebook):</p>
-
-  <ul>
-  <li><a href="http://flowingdata.com/2011/06/10/what-you-need-to-get-together/">What you need to get together</a></li>
-  <li><a href="http://flowingdata.com/2011/02/14/valentines-day-importance/">Valentine’s Day importance</a></li>
-  <li><a href="http://flowingdata.com/2011/01/30/what-your-state-is-the-worst-at-united-states-of-shame/">What your state is the worst at – United States of shame</a></li>
-  <li><a href="http://flowingdata.com/2011/05/13/plush-statistical-distribution-pillows/">Plush statistical distribution pillows</a></li>
-  <li><a href="http://flowingdata.com/2011/07/01/hitler-learns-topology/">Hitler learns topology</a></li>
-  <li><a href="http://flowingdata.com/2011/01/27/dexters-victims-through-season-five/">Dexter’s victims through season five</a></li>
-  <li><a href="http://flowingdata.com/2011/07/06/access-to-education-where-you-live/">Access to education where you live</a></li>
-  <li><a href="http://flowingdata.com/2011/03/09/watching-costco-warehouses-open-nationwide/">Watching the growth of Costco warehouses</a></li>
-  <li><a href="http://flowingdata.com/2011/03/22/are-gas-prices-really-that-high/">Are gas prices really that high?</a></li>
-  <li><a href="http://flowingdata.com/2011/01/21/flight-safety-esque-beer-pong-guide/">Flight safety-esque beer pong guide</a></li>
-  </ul>
-
-
-  <p>The 10 articles with the lowest residuals (i.e., the articles most popular on Twitter):</p>
-
-  <ul>
-  <li><a href="http://flowingdata.com/2011/05/25/pew-research-raw-survey-data-now-available/">Pew Research raw survey data now available</a></li>
-  <li><a href="http://flowingdata.com/2011/01/24/explore-your-linkedin-network-visually-with-inmaps/">Explore your LinkedIn network visually with InMaps</a></li>
-  <li><a href="http://flowingdata.com/2011/02/03/stock-market-predictions-with-twitter/">Stock market predictions with Twitter</a></li>
-  <li><a href="http://flowingdata.com/2011/01/04/delicious-mass-exodus/">Delicious mass exodus</a></li>
-  <li><a href="http://flowingdata.com/2011/03/25/open-source-data-science-toolkit/">Open-source Data Science Toolkit</a></li>
-  <li><a href="http://flowingdata.com/2011/04/17/business-intelligence-vs-infotainment/">Business intelligence vs. infotainment</a></li>
-  <li><a href="http://flowingdata.com/2011/04/20/see-what-you-and-others-tweet-about-with-the-topic-explorer/">See what you and others tweet about with the Topic Explorer</a></li>
-  <li><a href="http://flowingdata.com/2011/01/25/growth-and-usage-of-foursquare-in-2010/">Growth and usage of foursquare in 2010</a></li>
-  <li><a href="http://flowingdata.com/2011/05/10/flash-vs-html5/">Flash vs. HTML5</a></li>
-  <li><a href="http://flowingdata.com/2011/06/09/gender-and-time-comparisons-on-twitter/">Gender and time comparisons on Twitter</a></li>
-  </ul>
-
-
-  <p>Here&#8217;s a density plot of article residuals, split by whether the article has a visualization or not (residuals of picture-free articles are clearly shifted towards the negative end):</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/has-viz-residuals.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/has-viz-residuals.png" alt="Residuals" /></a></p>
-
-  <p>Here are the mean residuals per category (again, we see that the miscellaneous, data underload, data art, and infographics categories tend to be more popular on Facebook, while the data sources, software, online applications, and news categories tend to be more popular on Twitter):</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/category-residuals.png"><img src="http://dl.dropbox.com/u/10506/blog/likes-vs-tweets/category-residuals.png" alt="Category Residuals" /></a></p>
-
-  <p>And that&#8217;s it! In the spirit of these findings, I hope this article gets <a href="http://blog.echen.me/2011/07/28/tweets-vs-likes-what-gets-shared-on-twitter-vs-facebook/?share=facebook&amp;nb=1">liked</a> a little and <a href="https://twitter.com/share?original_referer=http%3A%2F%2Fblog.echen.me%2F2011%2F07%2F28%2Ftweets-vs-likes-what-gets-shared-on-twitter-vs-facebook%2F&amp;source=tweetbutton&amp;text=Tweets%20vs.%20Likes%3A%20What%20gets%20shared%20on%20Twitter%20vs.%20Facebook%3F%3A&amp;url=http%3A%2F%2Fwp.me%2Fpy9AS-6P">tweeted</a> lots and lots.</p>
-  </div>  
-<script type= "text/javascript">
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-</script>
-
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/07/18/introduction-to-restricted-boltzmann-machines/">Introduction to Restricted Boltzmann Machines</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-07-18T04:15:00+02:00">
-          on&nbsp;Mon 18 July 2011
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p>Suppose you ask a bunch of users to rate a set of movies on a 0-100 scale. In classical <a href="http://en.wikipedia.org/wiki/Factor_analysis">factor analysis</a>, you could then try to explain each movie and user in terms of a set of latent <em>factors</em>. For example, movies like Star Wars and Lord of the Rings might have strong associations with a latent science fiction and fantasy factor, and users who like Wall-E and Toy Story might have strong associations with a latent Pixar factor.</p>
-
-
-
-
-  <p>Restricted Boltzmann Machines essentially perform a <em>binary</em> version of factor analysis. (This is one way of thinking about RBMs; there are, of course, others, and lots of different ways to use RBMs, but I&#8217;ll adopt this approach for this post.) Instead of users rating a set of movies on a continuous scale, they simply tell you whether they like a movie or not, and the RBM will try to discover latent factors that can explain the activation of these movie choices.</p>
-
-
-
-
-  <p>More technically, a Restricted Boltzmann Machine is a <strong>stochastic neural network</strong> (<em>neural network</em> meaning we have neuron-like units whose binary activations depend on the neighbors they&#8217;re connected to; <em>stochastic</em> meaning these activations have a probabilistic element) consisting of:</p>
-
-
-
-
-  <ul>
-  <li>One layer of <strong>visible units</strong> (users&#8217; movie preferences whose states we know and set);</li>
-  <li>One layer of <strong>hidden units</strong> (the latent factors we try to learn); and</li>
-  <li>A bias unit (whose state is always on, and is a way of adjusting for the different inherent popularities of each movie).</li>
-  </ul>
-
-
-
-
-  <p>Furthermore, each visible unit is connected to all the hidden units (this connection is undirected, so each hidden unit is also connected to all the visible units), and the bias unit is connected to all the visible units and all the hidden units. To make learning easier, we restrict the network so that no visible unit is connected to any other visible unit and no hidden unit is connected to any other hidden unit.</p>
-
-
-
-
-  <p>For example, suppose we have a set of six movies (Harry Potter, Avatar, LOTR 3, Gladiator, Titanic, and Glitter) and we ask users to tell us which ones they want to watch. If we want to learn two latent units underlying movie preferences &#8211; for example, two natural groups in our set of six movies appear to be SF/fantasy (containing Harry Potter, Avatar, and LOTR 3) and Oscar winners (containing LOTR 3, Gladiator, and Titanic), so we might hope that our latent units will correspond to these categories &#8211; then our RBM would look like the following:</p>
-
-
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/rbms/rbm-example.png"><img src="http://dl.dropbox.com/u/10506/blog/rbms/rbm-example.png" alt="RBM Example" /></a></p>
-
-
-
-
-  <p>(Note the resemblance to a factor analysis graphical model.)</p>
-
-
-
-
-  <h1>State Activation</h1>
-
-
-
-
-  <p>Restricted Boltzmann Machines, and neural networks in general, work by updating the states of some neurons given the states of others, so let&#8217;s talk about how the states of individual units change. Assuming we know the connection weights in our RBM (we&#8217;ll explain how to learn these below), to update the state of unit $i$:</p>
-
-
-
-
-  <ul>
-  <li>Compute the <strong>activation energy</strong> $a\_i = &#92;sum\_j w\_{ij} x\_j$ of unit $i$, where the sum runs over all units $j$ that unit $i$ is connected to, $w\_{ij}$ is the weight of the connection between $i$ and $j$, and $x\_j$ is the 0 or 1 state of unit $j$. In other words, all of unit $i$&#8217;s neighbors send it a message, and we compute the sum of all these messages.</li>
-  <li>Let $p\_i = &#92;sigma(a\_i)$, where $&#92;sigma(x) = 1/(1 + exp(-x))$ is the logistic function. Note that $p\_i$ is close to 1 for large positive activation energies, and $p\_i$ is close to 0 for negative activation energies.</li>
-  <li>We then turn unit $i$ on with probability $p\_i$, and turn it off with probability $1 - p\_i$.</li>
-  <li>(In layman&#8217;s terms, units that are positively connected to each other try to get each other to share the same state (i.e., be both on or off), while units that are negatively connected to each other are enemies that prefer to be in different states.)</li>
-  </ul>
-
-
-
-
-  <p>For example, let&#8217;s suppose our two hidden units really do correspond to SF/fantasy and Oscar winners.</p>
-
-
-
-
-  <ul>
-  <li>If Alice has told us her six binary preferences on our set of movies, we could then ask our RBM which of the hidden units her preferences activate (i.e., ask the RBM to explain her preferences in terms of latent factors). So the six movies send messages to the hidden units, telling them to update themselves. (Note that even if Alice has declared she wants to watch Harry Potter, Avatar, and LOTR 3, this doesn&#8217;t guarantee that the SF/fantasy hidden unit will turn on, but only that it will turn on with high <em>probability</em>. This makes a bit of sense: in the real world, Alice wanting to watch all three of those movies makes us highly suspect she likes SF/fantasy in general, but there&#8217;s a small chance she wants to watch them for other reasons. Thus, the RBM allows us to <em>generate</em> models of people in the messy, real world.)</li>
-  <li>Conversely, if we know that one person likes SF/fantasy (so that the SF/fantasy unit is on), we can then ask the RBM which of the movie units that hidden unit turns on (i.e., ask the RBM to generate a set of movie recommendations). So the hidden units send messages to the movie units, telling them to update their states. (Again, note that the SF/fantasy unit being on doesn&#8217;t guarantee that we&#8217;ll always recommend all three of Harry Potter, Avatar, and LOTR 3 because, hey, not everyone who likes science fiction liked Avatar.)</li>
-  </ul>
-
-
-
-
-  <h1>Learning Weights</h1>
-
-
-
-
-  <p>So how do we learn the connection weights in our network? Suppose we have a bunch of training examples, where each training example is a binary vector with six elements corresponding to a user&#8217;s movie preferences. Then for each epoch, do the following:</p>
-
-
-
-
-  <ul>
-  <li>Take a training example (a set of six movie preferences). Set the states of the visible units to these preferences.</li>
-  <li>Next, update the states of the hidden units using the logistic activation rule described above: for the $j$th hidden unit, compute its activation energy $a\_j = &#92;sum\_i w\_{ij} x\_i$, and set $x\_j$ to 1 with probability $&#92;sigma(a\_j)$ and to 0 with probability $1 - &#92;sigma(a\_j)$. Then for each edge $e\_{ij}$, compute $Positive(e\_{ij}) = x\_i \* x\_j$ (i.e., for each pair of units, measure whether they&#8217;re both on).</li>
-  <li>Now <strong>reconstruct</strong> the visible units in a similar manner: for each visible unit, compute its activation energy $a\_i$, and update its state. (Note that this <em>reconstruction</em> may not match the original preferences.) Then update the hidden units again, and compute $Negative(e\_{ij}) = x\_i \* x\_j$ for each edge.</li>
-  <li>Update the weight of each edge $e\_{ij}$ by setting $w\_{ij} = w\_{ij} + L \* (Positive(e\_{ij}) - Negative(e\_{ij}))$, where $L$ is a learning rate.</li>
-  <li>Repeat over all training examples.</li>
-  </ul>
-
-
-
-
-  <p>Continue until the network converges (i.e., the error between the training examples and their reconstructions falls below some threshold) or we reach some maximum number of epochs.</p>
-
-
-
-
-  <p>Why does this update rule make sense? Note that</p>
-
-
-
-
-  <ul>
-  <li>In the first phase, $Positive(e\_{ij})$ measures the association between the $i$th and $j$th unit that we <em>want</em> the network to learn from our training examples;</li>
-  <li>In the &#8220;reconstruction&#8221; phase, where the RBM generates the states of visible units based on its hypotheses about the hidden units alone, $Negative(e\_{ij})$ measures the association that the network <em>itself</em> generates (or &#8220;daydreams&#8221; about) when no units are fixed to training data.</li>
-  </ul>
-
-
-
-
-  <p>So by adding $Positive(e\_{ij}) - Negative(e\_{ij})$ to each edge weight, we&#8217;re helping the network&#8217;s daydreams better match the reality of our training examples.</p>
-
-
-
-
-  <p>(You may hear this update rule called <strong>contrastive divergence</strong>, which is basically a funky term for &#8220;approximate gradient descent&#8221;.)</p>
-
-
-
-
-  <h1>Examples</h1>
-
-
-
-
-  <p>I wrote <a href="https://github.com/echen/restricted-boltzmann-machines">a simple RBM implementation</a> in Python (the code is heavily commented, so take a look if you&#8217;re still a little fuzzy on how everything works), so let&#8217;s use it to walk through some examples.</p>
-
-
-
-
-  <p>First, I trained the RBM using some fake data.</p>
-
-
-
-
-  <ul>
-  <li>Alice: (Harry Potter = 1, Avatar = 1, LOTR 3 = 1, Gladiator = 0, Titanic = 0, Glitter = 0). Big SF/fantasy fan.</li>
-  <li>Bob: (Harry Potter = 1, Avatar = 0, LOTR 3 = 1, Gladiator = 0, Titanic = 0, Glitter = 0). SF/fantasy fan, but doesn&#8217;t like Avatar.</li>
-  <li>Carol: (Harry Potter = 1, Avatar = 1, LOTR 3 = 1, Gladiator = 0, Titanic = 0, Glitter = 0). Big SF/fantasy fan.</li>
-  <li>David: (Harry Potter = 0, Avatar = 0, LOTR 3 = 1, Gladiator = 1, Titanic = 1, Glitter = 0). Big Oscar winners fan.</li>
-  <li>Eric:  (Harry Potter = 0, Avatar = 0, LOTR 3 = 1, Gladiator = 1, Titanic = 1, Glitter = 0). Oscar winners fan, except for Titanic.</li>
-  <li>Fred: (Harry Potter = 0, Avatar = 0, LOTR 3 = 1, Gladiator = 1, Titanic = 1, Glitter = 0). Big Oscar winners fan.</li>
-  </ul>
-
-
-
-
-  <p>The network learned the following weights:</p>
-
-
-
-
-  <pre><code>                 Bias Unit       Hidden 1        Hidden 2
-  Bias Unit       -0.08257658     -0.19041546      1.57007782
-  Harry Potter    -0.82602559     -7.08986885      4.96606654
-  Avatar          -1.84023877     -5.18354129      2.27197472
-  LOTR 3           3.92321075      2.51720193      4.11061383
-  Gladiator        0.10316995      6.74833901     -4.00505343
-  Titanic         -0.97646029      3.25474524     -5.59606865
-  Glitter         -4.44685751     -2.81563804     -2.91540988
-  </code></pre>
-
-
-
-
-  <p>Note that the first hidden unit seems to correspond to the Oscar winners, and the second hidden unit seems to correspond to the SF/fantasy movies, just as we were hoping.</p>
-
-
-
-
-  <p>What happens if we give the RBM a new user, George, who has (Harry Potter = 0, Avatar = 0, LOTR 3 = 0, Gladiator = 1, Titanic = 1, Glitter = 0) as his preferences? It turns the Oscar winners unit on (but not the SF/fantasy unit), correctly guessing that George probably likes movies that are Oscar winners.</p>
-
-
-
-
-  <p>What happens if we activate only the SF/fantasy unit, and run the RBM a bunch of different times? In my trials, it turned on Harry Potter, Avatar, and LOTR 3 three times; it turned on Avatar and LOTR 3, but not Harry Potter, once; and it turned on Harry Potter and LOTR 3, but not Avatar, twice. Note that, based on our training examples, these generated preferences do indeed match what we might expect real SF/fantasy fans want to watch.</p>
-
-
-
-
-  <h1>Modifications</h1>
-
-
-
-
-  <p>I tried to keep the connection-learning algorithm I described above pretty simple, so here are some modifications that often appear in practice:</p>
-
-
-
-
-  <ul>
-  <li>Above, $Negative(e\_{ij})$ was determined by taking the product of the $i$th and $j$th units after reconstructing the visible units <em>once</em> and then updating the hidden units again. We could also take the product after some larger number of reconstructions (i.e., repeat updating the visible units, then the hidden units, then the visible units again, and so on); this is slower, but describes the network&#8217;s daydreams more accurately.</li>
-  <li>Instead of using $Positive(e\_{ij})=x\_i \* x\_j$, where $x\_i$ and $x\_j$ are binary 0 or 1 <em>states</em>, we could also let $x\_i$ and/or $x\_j$ be activation <em>probabilities</em>. Similarly for $Negative(e\_{ij})$.</li>
-  <li>We could penalize larger edge weights, in order to get a sparser or more regularized model.</li>
-  <li>When updating edge weights, we could use a momentum factor: we would add to each edge a weighted sum of the current step as described above (i.e., $L \* (Positive(e\_{ij}) - Negative(e\_{ij})$) and the step previously taken.</li>
-  <li>Instead of using only one training example in each epoch, we could use <em>batches</em> of examples in each epoch, and only update the network&#8217;s weights after passing through all the examples in the batch. This can speed up the learning by taking advantage of fast matrix-multiplication algorithms.</li>
-  </ul>
-
-
-
-
-  <h1>Further</h1>
-
-
-
-
-  <p>If you&#8217;re interested in learning more about Restricted Boltzmann Machines, here are some good links.</p>
-
-
-
-
-  <ul>
-  <li><a href="http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf">A Practical guide to training restricted Boltzmann machines</a>, by Geoffrey Hinton.</li>
-  <li>A talk by Andrew Ng on <a href="http://www.youtube.com/watch?v=ZmNOAtZIgIk">Unsupervised Feature Learning and Deep Learning</a>.</li>
-  <li><a href="http://www.machinelearning.org/proceedings/icml2007/papers/407.pdf">Restricted Boltzmann Machines for Collaborative Filtering</a>. I found this paper hard to read, but it&#8217;s an interesting application to the Netflix Prize.</li>
-  <li><a href="http://arxiv.org/abs/0908.4425">Geometry of the Restricted Boltzmann Machine</a>. A very readable introduction to RBMs, &#8220;starting with the observation that its Zariski closure is a Hadamard power of the first secant variety of the Segre variety of projective lines&#8221;. (I kid, I kid.)</li>
-  </ul>
-
-  </div>  
-<script type= "text/javascript">
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-</script>
-
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/06/27/topic-modeling-the-sarah-palin-emails/">Topic Modeling the Sarah Palin Emails</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-06-27T04:15:00+02:00">
-          on&nbsp;Mon 27 June 2011
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><h1>LDA-based Email Browser</h1>
-
-  <p>Earlier this month, several thousand emails from Sarah Palin&#8217;s time as governor of Alaska were <a href="http://sunlightlabs.com/blog/2011/sarahs-inbox/">released</a>. The emails weren&#8217;t organized in any fashion, though, so to make them easier to browse, I&#8217;ve been working on some topic modeling (in particular, using latent Dirichlet allocation) to separate the documents into different groups.</p>
-
-  <p>I threw up <a href="http://sarah-palin.heroku.com/">a simple demo app</a> to view the organized documents <a href="http://sarah-palin.heroku.com/">here</a>.</p>
-
-  <h1>What is Latent Dirichlet Allocation?</h1>
-
-  <p>Briefly, given a set of documents, LDA tries to learn the latent topics underlying the set. It represents each document as a mixture of topics (generated from a Dirichlet distribution), each of which emits words with a certain probability.</p>
-
-  <p>For example, given the sentence &#8220;I listened to Justin Bieber and Lady Gaga on the radio while driving around in my car&#8221;, an LDA model might represent this sentence as 75% about music (a topic which, say, emits the words <em>Bieber</em> with 10% probability, <em>Gaga</em> with 5% probability, <em>radio</em> with 1% probability, and so on) and 25% about cars (which might emit <em>driving</em> with 15% probability and <em>cars</em> with 10% probability).</p>
-
-  <p>If you&#8217;re familiar with latent semantic analysis, you can think of LDA as a generative version. (For a more in-depth explanation, I wrote an introduction to LDA <a href="http://blog.echen.me/2011/08/22/introduction-to-latent-dirichlet-allocation/">here</a>.)</p>
-
-  <h1>Sarah Palin Email Topics</h1>
-
-  <p>Here&#8217;s a sample of the topics learnt by the model, as well as the top words for each topic. (Names, of course, are based on my own interpretation.)</p>
-
-  <ul>
-  <li><a href="http://sarah-palin.heroku.com/topics/24"><strong>Wildlife/BP Corrosion</strong></a>: game, fish, moose, wildlife, hunting, bears, polar, bear, subsistence, management, area, board, hunt, wolves, control, department, year, use, wolf, habitat, hunters, caribou, program, denby, fishing, …</li>
-  <li><a href="http://sarah-palin.heroku.com/topics/0"><strong>Energy/Fuel/Oil/Mining</strong></a>: energy, fuel, costs, oil, alaskans, prices, cost, nome, now, high, being, home, public, power, mine, crisis, price, resource, need, community, fairbanks, rebate, use, mining, villages, …</li>
-  <li><a href="http://sarah-palin.heroku.com/topics/19"><strong>Trig/Family/Inspiration</strong></a>: family, web, mail, god, son, from, congratulations, children, life, child, down, trig, baby, birth, love, you, syndrome, very, special, bless, old, husband, years, thank, best, …</li>
-  <li><a href="http://sarah-palin.heroku.com/topics/6"><strong>Gas</strong></a>: gas, oil, pipeline, agia, project, natural, north, producers, companies, tax, company, energy, development, slope, production, resources, line, gasline, transcanada, said, billion, plan, administration, million, industry, …</li>
-  <li><a href="http://sarah-palin.heroku.com/topics/12"><strong>Education/Waste</strong></a>: school, waste, education, students, schools, million, read, email, market, policy, student, year, high, news, states, program, first, report, business, management, bulletin, information, reports, 2008, quarter, …</li>
-  <li><a href="http://sarah-palin.heroku.com/topics/15"><strong>Presidential Campaign/Elections</strong></a>: mail, web, from, thank, you, box, mccain, sarah, very, good, great, john, hope, president, sincerely, wasilla, work, keep, make, add, family, republican, support, doing, p.o, …</li>
-  </ul>
-
-
-  <p>Here&#8217;s a sample email from the wildlife topic:</p>
-
-  <p><a href="http://sarah-palin.heroku.com/emails/6719"><img src="http://dl.dropbox.com/u/10506/blog/palin-browser/wildlife-email.png" alt="Wildlife Email" /></a></p>
-
-  <p>I also thought the classification for <a href="http://sarah-palin.heroku.com/emails/12900">this email</a> was really neat: the LDA model labeled it as 10% in the <a href="http://sarah-palin.heroku.com/topics/15">Presidential Campaign/Elections</a> topic and 90% in the <a href="http://sarah-palin.heroku.com/topics/24">Wildlife</a> topic, and it&#8217;s precisely a wildlife-based protest against Palin as a choice for VP:</p>
-
-  <p><a href="http://sarah-palin.heroku.com/emails/12900"><img src="http://dl.dropbox.com/u/10506/blog/palin-browser/wildlife-vp.png" alt="Wildlife-VP Protest" /></a></p>
-
-  <h1>Future Analysis</h1>
-
-  <p>In a future post, I&#8217;ll perhaps see if we can glean any interesting patterns from the email topics. For example, for a quick graph now, if we look at the percentage of emails in the <a href="http://sarah-palin.heroku.com/topics/19">Trig/Family/Inspiration topic</a> across time, we see that there&#8217;s a spike in April 2008 &#8211; exactly (and unsurprisingly) the month in which Trig was born.</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/palin-browser/trig-topic.png"><img src="http://dl.dropbox.com/u/10506/blog/palin-browser/trig-topic.png" alt="Trig" /></a></p>
-  </div>  
-
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/05/01/unsupervised-language-detection-algorithms/">Filtering for English Tweets: Unsupervised Language Detection on Twitter</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-05-01T04:15:00+02:00">
-          on&nbsp;Sun 01 May 2011
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p>(See a demo <a href="http://babel-fett.heroku.com/">here</a>.)</p>
-
-  <p>While working on a Twitter sentiment analysis project, I ran into the problem of needing to filter out all non-English tweets. (Asking the Twitter API for English-only tweets doesn&#8217;t seem to work, as it nonetheless returns tweets in Spanish, Portuguese, Dutch, Russian, and a couple other languages.)</p>
-
-  <p>Since I didn&#8217;t have any labeled data, I thought it would be fun to build an <strong>unsupervised</strong> language classifier. In particular, using an EM algorithm to build a naive Bayes model of English vs. non-English n-gram probabilities turned out to work quite well, so here&#8217;s a description.</p>
-
-  <h1>EM Algorithm</h1>
-
-  <p>Let&#8217;s recall the naive Bayes algorithm: given a tweet (a set of <em>character</em> n-grams), we estimate its language to be the language $L$ that maximizes</p>
-
-  <p>$$P(language = L | ngrams) \propto P(ngrams | language = L) P(language = L)$$</p>
-
-  <p>Thus, we need to estimate $P(ngram | language = L)$ and $P(language = L)$.</p>
-
-  <p>This would be easy <strong>if we knew the language of each tweet</strong>, since we could estimate</p>
-
-  <ul>
-  <li>$P(xyz| language = English)$ as #(number of times &#8220;xyz&#8221; is a trigram in the English tweets) / #(total trigrams in the English tweets)</li>
-  <li>$P(language = English)$ as the proportion of English tweets.</li>
-  </ul>
-
-
-  <p>Or, it would also be easy <strong>if we knew the n-gram probabilities for each language</strong>, since we could use Bayes&#8217; theorem to compute the language <em>probabilities</em> for each tweet, and then take a weighted variant of the previous paragraph.</p>
-
-  <p><strong>The problem is that we know neither of these.</strong> So what the EM algorithm says is that that we can simply <strong>guess</strong>:</p>
-
-  <ul>
-  <li>Pretend we know the language of each tweet (by randomly assigning them at the beginning).</li>
-  <li>Using this guess, we can compute the n-gram probabilities for each language.</li>
-  <li>Using the n-gram probabilities for each language, we can recompute the language probabilities of each tweet.</li>
-  <li>Using these recomputed language probabilities, we can recompute the n-gram probabilities.</li>
-  <li>And so on, recomputing the language probabilities and n-gram probabilities over and over. While our guesses will be off in the beginning, the probabilities will eventually converge to (locally) minimize the likelihood. (In my tests, my language detector would sometimes correctly converge to an English detector, and sometimes it would converge to an English-and-Dutch detector.)</li>
-  </ul>
-
-
-  <h2>EM Analogy for the Layman</h2>
-
-  <p>Why does this work? Suppose you suddenly move to New York, and you want a way to differentiate between tourists and New Yorkers based on their activities. Initially, you don&#8217;t know who&#8217;s a tourist and who&#8217;s a New Yorker, and you don&#8217;t know which are touristy activities and which are not. So you randomly place people into two groups A and B. (You randomly assign all tweets to a language)</p>
-
-  <p>Now, given all the people in group A, you notice that a large number of them visit the Statue of Liberty; similarly, you notice that a large number of people in group B walk really quickly. (You notice that one set of words often has the n-gram &#8220;ing&#8221;, and that another set of words often has the n-gram &#8220;ias&#8221;; that is, you fix the language probabilities for each tweet, and recompute the n-gram probabilities for each language.)</p>
-
-  <p>So you start to put people visiting the Statue of Liberty in group A, and you start to put fast walkers in group B. (You fix the n-gram probabilities for each language, and recompute the language probabilities for each tweet.)</p>
-
-  <p>With your new A and B groups, you notice more differentiating factors: group A people tend to carry along cameras, and group B people tend to be more finance-savvy.</p>
-
-  <p>So you start to put camera-carrying folks in group A, and finance-savvy folks in group B.</p>
-
-  <p>And so on. Eventually, you settle on two groups of people and differentiating activities: people who walk slowly and visit the Statue of Liberty, and busy-looking people who walk fast and don&#8217;t visit. Assuming there are more native New Yorkers than tourists, you can then guess that the natives are the larger group.</p>
-
-  <h1>Results</h1>
-
-  <p>I wrote some Ruby code to implement the above algorithm, and trained it on half a million tweets, using English and &#8220;not English&#8221; as my two languages. The results looked surprisingly good from just eyeballing:</p>
-
-  <p><a href="https://img.skitch.com/20110303-qfrnb8gstgheh4xech4iutfskd.jpg"><img src="https://img.skitch.com/20110303-qfrnb8gstgheh4xech4iutfskd.jpg" alt="Example Results" /></a></p>
-
-  <p>But in order to get some hard metrics and to tune parameters (e.g., n-gram size), I needed a labeled dataset. So I pulled a set of English-language and Spanish-language documents from Project Gutenberg, and split them to form training and test sets (the training set consisted of 2000 lines of English and 1000 lines of Spanish, and  1000 lines of English and 1000 lines of Spanish for the test set).</p>
-
-  <p>Trained on bigrams, the detector resulted in:</p>
-
-  <ul>
-  <li>991 true positives (English lines correctly classified as English)</li>
-  <li>9 false negatives (English lines incorrectly classified as Spanish</li>
-  <li>11 false positives (Spanish lines incorrectly classified as English)</li>
-  <li>989 true negatives (Spanish lines correctly classified as English)</li>
-  </ul>
-
-
-  <p>for a precision of 0.989 and a recall of 0.991.</p>
-
-  <p>Trained on trigrams, the detector resulted in:</p>
-
-  <ul>
-  <li>992 true positives</li>
-  <li>8 false negatives</li>
-  <li>10 false positives</li>
-  <li>990 true negatives</li>
-  </ul>
-
-
-  <p>for a precision of 0.990 and a recall of 0.992.</p>
-
-  <p>Also, when I looked at the sentences the detector was making errors on, I saw that they almost always consisted of only one or two words (e.g., the incorrectly classified sentences were lines like &#8220;inmortal&#8221;, &#8220;autumn&#8221;, and &#8220;salir&#8221;). So the detector pretty much never made a mistake on a normal sentence!</p>
-
-  <h1>Code/Demo</h1>
-
-  <p>I put the code on <a href="https://github.com/echen/unsupervised-language-identification">my Github account</a>, and a quick <a href="http://babel-fett.heroku.com/">demo app</a>, trained on trigrams from tweets with lang=&#8221;en&#8221; according to the Twitter API, is <a href="http://babel-fett.heroku.com/">here</a>.</p>
+  <p>Thus, we can prove that a monotone graph property is evasive by finding a simplicial map that has no fixed point (which we can do by showing that no orbit of the map is a face of the complex). This approach has been used to prove things like the evasiveness of graph properties when the number of vertices is prime or a prime power, and the evasiveness of all bipartite graph properties.</p>
   </div>
-<script type= "text/javascript">
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-</script>
+  
 
                     </article>
                 </div>
@@ -860,106 +63,114 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/04/27/choosing-a-machine-learning-classifier/">Choosing a Machine Learning Classifier</a></h1>
+                        <h1 class="entry-title"><a href="../2011/02/15/item-to-item-collaborative-filtering-with-amazons-recommendation-system/">Item-to-Item Collaborative Filtering with Amazon's Recommendation System</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-04-27T04:15:00+02:00">
-          on&nbsp;Wed 27 April 2011
-        </li>
-
-	</ul>
 
 </div><!-- /.post-info -->
-  <div class="entry-content"><p>How do you know what machine learning algorithm to choose for your classification problem? Of course, if you really care about accuracy, your best bet is to test out a couple different ones (making sure to try different parameters within each algorithm as well), and select the best one by cross-validation. But if you&#8217;re simply looking for a &#8220;good enough&#8221; algorithm for your problem, or a place to start, here are some general guidelines I&#8217;ve found to work well over the years.</p>
+  
+<div class="entry-content"><h1>Introduction</h1>
 
-  <h1>How large is your training set?</h1>
+<p>In making its product recommendations, Amazon makes heavy use of an item-to-item collaborative filtering approach. This essentially means that for each item X, Amazon builds a neighborhood of related items S(X); whenever you buy/look at an item, Amazon then recommends you items from that item&#8217;s neighborhood. That&#8217;s why when you sign in to Amazon and look at the front page, your recommendations are mostly of the form &#8220;You viewed&#8230; Customers who viewed this also viewed&#8230;&#8221;.</p>
 
-  <p>If your training set is small, high bias/low variance classifiers (e.g., Naive Bayes) have an advantage over low bias/high variance classifiers (e.g., kNN), since the latter will overfit. But low bias/high variance classifiers start to win out as your training set grows (they have lower asymptotic error), since high bias classifiers aren&#8217;t powerful enough to provide accurate models.</p>
+<h1>Other approaches.</h1>
 
-  <p>You can also think of this as a generative model vs. discriminative model distinction.</p>
+<p>The item-to-item approach can be contrasted to:</p>
 
-  <h1>Advantages of some particular algorithms</h1>
+<ul>
+<li><strong>A user-to-user collaborative filtering approach</strong>. This finds users similar to you (e.g., it could find users who bought a lot of items in common with you), and suggest items that they&#8217;ve bought but you haven&#8217;t.</li>
+<li><strong>A global, latent factorization approach</strong>. Rather than looking at individual items in isolation (in the item-to-item approach, if you and I both buy a book X, Amazon will make essentially the same recommendations based on X, regardless of what we&#8217;ve bought in the past), a global approach would look at all the items you&#8217;ve bought, and try to detect properties that characterize what you like. For example, if you buy a lot of science fiction books and also a lot of romance books, a global-approach algorithm might try to recommend you books with both science fiction and romance elements.</li>
+</ul>
 
-  <p><strong>Advantages of Naive Bayes:</strong> Super simple, you&#8217;re just doing a bunch of counts. If the NB conditional independence assumption actually holds, a Naive Bayes classifier will converge quicker than discriminative models like logistic regression, so you need less training data. And even if the NB assumption doesn&#8217;t hold, a NB classifier still often does a great job in practice. A good bet if  want something fast and easy that performs pretty well. Its main disadvantage is that it can&#8217;t learn interactions between features (e.g., it can&#8217;t learn that although you love movies with Brad Pitt and Tom Cruise, you hate movies where they&#8217;re together).</p>
 
-  <p><strong>Advantages of Logistic Regression:</strong> Lots of ways to regularize your model, and you don&#8217;t have to worry as much about your features being correlated, like you do in Naive Bayes. You also have a nice probabilistic interpretation, unlike decision trees or SVMs, and you can easily update your model to take in new data (using an online gradient descent method), again unlike decision trees or SVMs. Use it if you want a probabilistic framework (e.g., to easily adjust classification thresholds, to say when you&#8217;re unsure, or to get confidence intervals) or if you expect to receive more training data in the future that you want to be able to quickly incorporate into your model.</p>
+<h1>Pros/cons of the item-to-item approach:</h1>
 
-  <p><strong>Advantages of Decision Trees:</strong> Easy to interpret and explain (for some people &#8211; I&#8217;m not sure I fall into this camp). They easily handle feature interactions and they&#8217;re non-parametric, so you don&#8217;t have to worry about outliers or whether the data is linearly separable (e.g., decision trees easily take care of cases where you have class A at the low end of some feature x, class B in the mid-range of feature x, and A again at the high end). One disadvantage is that they don&#8217;t support online learning, so you have to rebuild your tree when new examples come on. Another disadvantage is that they easily overfit, but that&#8217;s where ensemble methods like random forests (or boosted trees) come in. Plus, random forests are often the winner for lots of problems in classification (usually slightly ahead of SVMs, I believe), they&#8217;re fast and scalable, and you don&#8217;t have to worry about tuning a bunch of parameters like you do with SVMs, so they seem to be quite popular these days.</p>
+<ul>
+<li><strong>Pros over the user-to-user approach</strong>: Amazon (and most applications) has many more users than items, so it&#8217;s computationally simpler to find similar items than it is to find similar users. Finding similar users is also a difficult algorithmic task, since individual users often have a very wide range of tastes, but individual items usually belong to relatively few genres.</li>
+<li><strong>Pros over the factorization approach</strong>: Simpler to implement. Faster to update recommendations: as soon as you buy a new book, Amazon can make a new recommendation in the item-to-item approach, whereas a factorization approach would have to wait until the factorization has been recomputed. The item-to-item approach can also be more easily leveraged in several areas, not only in the recommendations made to you, but also in the &#8220;similar items/other customers also bought&#8221; section when you look at a particular item.</li>
+<li><strong>Cons of the item-to-item approach</strong>: You don&#8217;t get very much diversity or surprise in item-to-item recommendations, so recommendations tend to be kind of &#8220;obvious&#8221; and boring.</li>
+</ul>
 
-  <p><strong>Advantages of SVMs:</strong> High accuracy, nice theoretical guarantees regarding overfitting, and with an appropriate kernel they can work well even if you&#8217;re data isn&#8217;t linearly separable in the base feature space. Especially popular in text classification problems where very high-dimensional spaces are the norm. Memory-intensive, hard to interpret, and kind of annoying to run and tune, though, so I think random forests are starting to steal the crown.</p>
 
-  <h1>But&#8230;</h1>
+<h1>How to find similar items</h1>
 
-  <p>Recall, though, that better data often beats better algorithms, and designing good features goes a long way. And if you have a huge dataset, then whichever classification algorithm you use might not matter so much in terms of classification performance (so choose your algorithm based on speed or ease of use instead).</p>
-
-  <p>And to reiterate what I said above, if you really care about accuracy, you should definitely try a bunch of different classifiers and select the best one by cross-validation. Or, to take a lesson from the Netflix Prize (and Middle Earth), just use an ensemble method to choose them all.</p>
-  </div>  
+<p>Since the item-to-item approach makes crucial use of similar items, here&#8217;s a high-level view of how to do it. First, associate each item with the set of users who have bought/looked at it. The similarity between any two items could then be a normalized measure of the number of users they have in common (i.e., the Jaccard index) or the cosine distance between the two items (imagine each item as a vector, with a 1 in the ith element if user i has bought it, and 0 otherwise).</p>
+</div>
 
                     </article>
  
 <div class="paginator">
-            <div class="navButton"><a href="http://blog.echen.me/author/edwin-chen3.html">Prev</a></div>
-    <div class="navButton">Page 4 / 7</div>
-        <div class="navButton"><a href="http://blog.echen.me/author/edwin-chen5.html" >Next</a></div>
+            <div class="navButton"><a href="../author/edwin-chen3.html">Prev</a></div>
+    <div class="navButton">Page 4 / 4</div>
 </div>
                 </div>
             </aside><!-- /#featured -->
             
         
-  
+
 	      <div class="LaunchyardDetail">
 	        <p>
-	          <a style="text-align: left" class="title" href="http://blog.echen.me/">Edwin Chen</a>	          
+	          <a style="text-align: left" class="title" href="../">Edwin Chen</a>
 	          <br/>
+
 	        </p>
-	        
-	        <div id="about" style="text-align: left">              	          
+
+	        <div id="about" style="text-align: left !important">
+	          <p>
+	            Building human/AI infrastructure at <a href="https://www.surgehq.ai">Surge</a>.
+            </p>
+            <br />
+            <p>
+              Need obsessively high-quality human-labeled data? Interested in a self-serve data labeling platform? <a href="https://www.surgehq.ai">Just reach out!</a> We help top companies create massive datasets to train and measure their AI.
+	          </p>
+            <br />
+            <p>
+              Former AI & engineering lead at Google, Facebook, Twitter, and Dropbox. Pure math and linguistics research at MIT.
+            </p>
+            <br />
 	          <div style="text-align: center">
-              <a href="mailto:hello[at]echen.me">Email</a><br />
-              <a href="https://twitter.com/#!/echen">Twitter</a><br/>
+              <a href="https://quora.com/edwin-chen-1">Quora</a><br />
+              <a href="https://twitter.com/echen">Twitter</a><br/>
               <a href="https://github.com/echen">Github</a><br/>
-              <a href="https://plus.google.com/113804726252165471503/">Google+</a><br/>
-              <a href="http://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
-              <a href="http://quora.com/edwin-chen-1">Quora</a><br/>
-              <br />
-              <a href="http://blog.echen.me/feeds/all.atom.xml">Atom</a> / <a href="http://blog.echen.me/feeds/all.rss.xml">RSS</a>
+              <a href="https://www.linkedin.com/in/edwinzchen">LinkedIn</a><br/>
+              <a href="mailto:hello[&aelig;]echen.me">Email</a><br/>
             </div>
           </div>
 
           <div id="recent_posts">
               <h3>Recent Posts</h3>
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
-            
+                <a style="font-size: 0.9em" href="../2017/05/30/exploring-lstms/">Exploring LSTMs  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
           </div>
         </div>
 
 
         <section id="extras" >
-       
-        
+
+
         </section><!-- /#extras -->
-	
+
         <footer id="contentinfo" >
                 <address id="about" class="vcard ">
                 Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
                 great advantage of <a href="http://python.org" target="_blank">Python</a>.
-		
-                </address><!-- /#about -->
-		
 
-                
+                </address><!-- /#about -->
+
+
+
         </footer><!-- /#contentinfo -->
 
 </body>

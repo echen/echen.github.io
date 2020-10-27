@@ -4,26 +4,28 @@
         <title>Edwin Chen's Blog</title>
         <meta charset="utf-8" />
 	      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="stylesheet" href="http://blog.echen.me/theme/css/main.css" type="text/css" />
+        <link rel="stylesheet" href="./theme/css/main.css" type="text/css" />
         <link href="http://blog.echen.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Edwin Chen's Blog Atom Feed" />
         <link href="http://blog.echen.me/feeds/all.rss.xml" type="application/rss+xml" rel="alternate" title="Edwin Chen's Blog RSS Feed" />
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
 
         <!--[if IE]>
                 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
 
         <!--[if lte IE 7]>
-                <link rel="stylesheet" type="text/css" media="all" href="http://blog.echen.me/css/ie.css"/>
-                <script src="http://blog.echen.me/js/IE8.js" type="text/javascript"></script><![endif]-->
+                <link rel="stylesheet" type="text/css" media="all" href="./css/ie.css"/>
+                <script src="./js/IE8.js" type="text/javascript"></script><![endif]-->
 
         <!--[if lt IE 7]>
-                <link rel="stylesheet" type="text/css" media="all" href="http://blog.echen.me/css/ie6.css"/><![endif]-->
+                <link rel="stylesheet" type="text/css" media="all" href="./css/ie6.css"/><![endif]-->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js" type="text/javascript"></script>
 
 
 </head>
 
 <body id="index" class="home">
-	
+
         
         
 
@@ -31,233 +33,72 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields</a></h1>
+                        <h1 class="entry-title"><a href="./2011/04/25/kickstarter-data-analysis-success-and-pricing/">Kickstarter Data Analysis: Success and Pricing</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2012-01-03T04:15:00+01:00">
-          on&nbsp;Tue 03 January 2012
-        </li>
-
-	</ul>
 
 </div><!-- /.post-info -->
-  <div class="entry-content"><p>Imagine you have a sequence of snapshots from a day in Justin Bieber&#8217;s life, and you want to label each image with the activity it represents (eating, sleeping, driving, etc.). How can you do this?</p>
+  <div class="entry-content"><p><a href="http://www.kickstarter.com/">Kickstarter</a> is an online crowdfunding platform for launching creative projects. When starting a new project, project owners specify a deadline and the minimum amount of money they need to raise. They receive the money (less a transaction fee) only if they reach or exceed that minimum; otherwise, no money changes hands.</p>
 
-  <p>One way is to ignore the sequential nature of the snapshots, and build a <em>per-image</em> classifier. For example, given a month&#8217;s worth of labeled snapshots, you might learn that dark images taken at 6am tend to be about sleeping, images with lots of bright colors tend to be about dancing, images of cars are about driving, and so on.</p>
+  <p>What&#8217;s particularly fun about Kickstarter is that in contrast to <a href="http://www.kiva.org/">that other microfinance site</a>, Kickstarter projects don&#8217;t ask for loans; instead, patrons receive pre-specified rewards unique to each project. For example, someone donating money to help an artist record an album might receive a digital copy of the album if they donate 20 dollars, or a digital copy plus a signed physical cd if they donate 50 dollars.</p>
 
-  <p>By ignoring this sequential aspect, however, you lose a lot of information. For example, what happens if you see a close-up picture of a mouth &#8211; is it about singing or eating? If you know that the <em>previous</em> image is a picture of Justin Bieber eating or cooking, then it&#8217;s more likely this picture is about eating; if, however, the previous image contains Justin Bieber singing or dancing, then this one probably shows him singing as well.</p>
+  <p>There are <a href="http://www.kickstarter.com/discover/hall-of-fame?ref=sidebar">a bunch</a> of <a href="http://www.kickstarter.com/projects/1104350651/tiktok-lunatik-multi-touch-watch-kits">neat</a> <a href="http://www.kickstarter.com/projects/2024077040/neil-gaimans-the-price">projects</a>, and I&#8217;m tempted to put one of my own on there soon, so I thought it would be fun to gather some data from the site and see what makes a project successful.</p>
 
-  <p>Thus, to increase the accuracy of our labeler, we should incorporate the labels of nearby photos, and this is precisely what a <strong>conditional random field</strong> does.</p>
+  <h1>Categories</h1>
 
-  <h1>Part-of-Speech Tagging</h1>
+  <p>I started by scraping the categories section.</p>
 
-  <p>Let&#8217;s go into some more detail, using the more common example of <strong>part-of-speech tagging</strong>.</p>
+  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/successful-projects-by-category.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/successful-projects-by-category.png" alt="Successful projects by category" /></a></p>
 
-  <p>In POS tagging, the goal is to label a sentence (a sequence of words or tokens) with tags like ADJECTIVE, NOUN, PREPOSITION, VERB, ADVERB, ARTICLE.</p>
+  <p>In true indie fashion, the artsy categories tend to dominate. (I&#8217;m surprised/disappointed how little love the Technology category gets.)</p>
 
-  <p>For example, given the sentence &#8220;Bob drank coffee at Starbucks&#8221;, the labeling might be &#8220;Bob (NOUN) drank (VERB) coffee (NOUN) at (PREPOSITION) Starbucks (NOUN)&#8221;.</p>
+  <h1>Ending Soon</h1>
 
-  <p>So let&#8217;s build a conditional random field to label sentences with their parts of speech. Just like any classifier, we&#8217;ll first need to decide on a set of feature functions $f_i$.</p>
+  <p>The categories section really only provides a history of <em>successful</em> projects, though, so to get some data on unsuccessful projects as well, I took a look at the <a href="http://www.kickstarter.com/discover/ending-soon?ref=sidebar">Ending Soon</a> section of projects whose deadlines are about to pass.</p>
 
-  <h2>Feature Functions in a CRF</h2>
+  <p>It looks like about 50% of all Kickstarter projects get successfully funded by the deadline:</p>
 
-  <p>In a CRF, each <strong>feature function</strong> is a function that takes in as input:</p>
+  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/ending-soon-success.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/ending-soon-success.png" alt="Successful projects as deadline approaches" /></a></p>
 
-  <ul>
-  <li>a sentence s</li>
-  <li>the position i of a word in the sentence</li>
-  <li>the label $l_i$ of the current word</li>
-  <li>the label $l_{i-1}$ of the previous word</li>
-  </ul>
+  <p>Interestingly, most of the final funding seems to happen in the final few days: with just 5 days left, only about 20% of all projects have been funded. (In other words, with just 5 days left, 60% of the projects that will eventually be successful are still unfunded.) So the approaching deadline seems to really spur people to donate. I wonder if it&#8217;s because of increased publicity in the final few days (the project owners begging everyone for help!) or if it&#8217;s simply procrastination in action (perhaps people want to wait to see if their donation is really necessary)?</p>
 
+  <p>Lesson: if you&#8217;re still not fully funded with only a couple days remaining, don&#8217;t despair.</p>
 
-  <p>and outputs a real-valued number (though the numbers are often just either 0 or 1).</p>
+  <h1>Success vs. Failure</h1>
 
-  <p>(Note: by restricting our features to depend on only the <em>current</em> and <em>previous</em> labels, rather than arbitrary labels throughout the sentence, I&#8217;m actually building the special case of a <strong>linear-chain CRF</strong>. For simplicity, I&#8217;m going to ignore general CRFs in this post.)</p>
+  <p>What factors lead a project to succeed? Are there any quantitative differences between projects that eventually get funded and those that don&#8217;t?</p>
 
-  <p>For example, one possible feature function could measure how much we suspect that the current word should be labeled as an adjective given that the previous word is &#8220;very&#8221;.</p>
+  <p>Two simple (if kind of obvious) things I noticed are that unsuccessful projects tend to require a larger amount of money:</p>
 
-  <h2>Features to Probabilities</h2>
+  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/successful-vs-unsuccessful-goal.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/successful-vs-unsuccessful-goal.png" alt="Unsuccessful projects tend to ask for more money" /></a></p>
 
-  <p>Next, assign each feature function $f_j$ a <strong>weight</strong> $\lambda_j$ (I&#8217;ll talk below about how to learn these weights from the data). Given a sentence s, we can now score a labeling l of s by adding up the weighted features over all words in the sentence:</p>
+  <p>and unsuccessful projects also tend to raise less money in absolute terms (i.e., it&#8217;s not just that they ask for too much money to reach their goal &#8211; they&#8217;re simply not receiving enough money as well):</p>
 
-  <p>$score(l | s) = \sum_{j = 1}^m \sum_{i = 1}^n \lambda_j f_j(s, i, l_i, l_{i-1})$</p>
+  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/successful-vs-unsuccessful-amount-pledged.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/successful-vs-unsuccessful-amount-pledged.png" alt="Unsuccessful projects received less money" /></a></p>
 
-  <p>(The first sum runs over each feature function $j$, and the inner sum runs over each position $i$ of the sentence.)</p>
+  <p>Not terribly surprising, but it&#8217;s good to confirm (and I&#8217;m still working on finding other predictors).</p>
 
-  <p>Finally, we can transform these scores into probabilities $p(l | s)$ between 0 and 1 by exponentiating and normalizing:</p>
+  <h1>Pledge Rewards</h1>
 
-  <p>$p(l | s) = \frac{exp[score(l|s)]}{\sum_{l&#8217;} exp[score(l&#8217;|s)]} = \frac{exp[\sum_{j = 1}^m \sum_{i = 1}^n \lambda_j f_j(s, i, l_i, l_{i-1})]}{\sum_{l&#8217;} exp[\sum_{j = 1}^m \sum_{i = 1}^n \lambda_j f_j(s, i, l&#8217;_i, l&#8217;_{i-1})]}$</p>
+  <p>There&#8217;s a lot of interesting work in behavioral economics on pricing and choice &#8211; for example, the <a href="http://youarenotsosmart.com/2010/07/27/anchoring-effect/">anchoring effect</a> suggests that when building a menu, you should <a href="http://www.neurosciencemarketing.com/blog/articles/neuro-menus-and-restaurant-psychology.htm">include an expensive item</a> to make other menu items look reasonably priced in comparison, and the <a href="http://en.wikipedia.org/wiki/The_Paradox_of_Choice:_Why_More_Is_Less">paradox of choice </a> suggests that too many choices lead to a decision freeze &#8211; so one aspect of the Kickstarter data I was especially interested in was how pricing of rewards affects donations. For example, does pricing the lowest reward at 25 dollars lead to more money donated (people don&#8217;t lowball at 5 dollars instead) or less money donated (25 dollars is more money than most people are willing to give)? And what happens if a new reward at 5 dollars is added &#8211; again, does it lead to more money (now people can donate something they can afford) or less money (the people that would have paid 25 dollars switch to a 5 dollar donation)?</p>
 
-  <h2>Example Feature Functions</h2>
+  <p>First, here&#8217;s a look at the total number of pledges at each price. (More accurately, it&#8217;s the number of claimed rewards at each price.) [Update: the original version of this graph was wrong, but I&#8217;ve since fixed it.]</p>
 
-  <p>So what do these feature functions look like? Examples of POS tagging features could include:</p>
+  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/pledge%20amounts.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/pledge%20amounts.png" alt="Pledge Amounts" /></a></p>
 
-  <ul>
-  <li>$f_1(s, i, l_i, l_{i-1}) = 1$ if $l_i =$ ADVERB and the ith word ends in &#8220;-ly&#8221;; 0 otherwise.
+  <p>Surprisingly, 5 dollar and 1 dollar donations are actually not the most common contribution.</p>
 
-  <ul>
-  <li>If the weight $\lambda_1$ associated with this feature is large and positive, then this feature is essentially saying that we prefer labelings where words ending in -ly get labeled as ADVERB.</li>
-  </ul>
-  </li>
-  <li>$f_2(s, i, l_i, l_{i-1}) = 1$ if $i = 1$, $l_i =$ VERB, and the sentence ends in a question mark; 0 otherwise.
+  <p>To investigate pricing effects, I started by looking at all (successful) projects that had a reward priced at 1 dollar, and compared the number of donations at 1 dollar with the number of donations at the next lowest reward.</p>
 
-  <ul>
-  <li>Again, if the weight $\lambda_2$ associated with this feature is large and positive, then labelings that assign VERB to the first word in a question (e.g., &#8220;Is this a sentence beginning with a verb?&#8221;) are preferred.</li>
-  </ul>
-  </li>
-  <li>$f_3(s, i, l_i, l_{i-1}) = 1$ if $l_{i-1} =$ ADJECTIVE and $l_i =$ NOUN; 0 otherwise.
+  <p>Up to about 15-20 dollars, there&#8217;s a steady increase in the proportion of people who choose the second reward over the first reward, but after that, the proportion decreases.</p>
 
-  <ul>
-  <li>Again, a positive weight for this feature means that adjectives tend to be followed by nouns.</li>
-  </ul>
-  </li>
-  <li>$f_4(s, i, l_i, l_{i-1}) = 1$ if $l_{i-1} =$ PREPOSITION and $l_i =$ PREPOSITION.
+  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/anchoring.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/anchoring.png" alt="Anchoring" /></a></p>
 
-  <ul>
-  <li>A <em>negative</em> weight $\lambda_4$ for this function would mean that prepositions don&#8217;t tend to follow prepositions, so we should avoid labelings where this happens.</li>
-  </ul>
-  </li>
-  </ul>
+  <p><a href="http://dl.dropbox.com/u/10506/blog/kickstarter/anchoring-abline-b.png"><img src="http://dl.dropbox.com/u/10506/blog/kickstarter/anchoring-abline-b.png" alt="Anchoring with Regression Lines" /></a></p>
 
+  <p>So this perhaps suggests that if you&#8217;re going to price your lowest reward at 1 dollar, your next reward should cost roughly 20 dollars (or slightly more, to maximize your total revenue). Pricing above 20 dollars is a little too expensive for the folks who want to support you, but aren&#8217;t rich enough to throw gads of money; maybe rewards below 20 dollars aren&#8217;t good enough to merit the higher donation.</p>
 
-  <p>And that&#8217;s it! To sum up: to build a conditional random field, you just define a bunch of feature functions (which can depend on the entire sentence, a current position, and nearby labels), assign them weights, and add them all together, transforming at the end to a probability if necessary.</p>
-
-  <p>Now let&#8217;s step back and compare CRFs to some other common machine learning techniques.</p>
-
-  <h1>Smells like Logistic Regression&#8230;</h1>
-
-  <p>The form of the CRF probabilities
-  $p(l | s) = \frac{exp[\sum_{j = 1}^m \sum_{i = 1}^n f_j(s, i, l_i, l_{i-1})]}{\sum_{l&#8217;} exp[\sum_{j = 1}^m \sum_{i = 1}^n f_j(s, i, l&#8217;_i, l&#8217;_{i-1})]}$
-  might look <a href="http://en.wikipedia.org/wiki/Logistic_regression">familiar</a>.</p>
-
-  <p>That&#8217;s because CRFs are indeed basically the sequential version of <strong>logistic regression</strong>: whereas logistic regression is a log-linear model for <em>classification</em>, CRFs are a log-linear model for <em>sequential labels</em>.</p>
-
-  <h1>Looks like HMMs&#8230;</h1>
-
-  <p>Recall that <strong><a href="http://en.wikipedia.org/wiki/Hidden_Markov_model">Hidden Markov Models</a></strong> are another model for part-of-speech tagging (and sequential labeling in general). Whereas CRFs throw any bunch of functions together to get a label score, HMMs take a <em>generative</em> approach to labeling, defining</p>
-
-  <p>$p(l,s) = p(l_1) \prod_i p(l_i | l_{i-1}) p(w_i | l_i)$</p>
-
-  <p>where</p>
-
-  <ul>
-  <li>$p(l_i | l_{i-1})$ are <strong>transition</strong> probabilities (e.g., the probability that a preposition is followed by a noun);</li>
-  <li>$p(w_i | l_i)$ are <strong>emission</strong> probabilities (e.g., the probability that a noun emits the word &#8220;dad&#8221;).</li>
-  </ul>
-
-
-  <p>So how do HMMs compare to CRFs? CRFs are more powerful &#8211; they can model everything HMMs can and more. One way of seeing this is as follows.</p>
-
-  <p>Note that the log of the HMM probability is $\log p(l,s) = \log p(l_0) + \sum_i \log p(l_i | l_{i-1}) + \sum_i \log p(w_i | l_i)$. This has exactly the log-linear form of a CRF if we consider these log-probabilities to be the weights associated to binary transition and emission indicator features.</p>
-
-  <p>That is, we can build a CRF equivalent to any HMM by&#8230;</p>
-
-  <ul>
-  <li>For each HMM <em>transition</em> probability $ p(l_i = y | l_{i-1} = x) $, define a set of CRF transition features of the form $f_{x,y}(s, i, l_i, l_{i-1}) = 1$ if $l_i = y$ and $l_{i-1} = x$. Give each feature a weight of $w_{x,y} = \log p(l_i = y | l_{i-1} = x)$.</li>
-  <li>Similarly, for each HMM <em>emission</em> probability $p(w_i = z | l_{i} = x)$, define a set of CRF emission features of the form $g_{x,y}(s, i, l_i, l_{i-1}) = 1$ if $w_i = z$ and $l_i = x$. Give each feature a weight of $w_{x,z} = \log p(w_i = z | l_i = x)$.</li>
-  </ul>
-
-
-  <p>Thus, the score $p(l|s)$ computed by a CRF using these feature functions is precisely proportional to the score computed by the associated HMM, and so every HMM is equivalent to some CRF.</p>
-
-  <p>However, CRFs can model a much richer set of label distributions as well, for two main reasons:</p>
-
-  <ul>
-  <li><strong>CRFs can define a much larger set of features.</strong> Whereas HMMs are necessarily <em>local</em> in nature (because they&#8217;re constrained to binary transition and emission feature functions, which force each word to depend only on the current label and each label to depend only on the previous label), CRFs can use more <em>global</em> features. For example, one of the features in our POS tagger above increased the probability of labelings that tagged the <em>first</em> word of a sentence as a VERB if the <em>end</em> of the sentence contained a question mark.</li>
-  <li><strong>CRFs can have arbitrary weights.</strong> Whereas the probabilities of an HMM must satisfy certain constraints (e.g., $0 &lt;= p(w_i | l_i) &lt;= 1, \sum_w p(w_i = w | l_1) = 1)$, the weights of a CRF are unrestricted (e.g., $\log p(w_i | l_i)$ can be anything it wants).</li>
-  </ul>
-
-
-  <h1>Learning Weights</h1>
-
-  <p>Let&#8217;s go back to the question of how to learn the feature weights in a CRF. One way is (surprise) to use <strong>gradient ascent</strong>.</p>
-
-  <p>Assume we have a bunch of training examples (sentences and associated part-of-speech labels). Randomly initialize the weights of our CRF model.
-  To shift these randomly initialized weights to the correct ones, for each training example&#8230;</p>
-
-  <ul>
-  <li>Go through each feature function $f_i$, and calculate the gradient of the log probability of the training example with respect to $\lambda_i$: $\frac{\partial}{\partial w_j} \log p(l | s) = \sum_{j = 1}^m f_i(s, j, l_j, l_{j-1}) - \sum_{l&#8217;} p(l&#8217; | s) \sum_{j = 1}^m f_i(s, j, l&#8217;_j, l&#8217;_{j-1})$</li>
-  <li>Note that the first term in the gradient is the contribution of feature $f_i$ under the <em>true</em> label, and the second term in the gradient is the <em>expected</em> contribution of feature $f_i$ under the current model. This is exactly the form you&#8217;d expect gradient ascent to take.</li>
-  <li>Move $\lambda_i$ in the direction of the gradient: $\lambda_i = \lambda_i + \alpha [\sum_{j = 1}^m f_i(s, j, l_j, l_{j-1}) - \sum_{l&#8217;} p(l&#8217; | s) \sum_{j = 1}^m f_i(s, j, l&#8217;_j, l&#8217;_{j-1})]$ where $\alpha$ is some learning rate.</li>
-  <li>Repeat the previous steps until some stopping condition is reached (e.g., the updates fall below some threshold).</li>
-  </ul>
-
-
-  <p>In other words, every step takes the difference between what we want the model to learn and the model&#8217;s current state, and moves $\lambda_i$ in the direction of this difference.</p>
-
-  <h1>Finding the Optimal Labeling</h1>
-
-  <p>Suppose we&#8217;ve trained our CRF model, and now a new sentence comes in. How do we do label it?</p>
-
-  <p>The naive way is to calculate $p(l | s)$ for every possible labeling l, and then choose the label that maximizes this probability. However, since there are $k^m$ possible labels for a tag set of size k and a sentence of length m, this approach would have to check an exponential number of labels.</p>
-
-  <p>A better way is to realize that (linear-chain) CRFs satisfy an <a href="http://en.wikipedia.org/wiki/Optimal_substructure">optimal substructure</a> property that allows us to use a (polynomial-time) dynamic programming algorithm to find the optimal label, similar to the <a href="http://en.wikipedia.org/wiki/Viterbi_algorithm">Viterbi algorithm</a> for HMMs.</p>
-
-  <h1>A More Interesting Application</h1>
-
-  <p>Okay, so part-of-speech tagging is kind of boring, and there are plenty of existing POS taggers out there. When might you use a CRF in real life?</p>
-
-  <p>Suppose you want to mine Twitter for the types of presents people received for Christmas:</p>
-
-  <blockquote class="twitter-tweet"><p>What people on Twitter wanted for Christmas, and what they got: <a href="http://t.co/EGeKTBgF" title="http://twitter.com/edchedch/status/153683967315419136/photo/1">twitter.com/edchedch/statu…</a></p>— Edwin Chen (@edchedch) <a href="https://twitter.com/edchedch/status/153683967315419136" data-datetime="2012-01-02T03:48:10+00:00">January 2, 2012</a></blockquote>
-
-
-  <script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-
-
-  <p>(Yes, I just embedded a tweet. BOOM.)</p>
-
-  <p>How can you figure out which words refer to gifts?</p>
-
-  <p>To gather data for the graphs above, I simply looked for phrases of the form &#8220;I want XXX for Christmas&#8221; and &#8220;I got XXX for Christmas&#8221;. However, a more sophisticated CRF variant could use a GIFT part-of-speech-like tag (even adding other tags like GIFT-GIVER and GIFT-RECEIVER, to get even more information on who got what from whom) and treat this like a POS tagging problem. Features could be based around things like &#8220;this word is a GIFT if the previous word was a GIFT-RECEIVER and the word before that was &#8216;gave&#8217;&#8221; or &#8220;this word is a GIFT if the next two words are &#8216;for Christmas&#8217;&#8221;.</p>
-
-  <h1>Fin</h1>
-
-  <p>I&#8217;ll end with some more random thoughts:</p>
-
-  <ul>
-  <li>I explicitly skipped over the graphical models framework that conditional random fields sit in, because I don&#8217;t think they add much to an initial understanding of CRFs. But if you&#8217;re interested in learning more, Daphne Koller is teaching a free, online course on <a href="http://www.pgm-class.org/">graphical models</a> starting in January.</li>
-  <li>Or, if you&#8217;re more interested in the many NLP applications of CRFs (like part-of-speech tagging or <a href="http://en.wikipedia.org/wiki/Named-entity_recognition">named entity extraction</a>), Manning and Jurafsky are teaching an <a href="http://www.nlp-class.org/">NLP class</a> in the same spirit.</li>
-  <li>I also glossed a bit over the analogy between CRFs:HMMs and Logistic Regression:Naive Bayes. This image (from <a href="http://arxiv.org/pdf/1011.4088v1">Sutton and McCallum&#8217;s introduction to conditional random fields</a>) sums it up, and shows the graphical model nature of CRFs as well:</li>
-  </ul>
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/crfs/crf-diagram.png"><img src="http://dl.dropbox.com/u/10506/blog/crfs/crf-diagram.png" alt="CRF Diagram" /></a></p></div>
-  
-<script type= "text/javascript">
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-</script>
+  <p>Next, I&#8217;m planning on digging a little deeper into pricing effects and what makes a project successful, so I&#8217;ll hopefully have some more Kickstarter analysis in a future post. In the meantime, in case anyone else wants to take a look, I put the data onto <a href="https://github.com/echen/kickstarter-data-analysis">my Github account</a>.</p>
+  </div>
 
                     </article>
                 </div>
@@ -270,175 +111,49 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary</a></h1>
+                        <h1 class="entry-title"><a href="./2011/04/21/a-mathematical-introduction-to-least-angle-regression/">A Mathematical Introduction to Least Angle Regression</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-10-24T04:15:00+02:00">
-          on&nbsp;Mon 24 October 2011
-        </li>
-
-	</ul>
 
 </div><!-- /.post-info -->
-  <div class="entry-content"><p>How was the <a href="http://en.wikipedia.org/wiki/Netflix_Prize">Netflix Prize</a> won? I went through a lot of the Netflix Prize papers a couple years ago, so I&#8217;ll try to give an overview of the techniques that went into the winning solution here.</p>
+  <div class="entry-content"><p>(For a layman&#8217;s introduction, see <a href="http://blog.echen.me/2011/03/14/least-angle-regression-for-the-hungry-layman/">here</a>.)</p>
 
-  <h1>Normalization of Global Effects</h1>
-
-  <p>Suppose Alice rates Inception 4 stars. We can think of this rating as composed of several parts:</p>
+  <p>Least Angle Regression (aka LARS) is a <strong>model selection method</strong> for linear regression (when you&#8217;re worried about overfitting or want your model to be easily interpretable). To motivate it, let&#8217;s consider some other model selection methods:</p>
 
   <ul>
-  <li>A <strong>baseline rating</strong> (e.g., maybe the mean over all user-movie ratings is 3.1 stars).</li>
-  <li>An <strong>Alice-specific effect</strong> (e.g., maybe Alice tends to rate movies lower than the average user, so her ratings are -0.5 stars lower than we normally expect).</li>
-  <li>An <strong>Inception-specific effect</strong> (e.g., Inception is a pretty awesome movie, so its ratings are 0.7 stars higher than we normally expect).</li>
-  <li>A less predictable effect based on the <strong>specific interaction</strong> between Alice and Inception that accounts for the remainder of the stars (e.g., Alice really liked Inception because of its particular combination of Leonardo DiCaprio and neuroscience, so this rating gets an additional 0.7 stars).</li>
+  <li><strong>Forward selection</strong> starts with no variables in the model, and at each step it adds to the model the variable with the most explanatory power, stopping if the explanatory power falls below some threshold. This is a fast and simple method, but it can also be too greedy: we fully add variables at each step, so correlated predictors don&#8217;t get much of a chance to be included in the model. (For example, suppose we want to build a model for the deliciousness of a PB&amp;J sandwich, and two of our variables are the amount of peanut butter and the amount of jelly. We&#8217;d like both variables to appear in our model, but since amount of peanut butter is (let&#8217;s assume) strongly correlated with the amount of jelly, once we fully add peanut butter to our model, jelly doesn&#8217;t add much explanatory power anymore, and so it&#8217;s unlikely to be added.)</li>
+  <li><strong>Forward stagewise regression</strong> tries to remedy the greediness of forward selection by only partially adding variables. Whereas forward selection finds the variable with the most explanatory power and goes all out in adding it to the model, forward stagewise finds the variable with the most explanatory power and updates its weight by only epsilon in the correct direction. (So we might first increase the weight of peanut butter a little bit, then increase the weight of peanut butter again, then increase the weight of jelly, then increase the weight of bread, and then increase the weight of peanut butter once more.) The problem now is that we have to make a ton of updates, so forward stagewise can be very inefficient.</li>
   </ul>
 
 
-  <p>In other words, we&#8217;ve decomposed the 4-star rating into:
-  4 = [3.1 (the baseline rating) - 0.5 (the Alice effect) + 0.7 (the Inception effect)] + 0.7 (the specific interaction)</p>
+  <p>LARS, then, is essentially forward stagewise made fast. Instead of making tiny hops in the direction of one variable at a time, LARS makes optimally-sized leaps in optimal directions. These directions are chosen to make equal angles (equal correlations) with each of the variables currently in our model. (We like peanut butter best, so we start eating it first; as we eat more, we get a little sick of it, so jelly starts looking equally appetizing, and we start eating peanut butter and jelly simultaneously; later, we add bread to the mix, etc.)</p>
 
-  <p>So instead of having our models predict the 4-star rating itself, we could first try to remove the effect of the baseline predictors (the first three components) and have them predict the specific 0.7 stars. (I guess you can also think of this as a simple kind of boosting.)</p>
-
-  <p>More generally, additional baseline predictors include:</p>
+  <p>In more detail, LARS works as follows:</p>
 
   <ul>
-  <li>A factor that allows Alice&#8217;s rating to (linearly) depend on the (square root of the) <strong>number of days since her first rating</strong>. (For example, have you ever noticed that you become a harsher critic over time?)</li>
-  <li>A factor that allows Alice&#8217;s rating to depend on the <strong>number of days since the movie&#8217;s first rating by anyone</strong>. (If you&#8217;re one of the first people to watch it, maybe it&#8217;s because you&#8217;re a huge fan and really excited to see it on DVD, so you&#8217;ll tend to rate it higher.)</li>
-  <li>A factor that allows Alice&#8217;s rating to depend on the <strong>number of people who have rated Inception</strong>. (Maybe Alice is a hipster who hates being part of the crowd.)</li>
-  <li>A factor that allows Alice&#8217;s rating to <strong>depend on the movie&#8217;s overall rating</strong>.</li>
-  <li>(Plus a bunch of others.)</li>
+  <li>Assume for simplicity that we&#8217;ve standardized our explanatory variables to have zero mean and unit variance, and that our response variable also has zero mean.</li>
+  <li>Start with no variables in your model.</li>
+  <li>Find the variable $ x_1 $ most correlated with the residual. (Note that the variable most correlated with the residual is equivalently the one that makes the least angle with the residual, whence the name.)</li>
+  <li>Move in the direction of this variable until some other variable $ x_2 $ is just as correlated.</li>
+  <li>At this point, start moving in a direction such that the residual stays equally correlated with $ x_1 $ and $ x_2 $ (i.e., so that the residual makes equal angles with both variables), and keep moving until some variable $ x_3 $ becomes equally correlated with our residual.</li>
+  <li>And so on, stopping when we&#8217;ve decided our model is big enough.</li>
   </ul>
 
 
-  <p>And, in fact, modeling these biases turned out to be fairly important: in their paper describing their final solution to the Netflix Prize, Bell and Koren write that</p>
+  <p>For example, consider the following image (slightly simplified from the <a href="http://www.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf">original LARS paper</a>; $x_1, x_2$ are our variables, and $y$ is our response):</p>
 
-  <blockquote><p>Of the numerous new algorithmic contributions, I would like to highlight one &#8211; those humble baseline predictors (or biases), which capture main effects in the data. While the literature mostly concentrates on the more sophisticated algorithmic aspects, we have learned that an accurate treatment of main effects is probably at least as signficant as coming up with modeling breakthroughs.</p></blockquote>
+  <p><a href="http://dl.dropbox.com/u/10506/blog/lars/lars-example.png"><img src="http://dl.dropbox.com/u/10506/blog/lars/lars-example.png" alt="LARS Example" /></a></p>
 
-
-  <p>(For a perhaps more concrete example of why removing these biases is useful, suppose you know that Bob likes the same kinds of movies that Alice does. To predict Bob&#8217;s rating of Inception, instead of simply predicting the same 4 stars that Alice rated, if we know that Bob tends to rate movies 0.3 stars higher than average, then we could first remove Alice&#8217;s bias and then add in Bob&#8217;s: 4 + 0.5 + 0.3 = 4.8.)</p>
-
-  <h1>Neighborhood Models</h1>
-
-  <p>Let&#8217;s now look at some slightly more sophisticated models. As alluded to in the section above, one of the standard approaches to collaborative filtering is to use neighborhood models.</p>
-
-  <p>Briefly, a neighborhood model works as follows. To predict Alice&#8217;s rating of Titanic, you could do two things:</p>
+  <p>Our model starts at $ \hat{\mu_0} $.</p>
 
   <ul>
-  <li><strong>Item-item approach</strong>: find a set of items similar to Titanic that Alice has also rated, and take the (weighted) mean of Alice&#8217;s ratings on them.</li>
-  <li><strong>User-user approach</strong>: find a set of users similar to Alice who rated Titanic, and again take the mean of their ratings of Titanic.</li>
+  <li>The residual (the green line) makes a smaller angle with $ x_1 $ than with $ x_2 $, so we start moving in the direction of $ x_1 $.
+  At $ \hat{\mu_1} $, the residual now makes equal angles with $ x_1, x_2 $, and so we start moving in a new direction that preserves this equiangularity/equicorrelation.</li>
+  <li>If there were more variables, we&#8217;d change directions again once a new variable made equal angles with our residual, and so on.</li>
   </ul>
 
 
-  <p>(See also my post on <a href="http://blog.echen.me/2011/02/15/an-overview-of-item-to-item-collaborative-filtering-with-amazons-recommendation-system/">item-to-item collaborative filtering on Amazon</a>.)</p>
-
-  <p>The main questions, then, are (let&#8217;s stick to the item-item approach for simplicity):</p>
-
-  <ul>
-  <li>How do we find the set of similar items?</li>
-  <li>How do we weight these items when taking their mean?</li>
-  </ul>
-
-
-  <p>The standard approach is to take some similarity metric (e.g., correlation or a Jaccard index) to define similarities between pairs of movies, take the K most similar movies under this metric (where K is perhaps chosen via cross-validation), and then use the same similarity metric when computing the weighted mean.</p>
-
-  <p>This has a couple problems:</p>
-
-  <ul>
-  <li><strong>Neighbors aren&#8217;t independent</strong>, so using a standard similarity metric to define a weighted mean overcounts information. For example, suppose you ask five friends where you should eat tonight. Three of them went to Mexico last week and are sick of burritos, so they strongly recommend against a taqueria. Thus, your friends&#8217; recommendations have a stronger bias than what you&#8217;d get if you asked five friends who didn&#8217;t know each other at all. (Compare with the situation where all three Lord of the Rings Movies are neighbors of Harry Potter.)</li>
-  <li>Different movies should perhaps be using <strong>different numbers of neighbors</strong>. Some movies may be predicted well by only one neighbor (e.g., Harry Potter 2 could be predicted well by Harry Potter 1 alone), some movies may require more, and some movies may have no good neighbors (so you should ignore your neighborhood algorithms entirely and let your other ratings models stand on their own).</li>
-  </ul>
-
-
-  <p>So another approach is the following:</p>
-
-  <ul>
-  <li>You can still use a similarity metric like correlation or cosine similarity to choose the set of similar items.</li>
-  <li>But instead of using the similarity metric to define the interpolation weights in the mean calculations, you essentially perform a (sparse) <strong>linear regression to find the weights</strong> that minimize the squared error between an item&#8217;s rating and a linear combination of the ratings of its neighbors. Note that these weights are no longer constrained, so that if all neighbors are weak, then their weights will be close to zero and the neighborhood model will have a low effect.</li>
-  </ul>
-
-
-  <p>(A slightly more complicated user-user approach, similar to this item-item neighborhood approach, is also useful.)</p>
-
-  <h1>Implicit Data</h1>
-
-  <p>Adding on to the neighborhood approach, we can also let <strong>implicit data influence our predictions</strong>. The mere fact that a user rated lots of science fiction movies but no westerns, suggests that the user likes science fiction better than cowboys. So using a similar framework as in the neighborhood ratings model, we can learn for Inception a set of <strong>offset weights</strong> associated to Inception&#8217;s movie neighbors.</p>
-
-  <p>Whenever we want to predict how Bob rates Inception, we look at whether Bob rated each of Inception&#8217;s neighbors. If he did, we add in the corresponding offset; if not, then we add nothing (and, thus, Bob&#8217;s rating is implicitly penalized by the missing weight).</p>
-
-  <h1>Matrix Factorization</h1>
-
-  <p>Complementing the neighborhood approach to collaborative filtering is the matrix factorization approach. Whereas the neighborhood approach takes a very local approach to ratings (if you liked Harry Potter 1, then you&#8217;ll like Harry Potter 2!), the factorization approach takes a more global view (we know that you like fantasy movies and that Harry Potter has a strong fantasy element, so we think that you&#8217;ll like Harry Potter) that <strong>decomposes users and movies into a set of latent factors</strong> (which we can think of as categories like &#8220;fantasy&#8221; or &#8220;violence&#8221;).</p>
-
-  <p>In fact, matrix factorization methods were probably the most important class of techniques for winning the Netflix Prize. In their 2008 Progress Prize paper, Bell and Koren write</p>
-
-  <blockquote><p>It seems that models based on matrix-factorization were found to be most accurate (and thus popular), as evident by recent publications and discussions on the Netflix Prize forum. We definitely agree to that, and would like to add that those matrix-factorization models also offer the important flexibility needed for modeling temporal effects and the binary view. Nonetheless, neighborhood models, which have been dominating most of the collaborative filtering literature, are still expected to be popular due to their practical characteristics - being able to handle new users/ratings without re-training and offering direct explanations to the recommendations.</p></blockquote>
-
-
-  <p>The typical way to perform matrix factorizations is to perform a <strong>singular value decomposition</strong> on the (sparse) ratings matrix (using stochastic gradient descent and regularizing the weights of the factors, possibly constraining the weights to be positive to get a type of non-negative matrix factorization). (Note that this &#8220;SVD&#8221; is a little different from the standard SVD learned in linear algebra, since not every user has rated every movie and so the ratings matrix contains many missing elements that we don&#8217;t want to simply treat as 0.)</p>
-
-  <p>Some SVD-inspired methods used in the Netflix Prize include:</p>
-
-  <ul>
-  <li><strong>Standard SVD</strong>: Once you&#8217;ve represented users and movies as factor vectors, you can dot product Alice&#8217;s vector with Inception&#8217;s vector to get Alice&#8217;s predicted rating of Inception.</li>
-  <li><strong>Asymmetric SVD</strong>: Instead of users having their own notion of factor vectors, we can represent users as a bag of items they have rated (or provided implicit feedback for). So Alice is now represented as a (possibly weighted) sum of the factor vectors of the items she has rated, and to get her predicted rating of Titanic, we can dot product this  representation with the factor vector of Titanic. From a practical perspective, this model has an added benefit in that no user parameterizations are needed, so we can use this approach to generate recommendations as soon as a user provides some feedback (which could just be views or clicks on an item, and not necessarily ratings), without needing to retrain the model to factorize the user.</li>
-  <li><strong>SVD++</strong>: Incorporate both the standard SVD and the asymmetric SVD model by representing users both by their own factor representation and as a bag of item vectors.</li>
-  </ul>
-
-
-  <h1>Regression</h1>
-
-  <p>Some regression models were also used in the predictions. The models are fairly standard, I think, so I won&#8217;t spend too long here. Basically, just as with the neighborhood models, we can take a user-centric approach and a movie-centric approach to regression:</p>
-
-  <ul>
-  <li><strong>User-centric approach</strong>: We learn a regression model for each user, using all the movies that the user rated as the dataset. The response is the movie&#8217;s rating, and the predictor variables are attributes associated to that movie (which can be derived from, say, PCA, MDS, or an SVD).</li>
-  <li><strong>Movie-centric approach</strong>: Similarly, we can learn a regression model for each movie, using all the users that rated the movie as the dataset.</li>
-  </ul>
-
-
-  <h1>Restricted Boltzmann Machines</h1>
-
-  <p>Restricted Boltzmann Machines provide another kind of <strong>latent factor approach</strong> that can be used. See <a href="http://www.machinelearning.org/proceedings/icml2007/papers/407.pdf">this paper</a> for a description of how to apply them to the Netflix Prize. (In case the paper&#8217;s a little difficult to read, I wrote an <a href="http://blog.echen.me/2011/07/18/introduction-to-restricted-boltzmann-machines">introduction to RBMs</a> a little while ago.)</p>
-
-  <h1>Temporal Effects</h1>
-
-  <p>Many of the models incorporate temporal effects. For example, when describing the baseline predictors above, we used a few temporal predictors that allowed a user&#8217;s rating to (linearly) depend on the time since the first rating he ever made and on the time since a movie&#8217;s first rating. We can also get more fine-grained temporal effects by, say, binning items into a couple months&#8217; worth of ratings at a time, and allowing movie biases to change within each bin. (For example, maybe in May 2006, Time Magazine nominated Titanic as the best movie ever made, which caused a spurt in glowing ratings around that time.)</p>
-
-  <p>In the matrix factorization approach, user factors were also allowed to be time-dependent (e.g., maybe Bob comes to like comedy movies more and more over time). We can also give more weight to recent user actions.</p>
-
-  <h1>Regularization</h1>
-
-  <p>Regularization was also applied throughout pretty much all the models learned, to <strong>prevent overfitting</strong> on the dataset. Ridge regression was heavily used in the factorization models to penalize large weights, and lasso regression (though less effective) was useful as well. Many other parameters (e.g., the baseline predictors, similarity weights and interpolation weights in the neighborhood models) were also estimated using fairly standard shrinkage techniques.</p>
-
-  <h1>Ensemble Methods</h1>
-
-  <p>Finally, let&#8217;s talk about how all of these different algorithms were combined to provide a single rating that <strong>exploits the strengths of each model</strong>. (Note that, as mentioned above, many of these models were not trained on the raw ratings data directly, but rather on the residuals of other models.)</p>
-
-  <p>In the paper detailing their final solution, the winners describe using <strong>gradient boosted decision trees to combine over 500 models</strong>; previous solutions used instead a <strong>linear regression</strong> to combine the predictors.</p>
-
-  <p>Briefly, gradient boosted decision trees work by sequentially fitting a series of decision trees to the data; each tree is asked to predict the error made by the previous trees, and is often trained on slightly perturbed versions of the data. (For a longer description of a similar technique, see <a href="http://blog.echen.me/2011/03/14/laymans-introduction-to-random-forests/">my introduction to random forests</a>.)</p>
-
-  <p>Since GBDTs have a built-in ability to apply different methods to different slices of the data, we can add in some predictors that help the trees make useful clusterings:</p>
-
-  <ul>
-  <li>Number of movies each user rated</li>
-  <li>Number of users that rated each movie</li>
-  <li>Factor vectors of users and movies</li>
-  <li>Hidden units of a restricted Boltzmann Machine</li>
-  </ul>
-
-
-  <p>(For example, one thing that Bell and Koren found (when using an earlier ensemble method) was that RBMs are more useful when the movie or the user has a low number of ratings, and that matrix factorization methods are more useful when the movie or user has a high number of ratings.)</p>
-
-  <p>Here&#8217;s a graph of the effect of ensemble size from early on in the competition (in 2007), and the authors&#8217; take on it:</p>
-
-  <p><a href="http://www2.research.att.com/~volinsky/netflix/newensemble.gif"><img src="http://www2.research.att.com/~volinsky/netflix/newensemble.gif" alt="Ensemble Size vs. RMSE" /></a></p>
-
-  <blockquote><p>However, we would like to stress that it is not necessary to have such a large number of models to do well. The plot below shows RMSE as a function of the number of methods used. One can achieve our winning score (RMSE=0.8712) with less than 50 methods, using the best 3 methods can yield RMSE < 0.8800, which would land in the top 10. Even just using our single best method puts us on the leaderboard with an RMSE of 0.8890. The lesson here is that having lots of models is useful for the incremental results needed to win competitions, but practically, excellent systems can be built with just a few well-selected models.</p></blockquote>
-
-  </div>  
+  <p>So when should you use LARS, as opposed to some other regularization method like lasso? There&#8217;s not really a clear-cut answer, but LARS tends to give very similar results as both lasso and forward stagewise (in fact, slight modifications to LARS give you lasso and forward stagewise), so I tend to just use lasso when I do these kinds of things, since the justifications for lasso make a little more sense to me. In fact, I don&#8217;t usually even think of LARS as a model selection method in its own right, but rather as a way to efficiently implement lasso (especially if you want to compute the full regularization path).</p>
+  </div>
 
                     </article>
                 </div>
@@ -451,860 +166,798 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like</a></h1>
+                        <h1 class="entry-title"><a href="./2011/04/16/introduction-to-cointegration-and-pairs-trading/">Introduction to Cointegration and Pairs Trading</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-09-29T04:15:00+02:00">
-          on&nbsp;Thu 29 September 2011
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p>What types of students go to which schools? There are, of course, the classic stereotypes:</p>
-
-  <ul>
-  <li><strong>MIT</strong> has the hacker engineers.</li>
-  <li><strong>Stanford</strong> has the laid-back, social folks.</li>
-  <li><strong>Harvard</strong> has the prestigious leaders of the world.</li>
-  <li><strong>Berkeley</strong> has the activist hippies.</li>
-  <li><strong>Caltech</strong> has the hardcore science nerds.</li>
-  </ul>
-
-
-  <p>But how well do these perceptions match reality? What are students at Stanford, Harvard, MIT, Caltech, and Berkeley <em>really</em> interested in? Following the path of my previous data-driven post on <a href="http://blog.echen.me/2011/04/18/twifferences-between-californians-and-new-yorkers/">differences between Silicon Valley and NYC</a>, I scraped the Quora profiles of a couple hundred followers of each school to find out.</p>
-
-  <h1>Topics</h1>
-
-  <p>So let&#8217;s look at what kinds of topics followers of each school are interested in*. (Skip past the lists for a discussion.)</p>
-
-  <h2>MIT</h2>
-
-  <p>Topics are followed by p(school = MIT|topic).</p>
-
-  <ul>
-  <li><strong>MIT Media Lab</strong>                             0.893</li>
-  <li><strong>Ksplice</strong>                                   0.69</li>
-  <li><strong>Lisp (programming language)</strong>               0.677</li>
-  <li><strong>Nokia</strong>                                     0.659</li>
-  <li><strong>Public Speaking</strong>                           0.65</li>
-  <li><strong>Data Storage</strong>                              0.65</li>
-  <li><strong>Google Voice</strong>                              0.609</li>
-  <li><strong>Hacking</strong>                                   0.602</li>
-  <li><strong>Startups in Europe</strong>                        0.597</li>
-  <li><strong>Startup Names</strong>                             0.572</li>
-  <li><strong>Mechanical Engineering</strong>                    0.563</li>
-  <li><strong>Engineering</strong>                               0.563</li>
-  <li><strong>Distributed Databases</strong>                     0.544</li>
-  <li><strong>StackOverflow</strong>                             0.536</li>
-  <li><strong>Boston</strong>                                    0.513</li>
-  <li><strong>Learning</strong>                                  0.507</li>
-  <li><strong>Open Source</strong>                               0.498</li>
-  <li><strong>Cambridge</strong>                                 0.496</li>
-  <li><strong>Public Relations</strong>                          0.493</li>
-  <li><strong>Visualization</strong>                             0.492</li>
-  <li><strong>Semantic Web</strong>                              0.486</li>
-  <li><strong>Andreessen-Horowitz</strong>                       0.483</li>
-  <li><strong>Nature</strong>                                    0.475</li>
-  <li><strong>Cryptography</strong>                              0.474</li>
-  <li><strong>Startups in Boston</strong>                        0.452</li>
-  <li><strong>Adobe Photoshop</strong>                           0.451</li>
-  <li><strong>Computer Security</strong>                         0.447</li>
-  <li><strong>Sachin Tendulkar</strong>                          0.443</li>
-  <li><strong>Hacker News</strong>                               0.442</li>
-  <li><strong>Games</strong>                                     0.429</li>
-  <li><strong>Android Applications</strong>                      0.428</li>
-  <li><strong>Best Engineers and Programmers</strong>            0.427</li>
-  <li><strong>College Admissions &amp; Getting Into College</strong> 0.422</li>
-  <li><strong>Co-Founders</strong>                               0.419</li>
-  <li><strong>Big Data</strong>                                  0.41</li>
-  <li><strong>System Administration</strong>                     0.4</li>
-  <li><strong>Biotechnology</strong>                             0.398</li>
-  <li><strong>Higher Education</strong>                          0.394</li>
-  <li><strong>NoSQL</strong>                                     0.387</li>
-  <li><strong>User Experience</strong>                           0.386</li>
-  <li><strong>Career Advice</strong>                             0.377</li>
-  <li><strong>Artificial Intelligence</strong>                   0.375</li>
-  <li><strong>Scalability</strong>                               0.37</li>
-  <li><strong>Taylor Swift</strong>                              0.368</li>
-  <li><strong>Google Search</strong>                             0.368</li>
-  <li><strong>Functional Programming</strong>                    0.365</li>
-  <li><strong>Bing</strong>                                      0.363</li>
-  <li><strong>Bioinformatics</strong>                            0.361</li>
-  <li><strong>How I Met Your Mother (TV series)</strong>         0.361</li>
-  <li><strong>Operating Systems</strong>                         0.356</li>
-  <li><strong>Compilers</strong>                                 0.355</li>
-  <li><strong>Google Chrome</strong>                             0.354</li>
-  <li><strong>Management &amp; Organizational Leadership</strong>    0.35</li>
-  <li><strong>Literary Fiction</strong>                          0.35</li>
-  <li><strong>Intelligence</strong>                              0.348</li>
-  <li><strong>Fight Club (1999 movie)</strong>                   0.344</li>
-  <li><strong>Hip Hop Music</strong>                             0.34</li>
-  <li><strong>UX Design</strong>                                 0.337</li>
-  <li><strong>Web Application Frameworks</strong>                0.336</li>
-  <li><strong>Startups in New York City</strong>                 0.333</li>
-  <li><strong>Book Recommendations</strong>                      0.33</li>
-  <li><strong>Engineering Recruiting</strong>                    0.33</li>
-  <li><strong>Search Engines</strong>                            0.329</li>
-  <li><strong>Social Search</strong>                             0.329</li>
-  <li><strong>Data Science</strong>                              0.328</li>
-  <li><strong>History</strong>                                   0.328</li>
-  <li><strong>Interaction Design</strong>                        0.326</li>
-  <li><strong>Classification (machine learning)</strong>         0.322</li>
-  <li><strong>Startup Incubators and Seed Programs</strong>      0.321</li>
-  <li><strong>Graphic Design</strong>                            0.321</li>
-  <li><strong>Product Design (software)</strong>                 0.319</li>
-  <li><strong>The College Experience</strong>                    0.319</li>
-  <li><strong>Writing</strong>                                   0.319</li>
-  <li><strong>MapReduce</strong>                                 0.318</li>
-  <li><strong>Database Systems</strong>                          0.315</li>
-  <li><strong>User Interfaces</strong>                           0.314</li>
-  <li><strong>Literature</strong>                                0.314</li>
-  <li><strong>C (programming language)</strong>                  0.314</li>
-  <li><strong>Television</strong>                                0.314</li>
-  <li><strong>Reading</strong>                                   0.313</li>
-  <li><strong>Usability</strong>                                 0.312</li>
-  <li><strong>Books</strong>                                     0.312</li>
-  <li><strong>Computers</strong>                                 0.311</li>
-  <li><strong>Stealth Startups</strong>                          0.311</li>
-  <li><strong>Daft Punk</strong>                                 0.31</li>
-  <li><strong>Healthy Eating</strong>                            0.309</li>
-  <li><strong>Innovation</strong>                                0.309</li>
-  <li><strong>Skiing</strong>                                    0.305</li>
-  <li><strong>JavaScript</strong>                                0.304</li>
-  <li><strong>Rock Music</strong>                                0.304</li>
-  <li><strong>Mozilla Firefox</strong>                           0.304</li>
-  <li><strong>Self-Improvement</strong>                          0.303</li>
-  <li><strong>McKinsey &amp; Company</strong>                        0.302</li>
-  <li><strong>AngelList</strong>                                 0.301</li>
-  <li><strong>Data Visualization</strong>                        0.301</li>
-  <li><strong>Cassandra (database)</strong>                      0.301</li>
-  </ul>
-
-
-  <h2>Stanford</h2>
-
-  <p>Topics are followed by p(school = Stanford|topic).</p>
-
-  <ul>
-  <li><strong>Stanford Computer Science</strong>                 0.951</li>
-  <li><strong>Stanford Graduate School of Business</strong>      0.939</li>
-  <li><strong>Stanford</strong>                                  0.896</li>
-  <li><strong>Stanford Football</strong>                         0.896</li>
-  <li><strong>Stanford Cardinal</strong>                         0.896</li>
-  <li><strong>Social Dance</strong>                              0.847</li>
-  <li><strong>Stanford University Courses</strong>               0.847</li>
-  <li><strong>Romance</strong>                                   0.769</li>
-  <li><strong>Instagram</strong>                                 0.745</li>
-  <li><strong>College Football</strong>                          0.665</li>
-  <li><strong>Mobile Location Applications</strong>              0.634</li>
-  <li><strong>Online Communities</strong>                        0.621</li>
-  <li><strong>Interpersonal Relationships</strong>               0.585</li>
-  <li><strong>Food &amp; Restaurants in Palo Alto</strong>           0.572</li>
-  <li><strong>Your 20s</strong>                                  0.566</li>
-  <li><strong>Men&#8217;s Fashion</strong>                             0.548</li>
-  <li><strong>Flipboard</strong>                                 0.537</li>
-  <li><strong>Inception (2010 movie)</strong>                    0.535</li>
-  <li><strong>Tumblr</strong>                                    0.531</li>
-  <li><strong>People Skills</strong>                             0.522</li>
-  <li><strong>Exercise</strong>                                  0.52</li>
-  <li><strong>Joel Spolsky</strong>                              0.516</li>
-  <li><strong>Valuations</strong>                                0.515</li>
-  <li><strong>The Social Network (2010 movie)</strong>           0.513</li>
-  <li><strong>LeBron James</strong>                              0.506</li>
-  <li><strong>Northern California</strong>                       0.506</li>
-  <li><strong>Evernote</strong>                                  0.5</li>
-  <li><strong>Quora Community</strong>                           0.5</li>
-  <li><strong>Blogging</strong>                                  0.49</li>
-  <li><strong>Downtown Palo Alto</strong>                        0.487</li>
-  <li><strong>The College Experience</strong>                    0.485</li>
-  <li><strong>Consumer Internet</strong>                         0.477</li>
-  <li><strong>Restaurants in San Francisco</strong>              0.477</li>
-  <li><strong>Chad Hurley</strong>                               0.47</li>
-  <li><strong>Meditation</strong>                                0.468</li>
-  <li><strong>Yishan Wong</strong>                               0.466</li>
-  <li><strong>Arrested Development (TV series)</strong>          0.463</li>
-  <li><strong>fbFund</strong>                                    0.457</li>
-  <li><strong>Best Engineers at X Company</strong>               0.451</li>
-  <li><strong>Language</strong>                                  0.45</li>
-  <li><strong>Words</strong>                                     0.448</li>
-  <li><strong>Happiness</strong>                                 0.447</li>
-  <li><strong>Path (company)</strong>                            0.446</li>
-  <li><strong>Color Labs (startup)</strong>                      0.446</li>
-  <li><strong>Palo Alto</strong>                                 0.445</li>
-  <li><strong>Woot.com</strong>                                  0.442</li>
-  <li><strong>Beer</strong>                                      0.442</li>
-  <li><strong>PayPal</strong>                                    0.441</li>
-  <li><strong>Women in Startups</strong>                         0.438</li>
-  <li><strong>Techmeme</strong>                                  0.433</li>
-  <li><strong>Women in Engineering</strong>                      0.428</li>
-  <li><strong>The Mission (San Francisco neighborhood)</strong>  0.427</li>
-  <li><strong>iPhone Applications</strong>                       0.416</li>
-  <li><strong>Asana</strong>                                     0.413</li>
-  <li><strong>Monetization</strong>                              0.412</li>
-  <li><strong>Repetitive Strain Injury (RSI)</strong>            0.4</li>
-  <li><strong>IDEO</strong>                                      0.398</li>
-  <li><strong>Spotify</strong>                                   0.397</li>
-  <li><strong>San Francisco Giants</strong>                      0.396</li>
-  <li><strong>Fortune Magazine</strong>                          0.389</li>
-  <li><strong>Love</strong>                                      0.387</li>
-  <li><strong>Human-Computer Interaction</strong>                0.382</li>
-  <li><strong>Hip Hop Music</strong>                             0.378</li>
-  <li><strong>Self-Improvement</strong>                          0.378</li>
-  <li><strong>Food in San Francisco</strong>                     0.375</li>
-  <li><strong>Quora (company)</strong>                           0.374</li>
-  <li><strong>Quora Infrastructure</strong>                      0.373</li>
-  <li><strong>iPhone</strong>                                    0.371</li>
-  <li><strong>Square (company)</strong>                          0.369</li>
-  <li><strong>Social Psychology</strong>                         0.369</li>
-  <li><strong>Network Effects</strong>                           0.366</li>
-  <li><strong>Chris Sacca</strong>                               0.365</li>
-  <li><strong>Walt Mossberg</strong>                             0.364</li>
-  <li><strong>Salesforce.com</strong>                            0.362</li>
-  <li><strong>Sex</strong>                                       0.361</li>
-  <li><strong>Etiquette</strong>                                 0.361</li>
-  <li><strong>David Pogue</strong>                               0.361</li>
-  <li><strong>Gowalla</strong>                                   0.36</li>
-  <li><strong>iOS Development</strong>                           0.354</li>
-  <li><strong>Palantir Technologies</strong>                     0.353</li>
-  <li><strong>Mobile Computing</strong>                          0.347</li>
-  <li><strong>Sports</strong>                                    0.346</li>
-  <li><strong>Video Games</strong>                               0.345</li>
-  <li><strong>Burning Man</strong>                               0.345</li>
-  <li><strong>Engineering Management</strong>                    0.343</li>
-  <li><strong>Cognitive Science</strong>                         0.342</li>
-  <li><strong>Dating &amp; Relationships</strong>                    0.341</li>
-  <li><strong>Fred Wilson (venture investor)</strong>            0.337</li>
-  <li><strong>Taiwan</strong>                                    0.333</li>
-  <li><strong>Natural Language Processing</strong>               0.33</li>
-  <li><strong>Eric Schmidt</strong>                              0.329</li>
-  <li><strong>Social Advice</strong>                             0.329</li>
-  <li><strong>Engineering Recruiting</strong>                    0.328</li>
-  <li><strong>Job Interviews</strong>                            0.325</li>
-  <li><strong>Mobile Phones</strong>                             0.324</li>
-  <li><strong>Twitter Inc. (company)</strong>                    0.321</li>
-  <li><strong>Engineering in Silicon Valley</strong>             0.321</li>
-  <li><strong>San Francisco Bay Area</strong>                    0.321</li>
-  <li><strong>Google Analytics</strong>                          0.32</li>
-  <li><strong>Fashion</strong>                                   0.315</li>
-  <li><strong>Interaction Design</strong>                        0.314</li>
-  <li><strong>Open Graph</strong>                                0.313</li>
-  <li><strong>Drugs &amp; Pharmaceuticals</strong>                   0.312</li>
-  <li><strong>Electronic Music</strong>                          0.312</li>
-  <li><strong>Facebook Inc. (company)</strong>                   0.309</li>
-  <li><strong>Fitness</strong>                                   0.309</li>
-  <li><strong>YouTube</strong>                                   0.308</li>
-  <li><strong>TED Talks</strong>                                 0.308</li>
-  <li><strong>Freakonomics (2005 Book)</strong>                  0.307</li>
-  <li><strong>Jack Dorsey</strong>                               0.306</li>
-  <li><strong>Nutrition</strong>                                 0.305</li>
-  <li><strong>Puzzles</strong>                                   0.305</li>
-  <li><strong>Silicon Valley Mergers &amp; Acquisitions</strong>     0.304</li>
-  <li><strong>Viral Growth &amp; Analytics</strong>                  0.304</li>
-  <li><strong>Amazon Web Services</strong>                       0.304</li>
-  <li><strong>StumbleUpon</strong>                               0.303</li>
-  <li><strong>Exceptional Comment Threads</strong>               0.303</li>
-  </ul>
-
-
-  <h2>Harvard</h2>
-
-  <ul>
-  <li><strong>Harvard Business School</strong>                   0.968</li>
-  <li><strong>Harvard Business Review</strong>                   0.922</li>
-  <li><strong>Harvard Square</strong>                            0.912</li>
-  <li><strong>Harvard Law School</strong>                        0.912</li>
-  <li><strong>Jimmy Fallon</strong>                              0.899</li>
-  <li><strong>Boston Red Sox</strong>                            0.658</li>
-  <li><strong>Klout</strong>                                     0.644</li>
-  <li><strong>Oprah Winfrey</strong>                             0.596</li>
-  <li><strong>Ivanka Trump</strong>                              0.587</li>
-  <li><strong>Dalai Lama</strong>                                0.569</li>
-  <li><strong>Food in New York City</strong>                     0.565</li>
-  <li><strong>U2</strong>                                        0.562</li>
-  <li><strong>TwitPic</strong>                                   0.534</li>
-  <li><strong>37signals</strong>                                 0.522</li>
-  <li><strong>David Lynch (director)</strong>                    0.512</li>
-  <li><strong>Al Gore</strong>                                   0.508</li>
-  <li><strong>TechStars</strong>                                 0.49</li>
-  <li><strong>Baseball</strong>                                  0.487</li>
-  <li><strong>Private Equity</strong>                            0.471</li>
-  <li><strong>Classical Music</strong>                           0.46</li>
-  <li><strong>Startups in New York City</strong>                 0.458</li>
-  <li><strong>HootSuite</strong>                                 0.449</li>
-  <li><strong>Kiva</strong>                                      0.442</li>
-  <li><strong>Ultimate Frisbee</strong>                          0.441</li>
-  <li><strong>Huffington Post</strong>                           0.436</li>
-  <li><strong>New York City</strong>                             0.433</li>
-  <li><strong>Charlie Cheever</strong>                           0.433</li>
-  <li><strong>The New York Times</strong>                        0.431</li>
-  <li><strong>Technology Journalism</strong>                     0.431</li>
-  <li><strong>McKinsey &amp; Company</strong>                        0.427</li>
-  <li><strong>TweetDeck</strong>                                 0.422</li>
-  <li><strong>How Does X Work?</strong>                          0.417</li>
-  <li><strong>Ashton Kutcher</strong>                            0.414</li>
-  <li><strong>Coldplay</strong>                                  0.402</li>
-  <li><strong>Conan O&#8217;Brien</strong>                             0.397</li>
-  <li><strong>Fast Company</strong>                              0.397</li>
-  <li><strong>WikiLeaks</strong>                                 0.394</li>
-  <li><strong>Michael Jackson</strong>                           0.389</li>
-  <li><strong>Guy Kawasaki</strong>                              0.389</li>
-  <li><strong>Journalism</strong>                                0.384</li>
-  <li><strong>Wall Street Journal</strong>                       0.384</li>
-  <li><strong>Cambridge</strong>                                 0.371</li>
-  <li><strong>Seattle</strong>                                   0.37</li>
-  <li><strong>Cities &amp; Metro Areas</strong>                      0.357</li>
-  <li><strong>Boston</strong>                                    0.353</li>
-  <li><strong>Tim Ferriss (author)</strong>                      0.35</li>
-  <li><strong>The New Yorker</strong>                            0.343</li>
-  <li><strong>Law</strong>                                       0.34</li>
-  <li><strong>Mashable</strong>                                  0.338</li>
-  <li><strong>Politics</strong>                                  0.335</li>
-  <li><strong>The Economist</strong>                             0.334</li>
-  <li><strong>Barack Obama</strong>                              0.333</li>
-  <li><strong>Skiing</strong>                                    0.329</li>
-  <li><strong>McKinsey Quarterly</strong>                        0.325</li>
-  <li><strong>Wired (magazine)</strong>                          0.316</li>
-  <li><strong>Bill Gates</strong>                                0.31</li>
-  <li><strong>Mad Men (TV series)</strong>                       0.308</li>
-  <li><strong>India</strong>                                     0.306</li>
-  <li><strong>TED Talks</strong>                                 0.306</li>
-  <li><strong>Netflix</strong>                                   0.304</li>
-  <li><strong>Wine</strong>                                      0.303</li>
-  <li><strong>Angel Investors</strong>                           0.302</li>
-  <li><strong>Facebook Ads</strong>                              0.301</li>
-  </ul>
-
-
-  <h2>UC Berkeley</h2>
-
-  <ul>
-  <li><strong>Berkeley</strong>                                  0.978</li>
-  <li><strong>California Golden Bears</strong>                   0.91</li>
-  <li><strong>Internships</strong>                               0.717</li>
-  <li><strong>Web Marketing</strong>                             0.484</li>
-  <li><strong>Google Social Strategy</strong>                    0.453</li>
-  <li><strong>Southwest Airlines</strong>                        0.451</li>
-  <li><strong>WordPress</strong>                                 0.429</li>
-  <li><strong>Stock Market</strong>                              0.429</li>
-  <li><strong>BMW (automobile)</strong>                          0.428</li>
-  <li><strong>Web Applications</strong>                          0.423</li>
-  <li><strong>Flickr</strong>                                    0.422</li>
-  <li><strong>Snowboarding</strong>                              0.42</li>
-  <li><strong>Electronic Music</strong>                          0.404</li>
-  <li><strong>MySQL</strong>                                     0.401</li>
-  <li><strong>Internet Advertising</strong>                      0.399</li>
-  <li><strong>Search Engine Optimization (SEO)</strong>          0.398</li>
-  <li><strong>Yelp</strong>                                      0.396</li>
-  <li><strong>Groupon</strong>                                   0.393</li>
-  <li><strong>In-N-Out Burger</strong>                           0.391</li>
-  <li><strong>The Matrix (1999 movie)</strong>                   0.389</li>
-  <li><strong>Trading (finance)</strong>                         0.385</li>
-  <li><strong>jQuery</strong>                                    0.381</li>
-  <li><strong>Hedge Funds</strong>                               0.378</li>
-  <li><strong>Social Media Marketing</strong>                    0.377</li>
-  <li><strong>San Francisco</strong>                             0.376</li>
-  <li><strong>Stealth Startups</strong>                          0.362</li>
-  <li><strong>Yahoo!</strong>                                    0.36</li>
-  <li><strong>Cascading Style Sheets</strong>                    0.359</li>
-  <li><strong>Angel Investors</strong>                           0.355</li>
-  <li><strong>UX Design</strong>                                 0.35</li>
-  <li><strong>StarCraft</strong>                                 0.348</li>
-  <li><strong>Los Angeles Lakers</strong>                        0.347</li>
-  <li><strong>Mountain View</strong>                             0.345</li>
-  <li><strong>How I Met Your Mother (TV series)</strong>         0.338</li>
-  <li><strong>Google+</strong>                                   0.337</li>
-  <li><strong>Ruby on Rails</strong>                             0.333</li>
-  <li><strong>Reading</strong>                                   0.333</li>
-  <li><strong>Social Media</strong>                              0.326</li>
-  <li><strong>China</strong>                                     0.322</li>
-  <li><strong>Palantir Technologies</strong>                     0.319</li>
-  <li><strong>Facebook Platform</strong>                         0.315</li>
-  <li><strong>Basketball</strong>                                0.315</li>
-  <li><strong>Education</strong>                                 0.314</li>
-  <li><strong>Business Development</strong>                      0.312</li>
-  <li><strong>Online &amp; Mobile Payments</strong>                  0.305</li>
-  <li><strong>Restaurants in San Francisco</strong>              0.302</li>
-  <li><strong>Technology Companies</strong>                      0.302</li>
-  <li><strong>Seth Godin</strong>                                0.3</li>
-  </ul>
-
-
-  <h2>Caltech</h2>
-
-  <ul>
-  <li><strong>Pasadena</strong>                                  0.969</li>
-  <li><strong>Chess</strong>                                     0.748</li>
-  <li><strong>Table Tennis</strong>                              0.671</li>
-  <li><strong>UCLA</strong>                                      0.67</li>
-  <li><strong>MacBook Pro</strong>                               0.618</li>
-  <li><strong>Physics</strong>                                   0.618</li>
-  <li><strong>Haskell</strong>                                   0.582</li>
-  <li><strong>Los Angeles</strong>                               0.58</li>
-  <li><strong>Electrical Engineering</strong>                    0.567</li>
-  <li><strong>Star Trek (movie</strong>                          0.561</li>
-  <li><strong>Disruptive Technology</strong>                     0.545</li>
-  <li><strong>Science</strong>                                   0.53</li>
-  <li><strong>Biology</strong>                                   0.526</li>
-  <li><strong>Quantum Mechanics</strong>                         0.521</li>
-  <li><strong>LaTeX</strong>                                     0.514</li>
-  <li><strong>Mathematics</strong>                               0.488</li>
-  <li><strong>xkcd</strong>                                      0.488</li>
-  <li><strong>Genetics &amp; Heredity</strong>                       0.487</li>
-  <li><strong>Chemistry</strong>                                 0.47</li>
-  <li><strong>Medicine &amp; Healthcare</strong>                     0.448</li>
-  <li><strong>Poker</strong>                                     0.445</li>
-  <li><strong>C++ (programming language)</strong>                0.442</li>
-  <li><strong>Data Structures</strong>                           0.434</li>
-  <li><strong>Emacs</strong>                                     0.428</li>
-  <li><strong>MongoDB</strong>                                   0.423</li>
-  <li><strong>Neuroscience</strong>                              0.404</li>
-  <li><strong>Science Fiction</strong>                           0.4</li>
-  <li><strong>Mac OS X</strong>                                  0.394</li>
-  <li><strong>Board Games</strong>                               0.387</li>
-  <li><strong>Computers</strong>                                 0.386</li>
-  <li><strong>Research</strong>                                  0.385</li>
-  <li><strong>Finance</strong>                                   0.385</li>
-  <li><strong>The Future</strong>                                0.379</li>
-  <li><strong>Linux</strong>                                     0.378</li>
-  <li><strong>The Colbert Report</strong>                        0.376</li>
-  <li><strong>The Beatles</strong>                               0.374</li>
-  <li><strong>The Onion</strong>                                 0.365</li>
-  <li><strong>Ruby</strong>                                      0.363</li>
-  <li><strong>Cars &amp; Automobiles</strong>                        0.361</li>
-  <li><strong>Quantitative Finance</strong>                      0.359</li>
-  <li><strong>Academia</strong>                                  0.359</li>
-  <li><strong>Law</strong>                                       0.355</li>
-  <li><strong>Cooking</strong>                                   0.354</li>
-  <li><strong>Psychology</strong>                                0.349</li>
-  <li><strong>Eminem</strong>                                    0.347</li>
-  <li><strong>Football (Soccer)</strong>                         0.346</li>
-  <li><strong>Computer Programming</strong>                      0.343</li>
-  <li><strong>Algorithms</strong>                                0.343</li>
-  <li><strong>Evolutionary Biology</strong>                      0.337</li>
-  <li><strong>Behavioral Economics</strong>                      0.335</li>
-  <li><strong>California</strong>                                0.329</li>
-  <li><strong>Machine Learning</strong>                          0.326</li>
-  <li><strong>Futurama</strong>                                  0.324</li>
-  <li><strong>Social Advice</strong>                             0.324</li>
-  <li><strong>StarCraft II</strong>                              0.319</li>
-  <li><strong>Job Interview Questions</strong>                   0.318</li>
-  <li><strong>Game Theory</strong>                               0.316</li>
-  <li><strong>This American Life</strong>                        0.315</li>
-  <li><strong>Economics</strong>                                 0.314</li>
-  <li><strong>Vim</strong>                                       0.31</li>
-  <li><strong>Graduate School</strong>                           0.309</li>
-  <li><strong>Git (revision control)</strong>                    0.306</li>
-  <li><strong>Computer Science</strong>                          0.303</li>
-  </ul>
-
-
-  <p>What do we see?</p>
-
-  <ul>
-  <li>First, in a nice validation of this approach, we find that each school is interested in exactly the <strong>locations</strong> we&#8217;d expect: Caltech is interested in <em>Pasadena</em> and <em>Los Angeles</em>; MIT and Harvard are both interested in <em>Boston</em> and <em>Cambridge</em> (Harvard is interested in <em>New York City</em> as well); Stanford is interested in <em>Palo Alto</em>, <em>Northern California</em>, and <em>San Francisco Bay Area</em>; and Berkeley is interested in <em>Berkeley</em>, <em>San Francisco</em>, and <em>Mountain View</em>.</li>
-  <li>More interestingly, let&#8217;s look at where each school likes to <strong>eat</strong>. Stereotypically, we expect Harvard, Stanford, and Berkeley students to be more outgoing and social, and MIT and Caltech students to be more introverted. This is indeed what we find:
-
-  <ul>
-  <li>Harvard follows <em>Food in New York City</em>; Stanford follows <em>Food &amp; Restaurants in Palo Alto</em>, <em>Restaurants in San Francisco</em>, and <em>Food in San Francisco</em>; and Berkeley follows <em>Restaurants in San Francisco</em> and <em>In-N-Out Burger</em>. In other words, Harvard, Stanford, and Berkeley love eating out.</li>
-  <li>Caltech, on the other hand, loves <em>Cooking</em>, and MIT loves <em>Healthy Eating</em> &#8211; both signs, perhaps, of a preference for eating in.</li>
-  </ul>
-  </li>
-  <li>And what does each university use to quench their <strong>thirst</strong>? Harvard students like to drink <em>wine</em> (classy!), while Stanford students prefer <em>beer</em> (the social drink of choice).</li>
-  <li>What about <strong>sports teams</strong>? MIT and Caltech couldn&#8217;t care less, though Harvard follows the <em>Boston Red Sox</em>, Stanford follows the <em>San Francisco Giants</em> (as well as their own <em>Stanford Football</em> and <em>Stanford Cardinal</em>), and Berkeley follows the <em>Los Angeles Lakers</em> (and the <em>California Golden Bears</em>).</li>
-  <li>For <strong>sports</strong> themselves, MIT students like <em>skiing</em>; Stanford students like <em>general exercise</em>, <em>fitness</em>, and <em>sports</em>; Harvard students like <em>baseball</em>, <em>ultimate frisbee</em>, and <em>skiing</em>; and Berkeley students like <em>snowboarding</em>. Caltech, in a league of its own, enjoys <em>table tennis</em> and <em>chess</em>.</li>
-  <li>What does each school think of <strong>social</strong>? Caltech students look for Social <em>Advice</em>. Berkeley students are interested in Social <em>Media</em> and Social Media Marketing. MIT, on the more technical side, wants Social <em>Search</em>. Stanford students, predictably, love the whole spectrum of social offerings, from Social <em>Dance</em> and <em>The Social Network</em>, to Social <em>Psychology</em> and Social <em>Advice</em>. (Interestingly, Caltech and Stanford are both interested in Social Advice, though I wonder if it&#8217;s for slightly different reasons.)</li>
-  <li>What&#8217;s each school&#8217;s relationship with <strong>computers</strong>? Caltech students are interested in Computer <em>Science</em>, MIT hackers are interested in Computer <em>Security</em>, and Stanford students are interested in Human-Computer <em>Interaction</em>.</li>
-  <li>Digging into the <strong>MIT vs. Caltech</strong> divide a little, we see that Caltech students really are more interested in the pure sciences (<em>Physics, Science, Biology, Quantum Mechanics, Mathematics, Chemistry</em>, etc.), while MIT students are more on the applied and engineering sides (<em>Mechanical Engineering, Engineering, Distributed Databases, Cryptography, Computer Security, Biotechnology, Operating Systems, Compilers</em>, etc.).</li>
-  <li>Regarding <strong>programming languages</strong>, Caltech students love <em>Haskell</em> (hardcore purity!), while MIT students love <em>Lisp</em>.</li>
-  <li>What does each school like to <strong>read</strong>, both offline and online? Caltech loves <em>science fiction</em>, <em>xkcd</em>, and <em>The Onion</em>; MIT likes <em>Hacker News</em>; Harvard loves journals, newspapers, and magazines (<em>Huffington Post</em>, the <em><a href="http://stuffwhitepeoplelike.com/2008/01/31/45-the-sunday-new-york-times/">New York Times</a></em>, <em>Fortune, Wall Street Journal, the New Yorker, the Economist</em>, and so on); and Stanford likes <em>TechMeme</em>.</li>
-  <li>What <strong>movies and television shows</strong> does each school like to watch? Caltech likes <em>Star Trek</em>, the <em>Colbert Report</em>, and <em>Futurama</em>. MIT likes <em>Fight Club</em> (I don&#8217;t know what this has to do with MIT, though I will note that on my first day as a freshman in a new dorm, Fight Club was precisely the movie we all went to a lecture hall to see). Stanford likes <em>The Social Network</em> and <em>Inception</em>. Harvard, rather fittingly, likes <em><a href="http://stuffwhitepeoplelike.com/2009/03/11/123-mad-men/">Mad Men</a></em> and <em><a href="http://stuffwhitepeoplelike.com/2010/09/08/134-the-ted-conference/">Ted Talks</a></em>.</li>
-  <li>Let&#8217;s look at the <strong>startups</strong> each school follows. MIT, of course, likes <em>Ksplice</em>. Berkeley likes <em>Yelp</em> and <em>Groupon</em>. Stanford likes just about every startup under the sun (<em>Instagram, Flipboard, Tumblr, Path, Color Labs</em>, etc.). And Harvard, that bastion of hard-won influence and prestige? To the surprise of precisely no one, Harvard enjoys <em>Klout</em>.</li>
-  </ul>
-
-
-  <p>Let&#8217;s end with a summarized view of each school:</p>
-
-  <ul>
-  <li><strong>Caltech</strong> is very much into the sciences (<em>Physics, Biology, Quantum Mechanics, Mathematics</em>, etc.), as well as many pretty nerdy topics (<em>Star Trek, Science Fiction, xkcd, Futurama, Starcraft II</em>, etc.).</li>
-  <li><strong>MIT</strong> is dominated by everything engineering and tech.</li>
-  <li><strong>Stanford</strong> loves relationships (<em>interpersonal relationships, people skills, love, network effects, sex, etiquette, dating and relationships, romance</em>), health and appearance (<em>fashion, fitness, nutrition, happiness</em>), and startups (<em>Instagram, Flipboard, Path, Color Labs</em>, etc.).</li>
-  <li><strong>Berkeley</strong>, sadly, is perhaps too large and diverse for an overall characterization.</li>
-  <li><strong>Harvard</strong> students are fascinated by famous figures (<em>Jimmy Fallon, Oprah Winfrey, Invaka Trump, Dalai Lama, David Lynch, Al Gore, Bill Gates, Barack Obama</em>), and by prestigious newspapers, journals, and magazines (<em>Fortune, the New York Times, the Wall Street Journal, the Economist</em>, and so on). Other very fitting interests include <em><a href="http://stuffwhitepeoplelike.com/2008/01/21/12-non-profit-organizations/">Kiva</a>, <a href="http://stuffwhitepeoplelike.com/2008/09/01/108-appearing-to-enjoy-classical-music/">classical music</a></em>, and <em><a href="http://www.vanityfair.com/online/daily/2008/06/coldplay">Coldplay</a></em>.</li>
-  </ul>
-
-
-  <p>*I pulled about 400 followers from each school, and added a couple filters, to try to ensure that followers were actual attendees of the schools rather than general people simply interested in them. Topics are sorted using a naive Bayes score and filtered to have at least 5 counts. Also, a word of warning: my dataset was fairly small and users on Quora are almost certainly not representative of their schools as a whole (though I tried to be rigorous with what I had).</p>
-  </div>  
-
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-09-07T04:15:00+02:00">
-          on&nbsp;Wed 07 September 2011
-        </li>
-
-	</ul>
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p><strong>tl;dr</strong> See <a href="http://www.youtube.com/watch?v=cZ4Ntg4jQHw">this movie visualization</a> for a case study on how a post propagates through Quora.</p>
-
-  <p>How does information spread through a network? Much of Quora&#8217;s appeal, after all, lies in its social graph &#8211; and when you&#8217;ve got a network of users, all broadcasting their activities to their neighbors, information can cascade in multiple ways. How do these social designs affect which users see what?</p>
-
-  <p>Think, for example, of what happens when your kid learns a new slang word at school. He doesn&#8217;t confine his use of the word to McKinley Elementary&#8217;s particular boundaries, between the times of 9-3pm &#8211; he introduces it to his friends from other schools at soccer practice as well. A couple months later, he even says it at home for the first time; you like the word so much, you then start using it at work. Eventually, Justin Bieber uses the word in a song, at which point the word&#8217;s popularity really starts to explode.</p>
-
-  <p>So how does information propagate through a social network? What types of people does an answer on Quora reach, and how does it reach them? (Do users discover new answers individually, or are hubs of connectors more key?) How does the activity of a post on Quora rise and fall? (Submissions on other sites have limited lifetimes, fading into obscurity soon after an initial spike; how does that change when users are connected and every upvote can revive a post for someone else&#8217;s eyes?)</p>
-
-  <p>(I looked at Quora since I had some data from there already available, but I hope the lessons should be fairly applicable in general, to other social networks like Facebook, Twitter, and LinkedIn as well.)</p>
-
-  <p>To give an initial answer to some of these questions, I dug into one of my more popular posts, on <a href="http://www.quora.com/Random-Forests/How-do-random-forests-work-in-laymans-terms">a layman&#8217;s introduction to random forests</a>.</p>
-
-  <h1>Users, Topics</h1>
-
-  <p>Before looking deeper into the voting dynamics of the post, let&#8217;s first get some background on what kinds of users the answer reached.</p>
-
-  <p>Here&#8217;s a graph of the topics that question upvoters follow. (Each node is a topic, and every time upvoter X follows both topics A and B, I add an edge between A and B.)</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoter-topics-unlabeled.png"><img src="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoter-topics-unlabeled.png" alt="Upvoters' Topics - Unlabeled" /></a></p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoter-topics-labeled.png"><img src="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoter-topics-labeled.png" alt="Upvoters' Topics - Labeled" /></a></p>
-
-  <p>We can see from the graph that upvoters tend to be interested in three kinds of topics:</p>
-
-  <ul>
-  <li><strong>Machine learning and other technical matters</strong> (the green cluster): Classification, Data Mining, Big Data, Information Retrieval, Analytics, Probability, Support Vector Machines, R, Data Science, &#8230;</li>
-  <li><strong>Startups/Silicon Valley</strong> (the red cluster): Facebook, Lean Startups, Investing, Seed Funding, Angel Investing, Technology Trends, Product Managment, Silicon Valley Mergers and Acquisitions, Asana, Social Games, Quora, Mark Zuckerberg, User Experience, Founders and Entrepreneurs, &#8230;</li>
-  <li><strong>General Intellectual Topics</strong> (the purple cluster): TED, Science, Book Recommendations, Philosophy, Politics, Self-Improvement, Travel, Life Hacks, &#8230;</li>
-  </ul>
-
-
-  <p>Also, here&#8217;s the network of the upvoters themselves (there&#8217;s an edge between users A and B if A follows B):</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoters-unlabeled.png"><img src="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoters-unlabeled.png" alt="Upvote Network - Unlabeled" /></a></p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoters-labeled.png"><img src="http://dl.dropbox.com/u/10506/blog/social-network-transmission/rf-upvoters-labeled.png" alt="Upvote Network - Labeled" /></a></p>
-
-  <p>We can see three main clusters of users:</p>
-
-  <ul>
-  <li>A large group in <strong>green</strong> centered around a lot of power users and Quora employees.</li>
-  <li>A machine learning group of folks in <strong>orange</strong> centered around people like Oliver Grisel, Christian Langreiter, and Joseph Turian.</li>
-  <li>A group of people following me, in <strong>purple</strong>.</li>
-  <li>Plus some smaller clusters in blue and yellow. (There were also a bunch of isolated users, connected to no one, that I filtered out of the picture.)</li>
-  </ul>
-
-
-  <p>Digging into how these topic and user graphs are related:</p>
-
-  <ul>
-  <li>The orange cluster of users is more heavily into machine learning: 79% of users in that cluster follow more green topics (machine learning and technical topics) than red and purple topics (startups and general intellectual matters).</li>
-  <li>The green cluster of users is reversed: 77% of users follow more of the red and purple clusters of topics (on startups and general intellectual matters) than machine learning and technical topics.</li>
-  </ul>
-
-
-  <p>More interestingly, though, we can ask: how do the connections between upvoters relate to the way the post spread?</p>
-
-  <h1>Social Voting Dynamics</h1>
-
-  <p>So let&#8217;s take a look. Here&#8217;s a visualization I made of upvotes on my answer across time (click <a href="http://www.youtube.com/watch?v=cZ4Ntg4jQHw">here</a> for a larger view).</p>
-
-  <iframe width="640" height="510" src="http://www.youtube.com/embed/cZ4Ntg4jQHw " frameborder="0" allowfullscreen></iframe>
-
-
-  <p></p>
-
-  <p>To represent the social dynamics of these upvotes, I drew an edge from user A to user B if user A transmitted the post to user B through an upvote. (Specifically, I drew an edge from Alice to Bob if Bob follows Alice and Bob&#8217;s upvote appeared within five days of Alice&#8217;s upvote; this is meant to simulate the idea that Alice was the key intermediary between my post and Bob.)</p>
-
-  <p>Also,</p>
-
-  <ul>
-  <li>Green nodes are users with at least one upvote edge.</li>
-  <li>Blue nodes are users who follow at least one of the topics the post is categorized under (i.e., users who probably discovered the answer by themselves).</li>
-  <li>Red nodes are users with no connections and who do not follow any of the post&#8217;s topics (i.e, users whose path to the post remain mysterious).</li>
-  <li>Users increase in size when they produce more connections.</li>
-  </ul>
-
-
-  <p>Here&#8217;s a play-by-play of the video:</p>
-
-  <ul>
-  <li>On Feb 14 (the day I wrote the answer), there&#8217;s a flurry of activity.</li>
-  <li>A couple of days later, Tracy Chou gives an upvote, leading to another spike in activity.</li>
-  <li>Then all&#8217;s quiet until&#8230; bam! Alex Kamil leads to a surge of upvotes, and his upvote finds Ludi Rehak, who starts a small surge of her own. They&#8217;re quickly followed by Christian Langreiter, who starts a small revolution among a bunch of machine learning folks a couple days later.</li>
-  <li>Then all is pretty calm again, until a couple months later when&#8230; bam! Aditya Sengupta brings in a smashing of his own followers, and his upvote makes its way to Marc Bodnick, who sets off a veritable storm of activity.</li>
-  </ul>
-
-
-  <p>(Already we can see some relationships between the graph of user connections and the way the post propagated. Many of the users from the orange cluster, for example, come from Alex Kamil and Christian Langreiter&#8217;s upvotes, and many of the users from the green cluster come from Aditya Sengupta and Marc Bodnick&#8217;s upvotes. What&#8217;s interesting, though, is, why didn&#8217;t the cluster of green users appear all at once, like the orange cluster did? People like Kah Seng Tay, Tracy Chou, Venkatesh Rao, and Chad Little upvoted the answer pretty early on, but it wasn&#8217;t until Aditya Sengupta&#8217;s upvote a couple months later that people like Marc Bodnick, Edmond Lau, and many of the other green users (who do indeed follow that first set of folks) discovered the answer. Did the post simply get lost in users&#8217; feeds the first time around? Was the post perhaps ignored until it received enough upvotes to be considered worth reading? Are some users&#8217; upvotes just trusted more than others&#8217;?)</p>
-
-  <p>For another view of the upvote dynamics, here&#8217;s a static visualization, where we can again easily see the clusters of activity:</p>
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/social-network-transmission/upvote-clusters-labeled-v2.png"><img src="http://dl.dropbox.com/u/10506/blog/social-network-transmission/upvote-clusters-labeled-v2.png" alt="Upvote Temporal Clusters" /></a></p>
-
-  <h1>Fin</h1>
-
-  <p>There are still many questions it would be interesting to look at; for example,</p>
-
-  <ul>
-  <li>What differentiates users who sparked spikes of activity from users who didn&#8217;t? I don&#8217;t believe it&#8217;s simply number of followers, as many well-connected upvoters did <em>not</em> lead to cascades of shares. Does authority matter?</li>
-  <li>How far can a post reach? Clearly, the post reached people more than one degree of separation away from me (where one degree of separation is a follower); what does the distribution of degrees look like? Is there any relationship between degree of separation and time of upvote?</li>
-  <li>What can we say about the people who started following me after reading my answer? Are they fewer degrees of separation away? Are they more interested in machine learning? Have they upvoted any of my answers before? (Perhaps there&#8217;s a certain &#8220;threshold&#8221; of interestingness people need to overflow before they&#8217;re considered acceptable followees.)</li>
-  </ul>
-
-
-  <p>But to summarize a bit what we&#8217;ve seen so far, here are some statistics on the role the social graph played in spreading the post:</p>
-
-  <ul>
-  <li>There are 5 clusters of activity after the initial post, sparked both by power users and less-connected folks. In an interesting cascade of information, some of these sparks led to further spikes in activity as well (as when Aditya Sengupta&#8217;s upvote found its way to Marc Bodnick, who set off even more activity).</li>
-  <li>35% of users made their way to my answer because of someone else&#8217;s upvote.</li>
-  <li>Through these connections, the post reached a fair variety of users: 32% of upvoters don&#8217;t even follow any of the post&#8217;s topics.</li>
-  <li>77% of upvotes came from users over two weeks <em>after</em> my answer appeared.</li>
-  <li>If we look only at the upvoters who follow at least one of the post&#8217;s topics, 33% didn&#8217;t see my answer until someone else showed it to them. In other words, a full one-third of people who presumably would have been interested in my post anyways only found it because of their social network.</li>
-  </ul>
-
-
-  <p>So it looks like the social graph played quite a large part in the post&#8217;s propagation, and I&#8217;ll end with a big shoutout to Stormy Shippy, who provided an awesome set of scripts I used to collect a lot of this data.</p>
-  </div>  
-
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2011/08/22/introduction-to-latent-dirichlet-allocation/">Introduction to Latent Dirichlet Allocation</a></h1>
-<div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2011-08-22T04:15:00+02:00">
-          on&nbsp;Mon 22 August 2011
-        </li>
-
-	</ul>
 
 </div><!-- /.post-info -->
   <div class="entry-content"><h1>Introduction</h1>
 
-  <p>Suppose you have the following set of sentences:</p>
+  <p>Suppose you see two drunks (i.e., two random walks) wandering around. The drunks don&#8217;t know each other (they&#8217;re independent), so there&#8217;s no meaningful relationship between their paths.</p>
+
+  <p>But suppose instead you have a drunk walking with her dog. This time there <em>is</em> a connection. What&#8217;s the nature of this connection? Notice that although each path individually is still an unpredictable random walk, given the location of one of the drunk or dog, we have a pretty good idea of where the other is; that is, the distance between the two is fairly predictable. (For example, if the dog wanders too far away from his owner, she&#8217;ll tend to move in his direction to avoid losing him, so the two stay close together despite a tendency to wander around on their own.) We describe this relationship by saying that the drunk and her dog form a cointegrating pair.</p>
+
+  <p>In more technical terms, if we have two non-stationary time series X and Y that become stationary when differenced (these are called integrated of order one series, or I(1) series; random walks are one example) such that some linear combination of X and Y is stationary (aka, I(0)), then we say that X and Y are cointegrated. In other words, while neither X nor Y alone hovers around a constant value, some combination of them does, so we can think of cointegration as describing a particular kind of long-run equilibrium relationship. (The definition of cointegration can be extended to multiple time series, with higher orders of integration.)</p>
+
+  <p>Other examples of cointegrated pairs:</p>
 
   <ul>
-  <li>I like to eat broccoli and bananas.</li>
-  <li>I ate a banana and spinach smoothie for breakfast.</li>
-  <li>Chinchillas and kittens are cute.</li>
-  <li>My sister adopted a kitten yesterday.</li>
-  <li>Look at this cute hamster munching on a piece of broccoli.</li>
+  <li>Income and consumption: as income increases/decreases, so too does consumption.</li>
+  <li>Size of police force and amount of criminal activity</li>
+  <li>A book and its movie adaptation: while the book and the movie may differ in small details, the overall plot will remain the same.</li>
+  <li>Number of patients entering or leaving a hospital</li>
   </ul>
 
 
-  <p>What is latent Dirichlet allocation? It&#8217;s a way of automatically discovering <strong>topics</strong> that these sentences contain. For example, given these sentences and asked for 2 topics, LDA might produce something like</p>
+  <h1>An application</h1>
+
+  <p>So why do we care about cointegration? In quantitative finance, cointegration forms the basis of the pairs trading strategy: suppose we have two cointegrated stocks X and Y, with the particular (for concreteness) cointegrating relationship X - 2Y = Z, where Z is a stationary series of zero mean. For example, X could be McDonald&#8217;s, Y could be Burger King, and the cointegration relationship would mean that X tends to be priced twice as high as Y, so that when X is more than twice the price of Y, we expect X to move down or Y to move up in the near future (and analogously, if X is less than twice the price of Y, we expect X to move up or Y to move down). This suggests the following trading strategy: if X - 2Y > d, for some positive threshold d, then we should sell X and buy Y (since we expect X to decrease in price and Y to increase), and similarly, if X - 2Y &lt; -d, then we should buy X and sell Y.</p>
+
+  <h1>Spurious regression</h1>
+
+  <p>But why do we need the notion of cointegration at all? Why can&#8217;t we simply use, say, the R-squared between X or Y to see if X and Y have some kind of relationship? The reason is that standard regression analysis fails when dealing with non-stationary variables, leading to spurious regressions that suggest relationships even when there are none.</p>
+
+  <p>For example, suppose we regress two independent random walks against each other, and test for a linear relationship. A large percentage of the time, we&#8217;ll find high R-squared values and low p-values when using standard OLS statistics, even though there&#8217;s absolutely no relationship between the two random walks. As an illustration, here I simulated 1000 pairs of random walks of length 100, and found p-values less than 0.05 in 77% of the cases:</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/cointegration/spurious-regression.png"><img src="http://dl.dropbox.com/u/10506/blog/cointegration/spurious-regression.png" alt="Spurious Regression" /></a></p>
+
+  <h1>A Cointegration Test</h1>
+
+  <p>So how do you detect cointegration? There are several different methods, but the simplest is the Engle-Granger test, which works roughly as follows:</p>
 
   <ul>
-  <li><strong>Sentences 1 and 2</strong>: 100% Topic A</li>
-  <li><strong>Sentences 3 and 4</strong>: 100% Topic B</li>
-  <li><strong>Sentence 5</strong>: 60% Topic A, 40% Topic B</li>
-  <li><strong>Topic A</strong>: 30% broccoli, 15% bananas, 10% breakfast, 10% munching, &#8230; (at which point, you could interpret topic A to be about food)</li>
-  <li><strong>Topic B</strong>: 20% chinchillas, 20% kittens, 20% cute, 15% hamster, &#8230; (at which point, you could interpret topic B to be about cute animals)</li>
+  <li>Check that $ X_t $ and $ Y_t $ are both I(1).</li>
+  <li>Estimate the cointegrating relationship $ Y_t = aX_t + e_t $ by ordinary least squares.</li>
+  <li>Check that the cointegrating residuals $ e_t $ are stationary (say, by using a so-called unit root test, e.g., the Dickey-Fuller test).</li>
   </ul>
 
 
-  <p>The question, of course, is: how does LDA perform this discovery?</p>
+  <h1>Error-correction and Granger representation</h1>
 
-  <h1>LDA Model</h1>
+  <p>Something else that should perhaps be mentioned is the relationship between cointegration and error-correction mechanisms: suppose we have two cointegrated series $ X_t, Y_t $, with autoregressive representations</p>
 
-  <p>In more detail, LDA represents documents as <strong>mixtures of topics</strong> that spit out words with certain probabilities. It assumes that documents are produced in the following fashion: when writing each document, you</p>
+  <p>$ X_t = a X_{t-1} + b Y_{t-1} + u_t $
+  $ Y_t = c X_{t-1} + d Y_{t-1} + v_t $</p>
+
+  <p>By the Granger representation theorem (which is actually a bit more general than this), we then have</p>
+
+  <p>$ \Delta X_t = \alpha_1 (Y_{t-1} - \beta X_{t-1}) + u_t $
+  $ \Delta Y_t = \alpha_2 (Y_{t-1} - \beta X_{t-1}) + v_t $</p>
+
+  <p>where $ Y_{t-1} - \beta X_{t-1} \sim I(0) $ is the cointegrating relationship. Regarding $ Y_{t-1} - \beta X_{t-1} $ as the extent of disequilibrium from the long-run relationship, and the $ \alpha_i $ as the speed (and direction) at which the time series correct themselves from this disequilibrium, we can see that this formalizes the way cointegrated variables adjust to match their long-run equilbrium.</p>
+
+  <h1>Summary</h1>
+
+  <p>So, just to summarize a bit, cointegration is an equilibrium relationship between time series that individually aren&#8217;t in equilbrium (you can kind of contrast this with (Pearson) correlation, which describes a linear relationship), and it&#8217;s useful because it allows us to incorporate both short-term dynamics (deviations from equilibrium) and long-run expectations (corrections to equilibrium).</p>
+  </div>
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2011/03/14/counting-clusters/">Counting Clusters</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  
+  <div class="entry-content"><p>Given a set of datapoints, we often want to know how many clusters the datapoints form. The <strong>gap statistic</strong> and the <strong>prediction strength</strong> are two practical algorithms for choosing the number of clusters.</p>
+
+  <h1>Gap Statistic</h1>
+
+  <p>The <a href="http://www.stanford.edu/~hastie/Papers/gap.pdf">gap statistic algorithm</a> works as follows:</p>
+
+  <p>For each i from 1 up to some maximum number of clusters,</p>
+
+  <ol>
+  <li><p>Run a k-means algorithm on the original dataset to find i clusters, and sum the distance of all points from their cluster mean. Call this sum the <strong>dispersion</strong>.</p></li>
+  <li><p>Generate a set of <em>reference</em> datasets (of the same size as the original). One simple way of generating a reference dataset is to sample uniformly from the original dataset&#8217;s bounding rectangle; a more sophisticated approach is take into account the original dataset&#8217;s shape by sampling, say, from a rectangle formed from the original dataset&#8217;s principal components.</p></li>
+  <li><p>Calculate the dispersion of each of these reference datasets, and take their mean.</p></li>
+  <li><p>Define the ith <strong>gap</strong> by: log(mean dispersion of reference datasets) - log(dispersion of original dataset).</p></li>
+  </ol>
+
+
+  <p>Once we&#8217;ve calculated all the gaps (we can add confidence intervals as well; see <a href="http://www.stanford.edu/~hastie/Papers/gap.pdf">the original paper</a> for the formula), we can select the number of clusters to be the one that gives the maximum gap. (Sidenote: I view the gap statistic as a very statistical-minded algorithm, since it compares the original dataset against a set of reference &#8220;control&#8221; datasets.)</p>
+
+  <p>For example, here I&#8217;ve generated three Gaussian clusters:</p>
+
+  <p><a href="https://github.com/echen/gap-statistic/raw/master/examples/3_clusters_2d.png"><img src="https://github.com/echen/gap-statistic/raw/master/examples/3_clusters_2d.png" alt="Three Gaussian Clusters" /></a></p>
+
+  <p>And running the gap statistic algorithm, we see that it correctly detects the number of clusters to be three:</p>
+
+  <p><a href="https://github.com/echen/gap-statistic/raw/master/examples/3_clusters_2d_gaps.png"><img src="https://github.com/echen/gap-statistic/raw/master/examples/3_clusters_2d_gaps.png" alt="Gap Statistic on Three Gaussian Clusters" /></a></p>
+
+  <p>For a sample R implementation of the gap statistic, see the Github repository <a href="https://github.com/echen/gap-statistic">here</a>.</p>
+
+  <h1>Prediction Strength</h1>
+
+  <p>Another cluster-counting algorithm is the <a href="http://www-stat.stanford.edu/~tibs/ftp/predstr.ps">prediction strength algorithm</a>. In contrast to the gap statistic (which, as mentioned above, I find very statistically), I see prediction strength as taking a more machine learning viewpoint, since it&#8217;s formulated as a supervised learning problem validated against a test set.</p>
+
+  <p>To calculate prediction strength, for each i from 1 up to some maximum number of clusters:</p>
+
+  <ol>
+  <li><p>Divide the dataset into two groups, a training set and a test set.</p></li>
+  <li><p>Run a k-means algorithm on each set to find i clusters.</p></li>
+  <li><p>For each <em>test</em> cluster, count the proportion of pairs of points in that cluster that would remain in the same cluster, if each were assigned to its closest <em>training</em> cluster mean.</p></li>
+  <li><p>The minimum over these proportions is the <strong>prediction strength</strong> for i clusters.</p></li>
+  </ol>
+
+
+  <p>Once we&#8217;ve calculated the prediction strength for each number of clusters, we select the number of clusters to be the maximum i such that the prediction strength for i is greater than some threshold. (The paper suggests 0.8 - 0.9 as a good threshold, and I&#8217;ve seen 0.8 work well in practice.)</p>
+
+  <p>Here&#8217;s the prediction strength algorithm run on the same example above:</p>
+
+  <p><a href="https://github.com/echen/prediction-strength/raw/master/examples/3_clusters_2d_ps.png"><img src="https://github.com/echen/prediction-strength/raw/master/examples/3_clusters_2d_ps.png" alt="Prediction Strength on Three Gaussian Clusters" /></a></p>
+
+  <p>Again, check out a sample R implementation of the prediction strength <a href="https://github.com/echen/prediction-strength">here</a>.</p>
+
+  <p>In practice, I tend to prefer using the gap statistic algorithm, since it&#8217;s a little easier to code and it doesn&#8217;t require selecting an arbitrary threshold like the prediction strength does. I&#8217;ve also found that it gives slightly better results (though the original prediction strength paper has the opposite finding).</p>
+
+  <h1>Appendix</h1>
+
+  <p>I ended up giving a brief description of two very common clustering algorithms, <strong>k-means</strong> and <strong>Gaussian mixture models</strong> in the comments, so I figured I might as well bring them up here.</p>
+
+  <h2>k-means algorithm</h2>
+
+  <p>Suppose we have a set of datapoints that we want to cluster. We want to learn two things:</p>
 
   <ul>
-  <li>Decide on the number of words N the document will have (say, according to a Poisson distribution).</li>
-  <li>Choose a topic mixture for the document (according to a Dirichlet distribution over a fixed set of K topics). For example, assuming that we have the two food and cute animal topics above, you might choose the document to consist of 1/3 food and 2/3 cute animals.</li>
-  <li>Generate each word w_i in the document by:
-
-  <ul>
-  <li>First picking a topic (according to the multinomial distribution that you sampled above; for example, you might pick the food topic with 1/3 probability and the cute animals topic with 2/3 probability).</li>
-  <li>Using the topic to generate the word itself (according to the topic&#8217;s multinomial distribution). For example, if we selected the food topic, we might generate the word &#8220;broccoli&#8221; with 30% probability, &#8220;bananas&#8221; with 15% probability, and so on.</li>
-  </ul>
-  </li>
-  </ul>
-
-
-  <p>Assuming this generative model for a collection of documents, LDA then tries to backtrack from the documents to find a set of topics that are likely to have generated the collection.</p>
-
-  <h2>Example</h2>
-
-  <p>Let&#8217;s make an example. According to the above process, when generating some particular document D, you might</p>
-
-  <ul>
-  <li>Pick 5 to be the number of words in D.</li>
-  <li>Decide that D will be 1/2 about food and 1/2 about cute animals.</li>
-  <li>Pick the first word to come from the food topic, which then gives you the word &#8220;broccoli&#8221;.</li>
-  <li>Pick the second word to come from the cute animals topic, which gives you &#8220;panda&#8221;.</li>
-  <li>Pick the third word to come from the cute animals topic, giving you &#8220;adorable&#8221;.</li>
-  <li>Pick the fourth word to come from the food topic, giving you &#8220;cherries&#8221;.</li>
-  <li>Pick the fifth word to come from the food topic, giving you &#8220;eating&#8221;.</li>
-  </ul>
-
-
-  <p>So the document generated under the LDA model will be &#8220;broccoli panda adorable cherries eating&#8221; (note that LDA is a bag-of-words model).</p>
-
-  <h1>Learning</h1>
-
-  <p>So now suppose you have a set of documents. You&#8217;ve chosen some fixed number of K topics to discover, and want to use LDA to learn the topic representation of each document and the words associated to each topic. How do you do this? One way (known as collapsed Gibbs sampling) is the following:</p>
-
-  <ul>
-  <li>Go through each document, and randomly assign each word in the document to one of the K topics.</li>
-  <li>Notice that this random assignment already gives you both topic representations of all the documents and word distributions of all the topics (albeit not very good ones).</li>
-  <li>So to improve on them, for each document d&#8230;
-
-  <ul>
-  <li>Go through each word w in d&#8230;
-
-  <ul>
-  <li>And for each topic t, compute two things: 1) p(topic t | document d) = the proportion of words in document d that are currently assigned to topic t, and 2) p(word w | topic t) = the proportion of assignments to topic t over all documents that come from this word w. Reassign w a new topic, where we choose topic t with probability p(topic t | document d) * p(word w | topic t) (according to our generative model, this is essentially the probability that topic t generated word w, so it makes sense that we resample the current word&#8217;s topic with this probability). (Also, I&#8217;m glossing over a couple of things here, in particular the use of priors/pseudocounts in these probabilities.)</li>
-  <li>In other words, in this step, we&#8217;re assuming that all topic assignments except for the current word in question are correct, and then updating the assignment of the current word using our model of how documents are generated.</li>
-  </ul>
-  </li>
-  </ul>
-  </li>
-  <li>After repeating the previous step a large number of times, you&#8217;ll eventually reach a roughly steady state where your assignments are pretty good. So use these assignments to estimate the topic mixtures of each document (by counting the proportion of words assigned to each topic within that document) and the words associated to each topic (by counting the proportion of words assigned to each topic overall).</li>
-  </ul>
-
-
-  <h1>Layman&#8217;s Explanation</h1>
-
-  <p>In case the discussion above was a little eye-glazing, here&#8217;s another way to look at LDA in a different domain.</p>
-
-  <p>Suppose you&#8217;ve just moved to a new city. You&#8217;re a hipster and an anime fan, so you want to know where the other hipsters and anime geeks tend to hang out. Of course, as a hipster, you know you can&#8217;t just <em>ask</em>, so what do you do?</p>
-
-  <p>Here&#8217;s the scenario: you scope out a bunch of different establishments (<strong>documents</strong>) across town, making note of the people (<strong>words</strong>) hanging out in each of them (e.g., Alice hangs out at the mall and at the park, Bob hangs out at the movie theater and the park, and so on). Crucially, you don&#8217;t know the typical interest groups (<strong>topics</strong>) of each establishment, nor do you know the different interests of each person.</p>
-
-  <p>So you pick some number K of categories to learn (i.e., you want to learn the K most important kinds of categories people fall into), and start by making a guess as to why you see people where you do. For example, you initially guess that Alice is at the mall because people with interests in X like to hang out there; when you see her at the park, you guess it&#8217;s because her friends with interests in Y like to hang out there; when you see Bob at the movie theater, you randomly guess it&#8217;s because the Z people in this city really like to watch movies; and so on.</p>
-
-  <p>Of course, your random guesses are very likely to be incorrect (they&#8217;re random guesses, after all!), so you want to improve on them. One way of doing so is to:</p>
-
-  <ul>
-  <li>Pick a place and a person (e.g., Alice at the mall).</li>
-  <li>Why is Alice likely to be at the mall? Probably because other people at the mall with the same interests sent her a message telling her to come.</li>
-  <li>In other words, the more people with interests in X there are at the mall and the stronger Alice is associated with interest X (at all the other places she goes to), the more likely it is that Alice is at the mall because of interest X.</li>
-  <li>So make a new guess as to why Alice is at the mall, choosing an interest with some probability according to how likely you think it is.</li>
-  </ul>
-
-
-  <p>Go through each place and person over and over again. Your guesses keep getting better and better (after all, if you notice that lots of geeks hang out at the bookstore, and you suspect that Alice is pretty geeky herself, then it&#8217;s a good bet that Alice is at the bookstore because her geek friends told her to go there; and now that you have a better idea of why Alice is probably at the bookstore, you can use this knowledge in turn to improve your guesses as to why everyone else is where they are), and eventually you can stop updating. Then take a snapshot (or multiple snapshots) of your guesses, and use it to get all the information you want:</p>
-
-  <ul>
-  <li>For each category, you can count the people assigned to that category to figure out what people have this particular interest. By looking at the people themselves, you can interpret the category as well (e.g., if category X contains lots of tall people wearing jerseys and carrying around basketballs, you might interpret X as the &#8220;basketball players&#8221; group).</li>
-  <li>For each place P and interest category C, you can compute the proportions of people at P because of C (under the current set of assignments), and these give you a representation of P. For example, you might learn that the people who hang out at Barnes &amp; Noble consist of 10% hipsters, 50% anime fans, 10% jocks, and 30% college students.</li>
-  </ul>
-
-
-  <h1>Real-World Example</h1>
-
-  <p>Finally, I applied LDA to a set of Sarah Palin&#8217;s emails a little while ago (see <a href="http://blog.echen.me/2011/06/27/topic-modeling-the-sarah-palin-emails/">here</a> for the blog post, or <a href="http://sarah-palin.heroku.com/">here</a> for an app that allows you to browse through the emails by the LDA-learned categories), so let&#8217;s give a brief recap. Here are some of the topics that the algorithm learned:</p>
-
-  <ul>
-  <li><strong>Trig/Family/Inspiration</strong>: family, web, mail, god, son, from, congratulations, children, life, child, down, trig, baby, birth, love, you, syndrome, very, special, bless, old, husband, years, thank, best, &#8230;</li>
-  <li><strong>Wildlife/BP Corrosion</strong>: game, fish, moose, wildlife, hunting, bears, polar, bear, subsistence, management, area, board, hunt, wolves, control, department, year, use, wolf, habitat, hunters, caribou, program, denby, fishing, &#8230;</li>
-  <li><strong>Energy/Fuel/Oil/Mining:</strong> energy, fuel, costs, oil, alaskans, prices, cost, nome, now, high, being, home, public, power, mine, crisis, price, resource, need, community, fairbanks, rebate, use, mining, villages, &#8230;</li>
-  <li><strong>Gas</strong>: gas, oil, pipeline, agia, project, natural, north, producers, companies, tax, company, energy, development, slope, production, resources, line, gasline, transcanada, said, billion, plan, administration, million, industry, &#8230;</li>
-  <li><strong>Education/Waste</strong>: school, waste, education, students, schools, million, read, email, market, policy, student, year, high, news, states, program, first, report, business, management, bulletin, information, reports, 2008, quarter, &#8230;</li>
-  <li><strong>Presidential Campaign/Elections</strong>: mail, web, from, thank, you, box, mccain, sarah, very, good, great, john, hope, president, sincerely, wasilla, work, keep, make, add, family, republican, support, doing, p.o, &#8230;</li>
+  <li>A description of the clusters themselves (so that if new points come in, we can assign them to a cluster).</li>
+  <li>Which clusters our current points fall into.</li>
   </ul>
 
 
-  <p>Here&#8217;s an example of an email which fell 99% into the Trig/Family/Inspiration category (particularly representative words are highlighted in blue):</p>
+  <p>We start by initializing k cluster centers (e.g., by randomly choosing k points among our datapoints). Then we repeatedly</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/palin-browser/trig-email.png"><img src="http://dl.dropbox.com/u/10506/blog/palin-browser/trig-email.png" alt="Trig Email" /></a></p>
+  <ul>
+  <li><strong>Step A</strong>: Assign each datapoint to the nearest cluster center.</li>
+  <li><strong>Step B</strong>: Update all the cluster centers: for each cluster i, take the mean over all points currently in the cluster, and update cluster center i to be this mean.</li>
+  <li>(Repeat steps A and B above until the cluster assignments stop changing.)</li>
+  </ul>
 
-  <p>And here&#8217;s an excerpt from an email which fell 10% into the Presidential Campaign/Election category (in red) and 90% into the Wildlife/BP Corrosion category (in green):</p>
 
-  <p><a href="http://dl.dropbox.com/u/10506/blog/palin-browser/wildlife-presidency-email.png"><img src="http://dl.dropbox.com/u/10506/blog/palin-browser/wildlife-presidency-email.png" alt="Wildlife-Presidency Email" /></a></p>
-  </div>  
+  <p>And that&#8217;s pretty much it for k-means.</p>
+
+  <h2>k-means from an EM point of View</h2>
+
+  <p>To ease the transition into Gaussian mixture models,
+  let&#8217;s also describe the k-means algorithm using <a href="http://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm">EM</a> language.</p>
+
+  <p>Note that if we knew for certain either 1) the exact cluster centers or 2) the cluster each point belonged to, we could trivially solve k-means, since</p>
+
+  <ul>
+  <li>If we knew the exact cluster centers, all we&#8217;d have to do is assign each point to its nearest cluster center, and we&#8217;d be done.</li>
+  <li>If we knew which cluster each point belonged to, we could pick the cluster center by simply taking the mean over all points in that cluster.</li>
+  </ul>
+
+
+  <p>The problem is that we know <em>neither</em> of these, and so we alternate between making educated guesses of each one:</p>
+
+  <ul>
+  <li>In A step above, we pretend that we know the cluster centers, and based off this pretense, we guess which cluster each point belongs to. (This is also known as the <strong>E step</strong> in the EM algorithm.)</li>
+  <li>In the B step above, we do the reverse: we pretend that we know which cluster each point belongs to, and then try to guess the cluster centers. (This is also known as the <strong>M step</strong> in EM.)</li>
+  </ul>
+
+
+  <p>Our guesses keep getting better and better, and eventually we&#8217;ll converge.</p>
+
+  <h2>Gaussian Mixture Models</h2>
+
+  <p>k-means has a <em>hard</em> notion of clustering: point X either belongs to cluster C or it doesn&#8217;t. But sometimes we want a <em>soft</em> notion instead: point X belongs to cluster C with probability p (according to a Gaussian kernel). This is where <a href="http://en.wikipedia.org/wiki/Mixture_model">Gaussian mixture modeling</a> comes in.</p>
+
+  <p>To run a GMM, we start by initializing $k$ Gaussians (say, by randomly choosing $k$ points to be the centers of the Gaussians and by setting the variance of each Gaussians to be the overall variance), and then we repeatedly:</p>
+
+  <ul>
+  <li><strong>E Step</strong>: Pretend we know the parameters of each Gaussian cluster, and assign each datapoint to Gaussian cluster i with appropriate probability.</li>
+  <li><strong>M Step</strong>: Pretend we know the probabilities that each point belongs to a given cluster. Using these probabilities, update the means and variances of each Gaussian cluster: the new mean for cluster i is the weighted mean over all points (where the weight of each point X is the probability that X belongs to cluster i), and similarly for the new variance.</li>
+  </ul>
+
+
+  <p>This is exactly like k-means in the EM formulation, except we replace the binary clustering formula with Gaussian kernels.</p>
+  </div>
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2011/03/14/hacker-news-analysis/">Hacker News Analysis</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  
+  <div class="entry-content"><p>I was playing around with the <a href="http://api.ihackernews.com/?db">Hacker News database</a> <a href="http://ronnieroller.com/">Ronnie Roller</a> made (thanks!), so I thought I&#8217;d post some of the things I looked at.</p>
+
+  <h1>Activity on the Site</h1>
+
+  <p>My first question was how activity on the site has increased over time. I looked at number of posts, points on posts, comments on posts, and number of users.</p>
+
+  <h2>Posts</h2>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/posts_by_month.png" alt="Hacker News Posts by Month" /></p>
+
+  <p>This looks like a strong linear fit, with an increase of 292 posts every month.</p>
+
+  <h2>Comments</h2>
+
+  <p>For comments, I fit a quadratic regression:</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/comments_by_month.png" alt="Hacker News Comments by Month" /></p>
+
+  <h2>Points</h2>
+
+  <p>A quadratic regression was also a better fit for points by month:</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/points_by_month.png" alt="Hacker News Points by Month" /></p>
+
+  <h2>Users</h2>
+
+  <p>And again for the number of distinct users with a submission:</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/users.png" alt="Hacker News Users by Month" /></p>
+
+  <h1>Points and Comments</h1>
+
+  <p>My next question was how points and comments related. Intuitively, posts with more points should have more comments, but it&#8217;s nice to check (maybe really good posts are kind of boring, so don&#8217;t lead to much discussion).</p>
+
+  <p>First, I plotted the points and comments of each individual post:</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/all_points_vs_comments.png" alt="All Points vs. Comments" /></p>
+
+  <p>As expected, there’s an overall positive correlation between points and comments. Interestingly, there are quite a few high-points posts with no comments.</p>
+
+  <p>The plot’s quite noisy, though, so let’s try cleaning it up a bit, by taking the median number of comments per points level (and removing posts at the higher end, where we have little data):</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/points_vs_median_comments.png" alt="Points vs. Median Comments" /></p>
+
+  <p>We see that posts with more points do tend to have more comments. Also, variance in number of comments is indicated by size and color, so (unsurprisingly) posts with more points have larger variance in their number of comments.</p>
+
+  <h1>Quality of Posts</h1>
+
+  <p>Another question was whether the quality of posts has degraded over time.</p>
+
+  <p>First, I computed a normalized &#8220;score&#8221; for each post, where a post&#8217;s score is defined as the number of points divided by the number of distinct users who made a submission in the same month. (The denominator is a rough proxy for the number of active users, and the goal of the score is to provide a way to compare posts across time.)</p>
+
+  <p>While the median score has declined over time (as perhaps should be expected, since only a fixed number of items can reach the front page):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/hn-analysis/median-score.png"><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/median-score.png" alt="Median Score" /></a></p>
+
+  <p>the absolute <em>number</em> of quality posts, defined as posts with a score greater than the (admittedly arbitrarily chosen) threshold 0.01, has increased (until possibly a dip starting in 2010):</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/num_quality_posts2.png" alt="Number of Quality Posts" /></p>
+
+  <p>(Of course, without some further analysis, it&#8217;s not clear how well this score measures quality of posts, so take these numbers with a grain of salt.)</p>
+
+  <h1>Company Trends</h1>
+
+  <p>Also, I wanted to see how certain topics have trended over time, so I looked at how mentions of some of the big-name companies (Google, Facebook, Microsoft, Yahoo, Twitter, Apple) have changed. For each company, I plotted the percentage of posts with the company&#8217;s name in the title, and also made a smoothed plot comparing all six at the end. Note that Microsoft and Yahoo seem to be trending slightly downward, and Apple seems to be trending upward.</p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/pct_microsoft.png" alt="Mentions of Microsoft" /></p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/pct_yahoo.png" alt="Mentions of Yahoo" /></p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/pct_google.png" alt="Mentions of Google" /></p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/pct_facebook.png" alt="Mentions of Facebook" /></p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/pct_twitter.png" alt="Mentions of Twitter" /></p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/pct_apple.png" alt="Mentions of Apple" /></p>
+
+  <p><img src="http://dl.dropbox.com/u/10506/blog/hn-analysis/all_trends2.png" alt="All Trends" /></p>
+  </div>
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2011/03/14/laymans-introduction-to-measure-theory/">Layman's Introduction to Measure Theory</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  
+  <div class="entry-content"><p>Measure theory studies ways of generalizing the notions of length/area/volume. Even in 2 dimensions, it might not be clear how to measure the area of the following fairly tame shape:</p>
+
+  <p><img src="http://d2o7bfz2il9cb7.cloudfront.net/main-qimg-809c3bdb18539dfa2917ee766a0a6159" alt="What's the area of this shape?" /></p>
+
+  <p>much less the &#8220;area&#8221; of even weirder shapes in higher dimensions or different spaces entirely.</p>
+
+  <p>For example, suppose you want to measure the length of a book (so that you can get a good sense of how long it takes to read). What&#8217;s a good measure? One possibility is to measure a book&#8217;s length in <em>pages</em>. Since books provide page counts, this is a fairly easy measure to get. However, different versions of the same book (e.g., hardcover and paperback versions) tend to have different page counts, so this page measure doesn&#8217;t satisfy the nice property of version invariance (which we would like to have, since hardcover and paperback versions of the same book take the same time to read). Also, not all books even have page counts (think Kindle books), so this measure doesn&#8217;t allow us to measure the length of all books we might want to read.</p>
+
+  <p>Another, possibly better measure is to measure a book&#8217;s length in terms of the number of <em>words</em> it contains. Now we do have version invariance (hardcover and paperback versions contain the same number of words) and we can measure the length of Kindle books as well. We can even do things like add two books together, and the measure/number of words of the concatenated books will pleasantly equal the sum of the measures/number of words of each book alone.</p>
+
+  <p>However, what happens when we try to measure a picture book&#8217;s length in words? We can&#8217;t &#8211; picture books are too pathological. Maybe we could say that a picture book has measure zero (since a picture book has no words), but then we get unhappy things like books of measure zero taking a really long time to read (imagine a really long picture book). So maybe a better option is to say that picture books are simply unmeasurable. Whenever someone asks for the length of a picture book, we ignore them, and this way our measure will continue to be a good approximation of reading time and we get to keep our other nice properties as well.</p>
+
+  <p>Similarly, measure theory asks questions like:</p>
+
+  <ul>
+  <li>How do we define a measure on our space? (Jordan measure and Lebesgue measure are two different options in Euclidean space.)</li>
+  <li>What properties does our measure satisfy? (For example, does it satisfy translational invariance, rotational invariance, additivity?)</li>
+  <li>Which objects are measurable/which objects can we say it&#8217;s okay not to measure in order to preserve nice properties of our measure? (The Banach-Tarski ball can be rigidly reassembled into two copies of the same shape and size as the original, so we don&#8217;t want it to be measurable, since then we would lose additivity properties.)</li>
+  </ul>
+
+
+  <p>And once we&#8217;ve defined a &#8220;generalized area&#8221; (our measure), we can try to generalize other mathematical concepts as well. For example, recall that the (Riemann) integral that you learn in calculus measures the area under a curve. What happens if we replace the &#8220;area&#8221; in the Riemann integral with our new, generalized measure (e.g., to get the Lebesgue integral)? Measure theory also helps make certain probability statements mathematically precise (e.g., we can say exactly what it means that a fair coin flipped infinitely often will &#8220;almost never&#8221; land heads more than 50% of the time).</p>
+  </div>
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2011/03/14/laymans-introduction-to-random-forests/">Layman's Introduction to Random Forests</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  
+  <div class="entry-content"><p>Suppose you&#8217;re very indecisive, so whenever you want to watch a movie, you ask your friend Willow if she thinks you&#8217;ll like it. In order to answer, Willow first needs to figure out what movies you like, so you give her a bunch of movies and tell her whether you liked each one or not (i.e., you give her a labeled training set). Then, when you ask her if she thinks you&#8217;ll like movie X or not, she plays a 20 questions-like game with IMDB, asking questions like &#8220;Is X a romantic movie?&#8221;, &#8220;Does Johnny Depp star in X?&#8221;, and so on. She asks more informative questions first (i.e., she maximizes the information gain of each question), and gives you a yes/no answer at the end.</p>
+
+  <p>Thus, <strong>Willow is a decision tree for your movie preferences</strong>.</p>
+
+  <p>But Willow is only human, so she doesn&#8217;t always generalize your preferences very well (i.e., she overfits). In order to get more accurate recommendations, you&#8217;d like to ask a bunch of your friends, and watch movie X if most of them say they think you&#8217;ll like it. That is, instead of asking only Willow, you want to ask Woody, Apple, and Cartman as well, and they vote on whether you&#8217;ll like a movie (i.e., <strong>you build an ensemble classifier</strong>, aka a forest in this case).</p>
+
+  <p>Now you don&#8217;t want each of your friends to do the same thing and give you the same answer, so you first give each of them slightly different data. After all, you&#8217;re not absolutely sure of your preferences yourself &#8211; you told Willow you loved Titanic, but maybe you were just happy that day because it was your birthday, so maybe some of your friends shouldn&#8217;t use the fact that you liked Titanic in making their recommendations. Or maybe you told her you loved Cinderella, but actually you <em>really really</em> loved it, so some of your friends should give Cinderella more weight. So instead of giving your friends the same data you gave Willow, you give them slightly perturbed versions. You don&#8217;t change your love/hate decisions, you just say you love/hate some movies a little more or less (formally, <strong>you give each of your friends a bootstrapped version of your original training data</strong>). For example, whereas you told Willow that you liked Black Swan and Harry Potter and disliked Avatar, you tell Woody that you liked Black Swan so much you watched it twice, you disliked Avatar, and don&#8217;t mention Harry Potter at all.</p>
+
+  <p>By using this ensemble, you hope that while each of your friends gives somewhat idiosyncratic recommendations (Willow thinks you like vampire movies more than you do, Woody thinks you like Pixar movies, and Cartman thinks you just hate everything), the errors get canceled out in the majority. Thus, <strong>your friends now form a bagged (bootstrap aggregated) forest of your movie preferences</strong>.</p>
+
+  <p>There&#8217;s still one problem with your data, however. While you loved both Titanic and Inception, it wasn&#8217;t because you like movies that star Leonardio DiCaprio. Maybe you liked both movies for other reasons. Thus, you don&#8217;t want your friends to all base their recommendations on whether Leo is in a movie or not. So when each friend asks IMDB a question, only a random subset of the possible questions is allowed (i.e., <strong>when you&#8217;re building a decision tree, at each node you use some randomness in selecting the attribute to split on</strong>, say by randomly selecting an attribute or by selecting an attribute from a random subset). This means your friends aren&#8217;t allowed to ask whether Leonardo DiCaprio is in the movie whenever they want. So whereas previously you injected randomness at the data level, by perturbing your movie preferences slightly, now you&#8217;re injecting randomness at the model level, by making your friends ask different questions at different times.</p>
+
+  <p>And so <strong>your friends now form a random forest</strong>.</p>
+  </div>
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2011/03/14/netflix-prize-summary-factorization-meets-the-neighborhood/">Netflix Prize Summary: Factorization Meets the Neighborhood</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  
+  <div class="entry-content"><p>(Way back when, I went through all the Netflix prize papers. I&#8217;m now (very slowly) trying to clean up my notes and put them online. Eventually, I hope to have a more integrated tutorial, but here&#8217;s a rough draft for now.)</p>
+
+  <p>This is a summary of Koren&#8217;s 2008 <a href="public.research.att.com/~volinsky/netflix/kdd08koren.pdf">Factorization Meets the Neighborhood: a Multifaceted Collaborative Filtering Model</a>.</p>
+
+  <p>There are two approaches to collaborative filtering: neighborhood methods and latent factor models.</p>
+
+  <ul>
+  <li>Neighborhood models are most effective at detecting very localized relationships (e.g., that people who like X-Men also like Spiderman), but poor at detecting a user&#8217;s overall signals.</li>
+  <li>Latent factor models are best at estimating overall structure (e.g., that a user likes horror movies), but are poor at detecting strong associations among small sets of closely related items.</li>
+  </ul>
+
+
+  <p>Since the two approaches have complementary strengths and weaknesses, we should integrate the two; this integration is the focus of this paper.</p>
+
+  <h1>Preliminaries</h1>
+
+  <p>As mentioned in previous papers, we should normalize out common effects from movies. Throughout the rest of this paper, Koren uses a baseline estimate of overall rating mean + user deviation from average + movie deviation from average for the rating of user i on movie i; estimation of the latter two parameters are done by solving a regularized least squares problem.</p>
+
+  <p>Koren then describes using a binary matrix (1 for rated, 0 for not rated) as a source of implicit feedback. This is useful because the mere fact that a user rated many science fiction movies (say) suggests that the user likes science fiction movies.</p>
+
+  <h1>A Neighborhood Model</h1>
+
+  <p>Recall the previous paper, where we modeled each rating $r_{ui}$ as</p>
+
+  <p>$$r_{ui} = b_{ui}+ \sum_{N \in N(i; u)} (r_{uj} - b_{uj}) w_{ij},$$</p>
+
+  <p>where $N(i; u)$ is the k items most similar to i among the items user u rated, and the $w_{ij}$ are parameters to be learned by solving a regularized least squares problem.</p>
+
+  <p>This paper makes several enhancements to that model. First, we replace $N(i; u)$ with $R^k(i; u)$, the intersection of the k items most similar to i (among all items) intersected with the items user u rated. Also, we denote by $N^k(i; u)$ the intersection of the k items most similar to i with the items user u has provided implicit feedback for. This gives us</p>
+
+  <p>$$r_{ui} = b_{ui} + \sum_{j \in R^k(i; u)} (r_{uj} - b_{uj}) w_{ij} + \sum_{j \in N^k(i; u)} c_{ij},$$</p>
+
+  <p>where the $c_{ij}$ are another set of parameters to learn.</p>
+
+  <p>Notice that by taking the intersection of the k items most similar to i with the items user u rated (giving perhaps a set of size less than k), rather than taking the k items most similar to i among the items user u rated, we let our model be influenced not only by what a user rates, but also by what a user does not rate. For example, if a user does not rate LOTR 1 or LOTR 2, his predicted rating for LOTR 3 is penalized.</p>
+
+  <p>This implies that our current model encourages greater deviations from baseline estimates for users that provided many ratings or plenty of implicit feedback. In other words, for well-modeled users with a lot of input, we are willing to predict quirkier and less common recommendations; users we have less information about, on the other hand, receive safer, baseline estimates.</p>
+
+  <p>Nonetheless, this dichotomy between power users and newbie users is perhaps overemphasized by our current model, so we moderate the dichotomy by modifying our model to be</p>
+
+  <p>$$r_{ui} = b_{ui} + |R^k(i; u)|^{-0.5} \sum_{j \in R^k(i; u)} (r_{uj} - b_{uj}) w_{ij} + |N^k(i; u)|^{-0.5} \sum_{j \in N^k(i; u)} c_{ij}.$$</p>
+
+  <p>Parameters are determined by solving a regularized least squares problem.</p>
+
+  <h1>Latent Factor Models Revisited</h1>
+
+  <p>Typical SVD approaches are based on the following rule:</p>
+
+  <p>$$r_{ui} = b_{ui} + p_u^T q_i,$$</p>
+
+  <p>where $p_u$ is a user-factors vector and $q_i$ is an item-factors vector. We describe two enhancements.</p>
+
+  <h2>Asymmetric-SVD</h2>
+
+  <p>One suggestion is to replace $p_u$ with</p>
+
+  <p>$$|R(u)|^{-0.5} + \sum_{j \in R(u)} (r_{uj} - b_{uj}) x_j + |N(u)|^{-0.5} \sum_{j \in N(u)} y_j,$$</p>
+
+  <p>where $R(u)$ is the set of items user u has rated, and $N(u)$ is the set of items user u has provided implicit feedback for. In other words, this model represents users through the items they prefer, rather than expressing users in a latent feature space. This model has several advantages:</p>
+
+  <ul>
+  <li>Asymmetric-SVD does not parameterize users, so we do not need to wait to retrain the model when a user comes in. Instead, we can handle new users as soon as they provide feedback.</li>
+  <li>Predictions are a direct function of past feedback, so we can easily explain predictions. (When using a pure latent feature solution, however, explainability is difficult.)</li>
+  </ul>
+
+
+  <p>As usual, parameters are learned via a regularized least-squares minimization.</p>
+
+  <h2>SVD++</h2>
+
+  <p>Another approach is to continue modeling users as latent features, while adding implicit feedback. Thus, we replace $p_u$ with $p_u + |N(u)|^{-0.5} \sum_{j \in N(u)} y_j$. While we lose the easily explainability and immediate feedback of the Asymmetric-SVD model, this approach is likely more accurate.</p>
+
+  <h1>An Integrated Model</h1>
+
+  <p>An integrated model incorporating baseline estimates, the neighborhood approach, and the latent factor approach is as follows:</p>
+
+  <p>$$r_{ui} = \left[\mu + b_u + b_i\right] +\left[q_i^T \big(p_u + \sqrt{|N(u)|}\sum_{j \in N(u)} y_j \big)\right] + \left[\sqrt{|R^k(i;u)} \sum_{j \in R^k(i; u)}(r_{uj} - b_{uj})w_{ij}+\sqrt{|N^k(i;u)|} \sum_{j \in N^k(i; u)} c_{ij}\right].$$</p>
+
+  <p>Note that we have used $(\mu + b_u + b_i)$ as our baseline estimate. We also used the SVD++ model, but we could use the Asymmetric-SVD model instead.</p>
+
+  <p>This rule provides a 3-tier model for recommendations:</p>
+
+  <ul>
+  <li>The first baseline group describes general properties of the item and user. For example, it may say that &#8220;The Sixth Sense&#8221; movie is known to be a good movie in general, and that Joe rates like the average user.</li>
+  <li>The next latent factor group may say that since &#8220;The Sixth Sense&#8221; and Joe rate high on the Psychological Thrillers Scale, Joe may like The Sixth Sense because he likes this genre of movies in general.</li>
+  <li>The final neighborhood tier makes fine-grained adjustments that are hard to file, such as the fact that Joe rated low the movie &#8220;Signs&#8221;, a similar psychological thriller by the same director.</li>
+  </ul>
+
+
+  <p>As usual, model parameters are determined by minimizing the regularized squared error function through gradient descent.</p>
+  </div>
+
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2011/03/14/netflix-prize-summary-scalable-collaborative-filtering-with-jointly-derived-neighborhood-interpolation-weights/">Netflix Prize Summary: Scalable Collaborative Filtering with Jointly Derived Neighborhood Interpolation Weights</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  
+  <div class="entry-content"><p>(Way back when, I went through all the Netflix prize papers. I&#8217;m now (very slowly) trying to clean up my notes and put them online. Eventually, I hope to have a more integrated tutorial, but here&#8217;s a rough draft for now.)</p>
+
+  <p>This is a summary of Bell and Koren&#8217;s 2007 <a href="public.research.att.com/~volinsky/netflix/BellKorICDM07.pdf">Scalable Collaborative Filtering with Jointly Derived Neighborhood Interpolation Weights</a> paper.</p>
+
+  <p><strong>tl;dr</strong> This paper&#8217;s main innovation is deriving neighborhood weights by solving a least squares problem, instead of using a standard similarity function to compute weights.</p>
+
+  <p>This paper improves upon the standard neighborhood approach to collaborative filtering in three areas: better data normalization, better neighbor weights (this is the key section), and better use of user data. I&#8217;ll first review the standard neighborhood approach, and follow with a description of these enhancements.</p>
+
+  <h2>Background: Standard Neighborhood Approach to Collaborative Filtering</h2>
+
+  <p>Recall that there are two types of neighborhood approaches:</p>
+
+  <ul>
+  <li>User-based approaches: to predict user i&#8217;s rating of item j, take the users most similar to user i, and perform a weighted average of their ratings of item j.</li>
+  <li>Item-based approaches: to predict user i&#8217;s rating of item j, perform a weighted average of user i&#8217;s ratings of items similar to item j.</li>
+  </ul>
+
+
+  <p>For example, to predict how you would rate the first Harry Potter movie, the user-based approach looks at how your friends rated the first Harry Potter movie, while the item-based approach looks at how you rated movies like Lord of the Rings and Twilight.</p>
+
+  <h2>Better Data Normalization</h2>
+
+  <p>Suppose I ask my friend Chris whether I should watch the latest Twilight movie. He tells me he would rate it 4.0/5 stars. Great, that&#8217;s a high rating, so that means I should watch it &#8211; or does it? It turns out that Chris is a super cheerful guy who&#8217;s never met a movie he didn&#8217;t like, and his average rating for a movie is actually 4.5/5 stars. So Twilight is actually less than average for him, and hence 4.0/5 stars from Chris isn&#8217;t actually that hearty a recommendation.</p>
+
+  <p>As another example, suppose you look at doctor ratings on Yelp. They&#8217;re abnormally high: the average is far from 3/5 stars. Why is this? Maybe it&#8217;s harder for people to change doctors than it is to go to a new restaurant, so people might not want to rate a doctor poorly when they know they&#8217;ll have to see the doctor again. Thus, an average rating of 5 stars on a McDonalds restaurant is much more impressive than an average of 5 stars on Dr. Joe.</p>
+
+  <p>The lesson is that when using existing ratings, we should normalize out these types of effects, so that ratings are as comparable as possible.</p>
+
+  <p>Another way of thinking about this is that we are simply building a regression model. That is, for each user u, we have a model
+  $r_{ui} = (\sum \theta_u x_{ui}) + SpecificRating$, where the $x_{ui}$ are common explanatory variables and we want to estimate $\theta_u$; and similarly for each item i. Once we&#8217;ve estimated the $\theta_u$, we can use the fancier neighborhood models on the specific ratings.</p>
+
+  <p>For example, suppose we want to predict Bob&#8217;s rating of Titanic. We&#8217;ve built a regression model with two explanatory variables, whether the movie was Oscar-nominated (1 if so, -1 if not) and whether the movie contains Kate Winslet (1 if so, -1 if not), and we&#8217;ve determined that Bob&#8217;s weights on these two variables are -2 (Bob tends to hate Oscar movies) and +1.5 (Bob likes Kate Winslet). Similarly, his friend John has weights +1 and -0.5 for these two variables (John likes Oscars, but dislikes Kate Winslet). So if we know that John rated Titanic a 4, then we have 4 = 1(1) + -0.5(1) + (John&#8217;s specific rating), so John&#8217;s specific rating of Titanic is 3.5. If we use John&#8217;s rating alone to estimate Bob&#8217;s, we might guess that Bob would rate Titanic -2(1) + 1.5(1) + (John&#8217;s specific rating) = 3.0.</p>
+
+  <p>To estimate the $\theta_u$, we actually perform this estimation in sequence: each explanatory variable is used to model the <em>residual</em> from the previous explanatory variable. Also, instead of using the maximum-likelihood unbiased estimator $\hat{\theta_u} = \frac{\sum r_{ui} x_{ui}}{x _ {ui} ^ 2}$, we shrink the weights to prevent overfitting. From a Bayesian point of view, the shrinkage arises from a hierarchical model where the true $\theta_u \sim N(\mu, \sigma^2)$, and $\hat{\theta_u} | \theta_u \sim N(\theta_u, \sigma_u^2)$, leading to $E(\theta_u | \hat{\theta_u}) = \frac{\sigma^2 \hat{\theta_u} + \sigma_u^2 \mu}{\sigma^2 + \sigma_u^2}$.</p>
+
+  <p>In practice, the explanatory variables Bell and Koren found to work well included the overall mean of all ratings, each movie&#8217;s specific mean, each user&#8217;s specific mean, time since movie release, time since user join, and number of ratings for each movie.</p>
+
+  <h2>Better Neighbor Weights</h2>
+
+  <p>Let&#8217;s consider some deficiencies of the neighborhood approach:</p>
+
+  <ul>
+  <li>Suppose I want to use the first LOTR movie to predict ratings of the first Harry Potter movie. To do this, I need to say how much weight the first LOTR movie should have in this prediction. But how do I choose this weight? Standard neighborhood approaches essentially pick arbitrary similarity functions (e.g., Pearson correlation, cosine distance) as the weight, possibly testing several similarity functions to see which gives the best performance, but is there a more principled approach to choosing weights?</li>
+  <li>The standard neighborhood approach ignores the fact that neighbors aren&#8217;t independent. For example, suppose all three LOTR movies are neighbors of the first HP movie. Since the three LOTR movies are so similar to each other, the standard approach is overcounting their information. Here&#8217;s an analogy: suppose I ask five of my friends where I should eat tonight. Three of them live together (boyfriend, girlfriend, and roommate), and they all recently took a trip together to Japan and are sick of Japanese food, so they vehemently recommend against sushi. Thus, my friends&#8217; recommendations have a stronger bias than would appear if I asked five friends who didn&#8217;t know each other at all.</li>
+  </ul>
+
+
+  <p>We&#8217;ll see how using an optimization method to derive weights (as opposed to deriving weights via a similarity function) overcomes these two limitations.</p>
+
+  <p>Recall our problem: we want to predict $r_{ui}$, user u&#8217;s rating of item i, and what we have is a set $N(i; u)$ of K neighbors of item i that user u has also rated. (These K neighbors are selected via a similarity function, as is standard.) So what we want to do is find weights $w_{ij}$ such that $r_{ui} = \sum_{j \in N(i; u) w_{ij} r_{uj}}$. A natural approach, then, is simply to choose our weights to minimize $\min_w \sum_{v \neq u} \left( r_{vi} - \sum_{j \in N(i; u)} w_{ij} r_{vj}\right)^2$.</p>
+
+  <p>Notice how this optimization solves our two problems above: it&#8217;s not only a more principled approach (we choose our weights by minimizing squared error), but by deriving weights simultaneously, we overcome interaction effects.</p>
+
+  <p>Differentiating our cost function, we find that the optimal weights satisfy the equation $Aw = b$, where A is a $K \times K$ matrix defined by $A_{jk} = \sum_{v \neq u} r_{vj} r_{vk}$ and $b$ is a vector defined by $b_j = \sum_{v \neq u} r_{vj} r_{vi}$.</p>
+
+  <p>However, not all users have rated every movie, so some of the ratings may be missing from the above formulas. So we should instead use an estimate of A and b, such as $\bar{A}_{jk} = \frac{\sum_{v \in U(j,k)} r_{vj} r_{vk}}{|U(j, k)|}$, where $U(j, k)$ is the set of users who rated both j and k, and similarly for b. To avoid overfitting, we should further modify by shrinking to a common mean: $\hat{A}_{jk} = \frac{|U(J,K)|\bar{A}_{jk} + \beta A_{\mu}}{|U(j,k)| + \beta}$, where $\beta$ is a shrinkage parameter and $A_{\mu}$ is the mean over all $\bar{A}$, and similarly for b.</p>
+
+  <p>Note that another benefit of our optimization-derived weights is that the weights of neighbors are no longer constrained to sum to 1. Thus, if an item simply has no strong neighbors, the neighbors&#8217; prediction will have only a small effect.</p>
+
+  <p>Also, when engineering these methods in practice, we should precompute all item-item similarities and all entries in the matrix $A$.</p>
+
+  <h2>Better Use of User Data</h2>
+
+  <p>Neighborhood models typically follow the item-based approach for two reasons:</p>
+
+  <ul>
+  <li>There are typically many more users than items, and new users come in much more frequently than new items, so it is easier to compute all pairs of item-item similarities.</li>
+  <li>Users have diverse tastes, so they aren&#8217;t as similar to each other. For example, Alice and Eve may both like horror movies, but disagree on comedies.</li>
+  </ul>
+
+
+  <p>But there are various reasons we might want to use a user-based approach <em>in addition to</em> an item-based approach (say, a user hasn&#8217;t rated many items yet, but we can find similar users based on other types of data, such as browsing history; or, we want to predict user u&#8217;s rating on item i, but user u hasn&#8217;t rated any items similar to i), so let&#8217;s see if we can get around these limitations.</p>
+
+  <p>To get around the first limitation, we can project users into a lower-dimensional space (say, by using a singular value decomposition), where we can use a space-partitioning data structure (e.g., a kd-tree) or a nearest-neighbor algorithm (e.g., locality sensitive hashing) to find neighboring users.</p>
+
+  <p>To get around the second limitation &#8211; that a user u may be predictive of user v for some items, but less so for others &#8211; we incorporate item-item similarity into our weighting method. That is, when using the user-neighborhood model to predict user u&#8217;s rating on item i, we give higher weight to items similar to i, by choosing the weights to minimize $\min_w \sum_{j \neq i} s_{ij} \left( r_{uj} - \sum_{v \in N(u, i)} w_{uv} r_{vj} \right)^2,$ where the $s_{ij}$ are item-item similarities.</p>
+
+  <h2>Appendix: Shrinkage</h2>
+
+  <p>Parameter shrinkage is used a couple times in the paper, so let&#8217;s explain what it means.</p>
+
+  <p>Suppose that we want to estimate the probability of a coin. If we flip it once and see heads, then the maximum-likelihood estimate of heads is 1. But (as is typical for maximum-likelihood estimates), this is severe overfitting, and what we should do instead is shrink this maximum-likelihood estimate to a prior estimate of the probability of heads, say 1/2. (Note that shrinkage doesn&#8217;t necessarily mean decreasing the number, just moving it towards a prior estimate).</p>
+
+  <p>How should we perform this shrinkage? If our maximum-likelihood estimate of our parameter $\theta$ is $x$ and our prior mean is $\mu$, a natural estimation of $\theta$ is to use a weighted mean $\alpha x + (1 - \alpha)\mu$, where $\alpha$ is some measure of the degree of belief in our maximum likelihood estimate.</p>
+
+  <p>This weighted average approach has several interpretations:</p>
+
+  <ul>
+  <li>We can also view it as a shrinkage of our maximum likelihood estimate to our prior mean: $\alpha x + (1 - \alpha)\mu = x + (1 - \alpha) (\mu - x)$</li>
+  <li>We can also view it as a Bayesian posterior: if we use a prior $\theta \sim N(\mu, \tau)$ (where $\tau$ is the precision of our Gaussian, not the variance) and a conditional distribution $x | \theta \sim N(\theta, \tau_x)$, then the posterior mean of $\theta$ is $\theta = \frac{\tau_x}{\tau_x + \tau}x + \frac{\tau}{\tau_x + \tau}\mu,$ which is equivalent to the form above.</li>
+  </ul>
+
+  </div>
+
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2011/03/14/prime-numbers-and-the-riemann-zeta-function/">Prime Numbers and the Riemann Zeta Function</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  
+  <div class="entry-content"><p>Lots of people know that the <a href="http://en.wikipedia.org/wiki/Riemann_hypothesis">Riemann Hypothesis</a> has <em>something</em> to do with prime numbers, but most introductions fail to say what or why. I&#8217;ll try to give one angle of explanation.</p>
+
+
+
+
+  <h1>Layman&#8217;s Terms</h1>
+
+
+
+
+  <p>Suppose you have a bunch of friends, each with an instrument that plays at a frequency equal to the imaginary part of a zero of the Riemann zeta function. If the Riemann Hypothesis holds, you can create a song that sounds exactly at the prime-powered beats, by simply telling all your friends to play at the same volume.</p>
+
+
+
+
+  <h1>Mathematical Terms</h1>
+
+
+
+
+  <p>Let $ &#92;pi(x) $ denote the number of primes less than or equal to x. Recall <a href="http://en.wikipedia.org/wiki/Prime_number_theorem#The_prime-counting_function_in_terms_of_the_logarithmic_integral">Gauss&#8217;s approximation</a>: $ &#92;pi(x) &#92;approx &#92;int\_2\^x &#92;frac{1}{&#92;log t} &#92;,dt $ (aka, the &#8220;probability that a number n is prime&#8221; is approximately $ &#92;frac{1}{&#92;log n} $).</p>
+
+
+
+
+  <p>Riemann improved on Gauss&#8217;s approximation by discovering an <em>exact</em> formula $ P(x) = A(x) - E(x) $ for counting the primes, where</p>
+
+
+
+
+  <ul>
+  <li>$ P(x) = &#92;sum\_{p\^k &lt; x} &#92;frac{1}{k} $ performs a weighted count of the prime powers less than or equal to x. [Think of this as a generalization of the prime counting function.]</li>
+  <li>$ A(x) = &#92;int\_0\^x &#92;frac{1}{&#92;log t} &#92;,dt+ &#92;int\_x\^{&#92;infty} &#92;frac{1}{t(t\^2  -1) &#92;log t} &#92;,dt $ $ - &#92;log 2 $ is a kind of generalization of Gauss&#8217;s approximation.</li>
+  <li>$ E(x) = &#92;sum\_{z : &#92;zeta(z) = 0} &#92;int\_0\^{x\^z} &#92;frac{1}{&#92;log t} &#92;,dt $ is an error-correcting factor that depends on the zeroes of the Riemann zeta function.</li>
+  </ul>
+
+
+
+
+  <p>In other words, if we use a simple Gauss-like approximation to the distribution of the primes, the zeroes of the Riemann zeta function sweep up after our errors.</p>
+
+
+
+
+  <p>Let&#8217;s dig a little deeper. Instead of using Riemann&#8217;s formula, I&#8217;m going to use an equivalent version</p>
+
+
+
+
+  <p>$$ &#92;psi(x) = (x + &#92;sum\_{n = 1}\^{&#92;infty} &#92;frac{x\^{-2n}}{2n} - &#92;log 2&#92;pi) - &#92;sum\_{z : &#92;zeta(z) = 0} &#92;frac{x\^z}{z} $$</p>
+
+
+
+
+  <p>where  $ &#92;psi(x) = &#92;sum\_{p\^k &#92;le x} &#92;log p $. Envisioning this formula to be in the same $P(x) = A(x) - E(x)$ form as above, this time where</p>
+
+
+
+
+  <ul>
+  <li>$ P(x) = &#92;psi(x) = &#92;sum\_{p\^k &#92;le x} &#92;log p $ is another kind of count of the primes.</li>
+  <li>$ A(x) = x + &#92;sum\_{n = 1}\^{&#92;infty} &#92;frac{x\^{-2n}}{2n} - &#92;log 2&#92;pi $ is another kind of approximation to $P(x)$.</li>
+  <li>$ E(x) = &#92;sum\_{z : &#92;zeta(z) = 0} &#92;frac{x\^z}{z} $ is another error-correction factor that depends on the zeroes of the Riemann zeta function.</li>
+  </ul>
+
+
+
+
+  <p>we can again interpret it as an error-correcting formula for counting the primes.</p>
+
+
+
+
+  <p>Now since $ &#92;psi(x) $ is a step function that jumps at the prime powers, its derivative $ &#92;psi&#8217;(x) $ has spikes at the prime powers and is zero everywhere else. So consider</p>
+
+
+
+
+  <p>$$ &#92;psi&#8217;(x) = 1 - &#92;frac{1}{x(x\^2 - 1)} - &#92;sum\_z x\^{z-1} $$</p>
+
+
+
+
+  <p>It&#8217;s well-known that the zeroes of the Riemann zeta function are symmetric about the real axis, so the (non-trivial) zeroes come in conjugate pairs $ z, &#92;bar{z} $. But $ x\^{z-1} + x\^{&#92;bar{z} - 1} $ is just a wave whose amplitude depends on the real part of z and whose frequency depends on the imaginary part (i.e., if $ z = a + bi $, then $ x\^{z-1} + x\^{&#92;bar{z}-1} = 2x\^{a-1} cos (b &#92;log x) $), which means $ &#92;psi&#8217;(x) $ can be decomposed into a sum of zeta-zero waves. Note that because of the $2x\^{a-1}$ term in front, the amplitude of these waves depends only on the real part $a$ of the conjugate zeroes.</p>
+
+
+
+
+  <p>For example, here are plots of $ &#92;psi&#8217;(x) $ using 10, 50, and 200 pairs of zeroes:</p>
+
+
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/riemann-hypothesis/10.png"><img src="http://dl.dropbox.com/u/10506/blog/riemann-hypothesis/10.png" alt="10 Pairs" /></a></p>
+
+
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/riemann-hypothesis/50.png"><img src="http://dl.dropbox.com/u/10506/blog/riemann-hypothesis/50.png" alt="50 Pairs" /></a></p>
+
+
+
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/riemann-hypothesis/200.png"><img src="http://dl.dropbox.com/u/10506/blog/riemann-hypothesis/200.png" alt="50 Pairs" /></a></p>
+
+
+
+
+  <p>So when the Riemann Hypothesis says that all the non-trivial zeroes have real part 1/2, it&#8217;s hypothesizing that the non-trivial zeta-zero waves have equal amplitude, i.e., they make equal contributions to counting the primes.</p>
+
+
+
+
+  <p><strong>In Fourier-poetic terms</strong>, when Flying Spaghetti Monster composed the music of the primes, he built the notes out of the zeroes of the Riemann zeta function. If the Riemann Hypothesis holds, he made all the non-trivial notes equally loud.</p>
+
+  </div>
 
                     </article>
  
 <div class="paginator">
-            <div class="navButton"><a href="http://blog.echen.me/index2.html">Prev</a></div>
-    <div class="navButton">Page 3 / 7</div>
-        <div class="navButton"><a href="http://blog.echen.me/index4.html" >Next</a></div>
+            <div class="navButton"><a href="./index2.html">Prev</a></div>
+    <div class="navButton">Page 3 / 4</div>
+        <div class="navButton"><a href="./index4.html" >Next</a></div>
 </div>
                 </div>
             </aside><!-- /#featured -->
             
         
-  
+
 	      <div class="LaunchyardDetail">
 	        <p>
-	          <a style="text-align: left" class="title" href="http://blog.echen.me/">Edwin Chen</a>	          
+	          <a style="text-align: left" class="title" href="./">Edwin Chen</a>
 	          <br/>
+
 	        </p>
-	        
-	        <div id="about" style="text-align: left">              	          
+
+	        <div id="about" style="text-align: left !important">
+	          <p>
+	            Building human/AI infrastructure at <a href="https://www.surgehq.ai">Surge</a>.
+            </p>
+            <br />
+            <p>
+              Need obsessively high-quality human-labeled data? Interested in a self-serve data labeling platform? <a href="https://www.surgehq.ai">Just reach out!</a> We help top companies create massive datasets to train and measure their AI.
+	          </p>
+            <br />
+            <p>
+              Former AI & engineering lead at Google, Facebook, Twitter, and Dropbox. Pure math and linguistics research at MIT.
+            </p>
+            <br />
 	          <div style="text-align: center">
-              <a href="mailto:hello[at]echen.me">Email</a><br />
-              <a href="https://twitter.com/#!/echen">Twitter</a><br/>
+              <a href="https://quora.com/edwin-chen-1">Quora</a><br />
+              <a href="https://twitter.com/echen">Twitter</a><br/>
               <a href="https://github.com/echen">Github</a><br/>
-              <a href="https://plus.google.com/113804726252165471503/">Google+</a><br/>
-              <a href="http://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
-              <a href="http://quora.com/edwin-chen-1">Quora</a><br/>
-              <br />
-              <a href="http://blog.echen.me/feeds/all.atom.xml">Atom</a> / <a href="http://blog.echen.me/feeds/all.rss.xml">RSS</a>
+              <a href="https://www.linkedin.com/in/edwinzchen">LinkedIn</a><br/>
+              <a href="mailto:hello[&aelig;]echen.me">Email</a><br/>
             </div>
           </div>
 
           <div id="recent_posts">
               <h3>Recent Posts</h3>
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
-            
+                <a style="font-size: 0.9em" href="./2017/05/30/exploring-lstms/">Exploring LSTMs  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
           </div>
         </div>
 
 
         <section id="extras" >
-       
-        
+
+
         </section><!-- /#extras -->
-	
+
         <footer id="contentinfo" >
                 <address id="about" class="vcard ">
                 Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
                 great advantage of <a href="http://python.org" target="_blank">Python</a>.
-		
-                </address><!-- /#about -->
-		
 
-                
+                </address><!-- /#about -->
+
+
+
         </footer><!-- /#contentinfo -->
 
 </body>

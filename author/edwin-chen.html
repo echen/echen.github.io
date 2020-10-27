@@ -4,26 +4,28 @@
         <title>Edwin Chen's Blog - Edwin Chen</title>
         <meta charset="utf-8" />
 	      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="stylesheet" href="http://blog.echen.me/theme/css/main.css" type="text/css" />
+        <link rel="stylesheet" href="../theme/css/main.css" type="text/css" />
         <link href="http://blog.echen.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Edwin Chen's Blog Atom Feed" />
         <link href="http://blog.echen.me/feeds/all.rss.xml" type="application/rss+xml" rel="alternate" title="Edwin Chen's Blog RSS Feed" />
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
 
         <!--[if IE]>
                 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
 
         <!--[if lte IE 7]>
-                <link rel="stylesheet" type="text/css" media="all" href="http://blog.echen.me/css/ie.css"/>
-                <script src="http://blog.echen.me/js/IE8.js" type="text/javascript"></script><![endif]-->
+                <link rel="stylesheet" type="text/css" media="all" href="../css/ie.css"/>
+                <script src="../js/IE8.js" type="text/javascript"></script><![endif]-->
 
         <!--[if lt IE 7]>
-                <link rel="stylesheet" type="text/css" media="all" href="http://blog.echen.me/css/ie6.css"/><![endif]-->
+                <link rel="stylesheet" type="text/css" media="all" href="../css/ie6.css"/><![endif]-->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js" type="text/javascript"></script>
 
 
 </head>
 
 <body id="index" class="home">
-	
+
         
         
 
@@ -31,17 +33,367 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation</a></h1>
+                        <h1 class="entry-title"><a href="../2017/05/30/exploring-lstms/">Exploring LSTMs</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2014-10-07T00:00:00+02:00">
-          on&nbsp;Tue 07 October 2014
-        </li>
 
-	</ul>
+</div><!-- /.post-info --><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
+
+<p>LSTMs are behind a lot of the amazing achievements deep learning has made in the past few years, and they're a fairly simple extension to neural networks under the right view. So I'll try to present them as intuitively as possible – in such a way that you could have discovered them yourself.</p>
+<p>But first, a picture:</p>
+<p><img alt="LSTM" src="http://i.imgur.com/lnBi8OZ.png"></p>
+<p>Aren't LSTMs beautiful? Let's go.</p>
+<p>(Note: if you're already familiar with neural networks and LSTMs, skip to the middle – the first half of this post is a tutorial.)</p>
+<h1>Neural Networks</h1>
+<p>Imagine we have a sequence of images from a movie, and we want to label each image with an activity (is this a fight?, are the characters talking?, are the characters eating?).</p>
+<p>How do we do this?</p>
+<p>One way is to ignore the sequential nature of the images, and build a <em>per-image</em> classifier that considers each image in isolation. For example, given enough images and labels:</p>
+<ul>
+<li>Our algorithm might first learn to detect low-level patterns like shapes and edges. </li>
+<li>With more data, it might learn to combine these patterns into more complex ones, like faces (two circular things atop a triangular thing atop an oval thing) or cats.</li>
+<li>And with even more data, it might learn to map these higher-level patterns into activities themselves (scenes with mouths, steaks, and forks are probably about eating).</li>
+</ul>
+<p>This, then, is a <strong>deep neural network</strong>: it takes an image input, returns an activity output, and – just as we might learn to detect patterns in puppy behavior without knowing anything about dogs (after seeing enough corgis, we discover common characteristics like fluffy butts and drumstick legs; next, we learn advanced features like splooting) – in between it learns to represent images through hidden layers of representations.</p>
+<h2>Mathematically</h2>
+<p>I assume people are familiar with basic neural networks already, but let's quickly review them.</p>
+<ul>
+<li>A <strong>neural network</strong> with a single hidden layer takes as input a vector x, which we can think of as a set of neurons. </li>
+<li>Each input neuron is connected to a hidden layer of neurons via a set of learned weights. </li>
+<li>The jth hidden neuron outputs <span class="math">\(h_j = \phi(\sum_i w_{ij} x_i)\)</span>, where <span class="math">\(\phi\)</span> is an activation function. </li>
+<li>The hidden layer is fully connected to an output layer, and the jth output neuron outputs <span class="math">\(y_j = \sum_i v_{ij} h_i\)</span>. If we need probabilities, we can transform the output layer via a <a href="https://en.wikipedia.org/wiki/Softmax_function">softmax</a> function.</li>
+</ul>
+<p>In matrix notation:</p>
+<div class="math">$$h = \phi(Wx)$$</div>
+<div class="math">$$y = Vh$$</div>
+<p>where</p>
+<ul>
+<li>x is our input vector</li>
+<li>W is a weight matrix connecting the input and hidden layers</li>
+<li>V is a weight matrix connecting the hidden and output layers</li>
+<li>Common activation functions for <span class="math">\(\phi\)</span> are the <a href="https://en.wikipedia.org/wiki/Sigmoid_function">sigmoid function</a>, <span class="math">\(\sigma(x)\)</span>, which squashes numbers into the range (0, 1); the <a href="https://en.wikipedia.org/wiki/Hyperbolic_function#Standard_analytic_expressions">hyperbolic tangent</a>, <span class="math">\(tanh(x)\)</span>, which squashes numbers into the range (-1, 1), and the <a href="https://en.wikipedia.org/wiki/Rectifier_(neural_networks)">rectified linear unit</a>, <span class="math">\(ReLU(x) = max(0, x)\)</span>.</li>
+</ul>
+<p>Here's a pictorial view:</p>
+<p><img alt="Neural Network" src="http://i.imgur.com/tFMQMOn.png"></p>
+<p>(Note: to make the notation a little cleaner, I assume x and h each contain an extra bias neuron fixed at 1 for learning bias weights.)</p>
+<h1>Remembering Information with RNNs</h1>
+<p>Ignoring the sequential aspect of the movie images is pretty ML 101, though. If we see a scene of a beach, we should boost beach activities in future frames: an image of someone in the water should probably be labeled <em>swimming</em>, not <em>bathing</em>, and an image of someone lying with their eyes closed is probably <em>suntanning</em>. If we remember that Bob just arrived at a supermarket, then even without any distinctive supermarket features, an image of Bob holding a slab of bacon should probably be categorized as <em>shopping</em> instead of <em>cooking</em>.</p>
+<p>So what we'd like is to let our model track the state of the world:</p>
+<ol>
+<li><strong>After seeing each image, the model outputs a label and also updates the knowledge it's been learning.</strong> For example, the model might learn to automatically discover and track information like location (are scenes currently in a house or beach?), time of day (if a scene contains an image of the moon, the model should remember that it's nighttime), and within-movie progress (is this image the first frame or the 100th?). Importantly, just as a neural network automatically discovers hidden patterns like edges, shapes, and faces without being fed them, our model should automatically discover useful information by itself.</li>
+<li>When given a new image, the model should <strong>incorporate the knowledge it's gathered</strong> to do a better job.</li>
+</ol>
+<p>This, then, is a <strong>recurrent neural network</strong>. Instead of simply taking an image and returning an activity, an RNN also maintains internal memories about the world (weights assigned to different pieces of information) to help perform its classifications.</p>
+<h2>Mathematically</h2>
+<p>So let's add the notion of <strong>internal knowledge</strong> to our equations, which we can think of as pieces of information that the network maintains over time. </p>
+<p>But this is easy: we know that the hidden layers of neural networks already encode useful information about their inputs, so why not use these layers as the memory passed from one time step to the next? This gives us our RNN equations:</p>
+<div class="math">$$h_t = \phi(Wx_t + Uh_{t-1})$$</div>
+<div class="math">$$y_t = Vh_t$$</div>
+<p>Note that the hidden state computed at time <span class="math">\(t\)</span> (<span class="math">\(h_t\)</span>, our internal knowledge) is fed back at the next time step. (Also, I'll use concepts like hidden state, knowledge, memories, and beliefs to describe <span class="math">\(h_t\)</span> interchangeably.)</p>
+<p><img alt="RNN" src="http://i.imgur.com/ifQrKRR.png"></p>
+<h1>Longer Memories through LSTMs</h1>
+<p>Let's think about how our model updates its knowledge of the world. So far, we've placed no constraints on this update, so its knowledge can change pretty chaotically: at one frame it thinks the characters are in the US, at the next frame it sees the characters eating sushi and thinks they're in Japan, and at the next frame it sees polar bears and thinks they're on Hydra Island. Or perhaps it has a wealth of information to suggest that Alice is an investment analyst, but decides she's a professional assassin after seeing her cook.</p>
+<p>This chaos means information quickly transforms and vanishes, and it's difficult for the model to keep a long-term memory. So what we'd like is for the network to <em>learn</em> how to update its beliefs (scenes without Bob shouldn't change Bob-related information, scenes with Alice should focus on gathering details about her), in a way that its knowledge of the world evolves more gently. </p>
+<p>This is how we do it.</p>
+<ol>
+<li><strong>Adding a forgetting mechanism.</strong> If a scene ends, for example, the model should forget the current scene location, the time of day, and reset any scene-specific information; however, if a character dies in the scene, it should continue remembering that he's no longer alive. Thus, we want the model to learn a separate <em>forgetting/remembering</em> mechanism: when new inputs come in, it needs to know which beliefs to keep or throw away.</li>
+<li><strong>Adding a saving mechanism.</strong> When the model sees a new image, it needs to learn whether any information about the image is worth using and saving. Maybe your mom sent you an article about the Kardashians, but who cares?</li>
+<li>So when new a input comes in, the model first forgets any long-term information it decides it no longer needs. Then it learns which parts of the new input are worth using, and saves them into its long-term memory.</li>
+<li><strong>Focusing long-term memory into working memory.</strong> Finally, the model needs to learn which parts of its long-term memory are immediately useful. For example, Bob's age may be a useful piece of information to keep in the long term (children are more likely to be crawling, adults are more likely to be working), but is probably irrelevant if he's not in the current scene. So instead of using the full long-term memory all the time, it learns which parts to focus on instead.</li>
+</ol>
+<p>This, then, is an <strong>long short-term memory network</strong>. Whereas an RNN can overwrite its memory at each time step in a fairly uncontrolled fashion, an LSTM transforms its memory in a very precise way: by using <em>specific learning mechanisms</em> for which pieces of information to remember, which to update, and which to pay attention to. This helps it keep track of information over longer periods of time.</p>
+<h2>Mathematically</h2>
+<p>Let's describe the LSTM additions mathematically.</p>
+<p>At time <span class="math">\(t\)</span>, we receive a new input <span class="math">\(x_t\)</span>. We also have our long-term and working memories passed on from the previous time step, <span class="math">\(ltm_{t-1}\)</span> and <span class="math">\(wm_{t-1}\)</span> (both n-length vectors), which we want to update.</p>
+<p><strong>We'll start with our long-term memory.</strong> First, we need to know which pieces of long-term memory to continue remembering and which to discard, so we want to use the new input and our working memory to learn a <strong>remember gate</strong> of n numbers between 0 and 1, each of which determines how much of a long-term memory element to keep. (A 1 means to keep it, a 0 means to forget it entirely.)</p>
+<p>Naturally, we can use a small neural network to learn this remember gate:</p>
+<div class="math">$$remember_t = \sigma(W_r x_t + U_r wm_{t-1}) $$</div>
+<p>(Notice the similarity to our previous network equations; this is just a shallow neural network. Also, we use a sigmoid activation because we need numbers between 0 and 1.)</p>
+<p>Next, we need to compute the information we can learn from <span class="math">\(x_t\)</span>, i.e., a <strong>candidate addition to our long-term memory</strong>:</p>
+<div class="math">$$ ltm'_t = \phi(W_l x_t + U_l wm_{t-1}) $$</div>
+<p><span class="math">\(\phi\)</span> is an activation function, commonly chosen to be <span class="math">\(tanh\)</span>.</p>
+<p>Before we add the candidate into our memory, though, we want to learn <strong>which parts of it are actually worth using and saving</strong>:</p>
+<div class="math">$$save_t = \sigma(W_s x_t + U_s wm_{t-1})$$</div>
+<p>(Think of what happens when you read something on the web. While a news article might contain information about Hillary, you should ignore it if the source is Breitbart.)</p>
+<p>Let's now combine all these steps. After forgetting memories we don't think we'll ever need again and saving useful pieces of incoming information, we have our <strong>updated long-term memory</strong>:</p>
+<div class="math">$$ltm_t = remember_t \circ ltm_{t-1} + save_t \circ ltm'_t$$</div>
+<p>where <span class="math">\(\circ\)</span> denotes element-wise multiplication.</p>
+<p><strong>Next, let's update our working memory.</strong> We want to learn how to focus our long-term memory into information that will be <em>immediately</em> useful. (Put differently, we want to learn what to move from an <em>external hard drive</em> onto our <em>working laptop</em>.) So we learn a <strong>focus/attention vector</strong>:</p>
+<div class="math">$$focus_t = \sigma(W_f x_t + U_f wm_{t-1})$$</div>
+<p>Our <strong>working memory</strong> is then</p>
+<div class="math">$$wm_t = focus_t \circ \phi(ltm_t)$$</div>
+<p>In other words, we pay full attention to elements where the focus is 1, and ignore elements where the focus is 0.</p>
+<p>And we're done! Hopefully this made it into your long-term memory as well.</p>
+<hr>
+<p>To summarize, whereas a vanilla RNN uses one equation to update its hidden state/memory:</p>
+<div class="math">$$h_t = \phi(Wx_t + Uh_{t-1})$$</div>
+<p>An LSTM uses several:</p>
+<div class="math">$$ltm_t = remember_t \circ ltm_{t-1} + save_t \circ ltm'_t$$</div>
+<div class="math">$$wm_t = focus_t \circ tanh(ltm_t)$$</div>
+<p>where each memory/attention sub-mechanism is just a mini brain of its own:</p>
+<div class="math">$$remember_t = \sigma(W_r x_t+  U_r wm_{t-1}) $$</div>
+<div class="math">$$save_t = \sigma(W_s x_t + U_s wm_{t-1})$$</div>
+<div class="math">$$focus_t = \sigma(W_f x_t + U_f wm_{t-1})$$</div>
+<div class="math">$$ ltm'_t = tanh(W_l x_t + U_l wm_{t-1}) $$</div>
+<p>(Note: the terminology and variable names I've been using are different from the usual literature. Here are the standard names, which I'll use interchangeably from now on:</p>
+<ul>
+<li>The long-term memory, <span class="math">\(ltm_t\)</span>, is usually called the <strong>cell state</strong>, denoted <span class="math">\(c_t\)</span>.</li>
+<li>The working memory, <span class="math">\(wm_t\)</span>, is usually called the <strong>hidden state</strong>, denoted <span class="math">\(h_t\)</span>. This is analogous to the hidden state in vanilla RNNs.</li>
+<li>The remember vector, <span class="math">\(remember_t\)</span>, is usually called the <strong>forget gate</strong> (despite the fact that a 1 in the forget gate still means to keep the memory and a 0 still means to forget it), denoted <span class="math">\(f_t\)</span>.</li>
+<li>The save vector, <span class="math">\(save_t\)</span>, is usually called the <strong>input gate</strong> (as it determines how much of the input to let into the cell state), denoted <span class="math">\(i_t\)</span>.</li>
+<li>The focus vector, <span class="math">\(focus_t\)</span>, is usually called the <strong>output gate</strong>, denoted <span class="math">\(o_t\)</span>.
+)</li>
+</ul>
+<p><img alt="LSTM" src="http://i.imgur.com/vsqgLYn.png"></p>
+<h1>Snorlax</h1>
+<p>I could have caught a hundred Pidgeys in the time it took me to write this post, so here's a cartoon.</p>
+<h2>Neural Networks</h2>
+<p><img alt="Neural Network" src="http://i.imgur.com/cOGzJxk.png"></p>
+<h2>Recurrent Neural Networks</h2>
+<p><img alt="RNN" src="http://i.imgur.com/PnWiSCf.png"></p>
+<h2>LSTMs</h2>
+<p><img alt="LSTM" src="http://i.imgur.com/EGZIUuc.pngg"></p>
+<h2>Learning to Code</h2>
+<p>Let's look at a few examples of what an LSTM can do. Following Andrej Karpathy's <a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/">terrific post</a>, I'll use character-level LSTM models that are fed sequences of characters and trained to predict the next character in the sequence. </p>
+<p>While this may seem a bit toyish, character-level models can actually be very useful, even on top of word models. For example:</p>
+<ul>
+<li><strong>Imagine a code autocompleter smart enough to allow you to program on your phone.</strong> An LSTM could (in theory) track the return type of the method you're currently in, and better suggest which variable to return; it could also know without compiling whether you've made a bug by returning the wrong type.</li>
+<li><strong>NLP applications like machine translation often have trouble dealing with rare terms.</strong> How do you translate a word you've never seen before, or convert adjectives to adverbs? Even if you know what a tweet means, how do you generate a new hashtag to capture it? Character models can daydream new terms, so this is another area with <a href="https://arxiv.org/pdf/1508.07909.pdf">interesting applications</a>.</li>
+</ul>
+<p>So to start, I spun up an EC2 p2.xlarge spot instance, and trained a 3-layer LSTM on the <a href="https://github.com/apache/commons-lang">Apache Commons Lang codebase</a>. Here's a program it generates after a few hours.</p>
+<p><code data-gist-id="de1d2d1bd34a94fba100b57b3a9e49ab" data-gist-hide-footer="true"></code></p>
+<p>While the code certainly isn't perfect, it's better than a lot of data scientists I know. And we can see that the LSTM has learned a lot of interesting (and correct!) coding behavior:</p>
+<ul>
+<li><strong>It knows how to structure classes:</strong> a license up top, followed by packages and imports, followed by comments and a class definition, followed by variables and methods. Similarly, it knows how to create methods: comments follow the correct orders (description, then @param, then @return, etc.), decorators are properly placed, and non-void methods end with appropriate return statements. Crucially, this behavior spans long ranges of code – see how giant the blocks are!</li>
+<li><strong>It can also track subroutines and nesting levels:</strong> indentation is always correct, and if statements and for loops are always closed out.</li>
+<li><strong>It even knows how to create tests.</strong></li>
+</ul>
+<p>How does the model do this? Let's look at a few of the hidden states.</p>
+<p>Here's a neuron that seems to track the code's <em>outer</em> level of indentation:</p>
+<p>(As the LSTM moves through the sequence, its neurons fire at varying intensities. The picture represents one particular neuron, where each row is a sequence and characters are color-coded according to the neuron's intensity; dark blue shades indicate large, positive activations, and dark red shades indicate very negative activations.)</p>
+<p><img alt="Outer Level of Indentation" src="http://i.imgur.com/szJnfAY.png"></p>
+<p>And here's a neuron that counts down the spaces between tabs:</p>
+<p><img alt="Tab Spaces" src="http://i.imgur.com/EBbM9Kx.png"></p>
+<p>For kicks, here's the output of a different 3-layer LSTM trained on TensorFlow's codebase:</p>
+<p><code data-gist-id="926b34e5bec6cd2b304cdecabda255b1" data-gist-hide-footer="true"></code></p>
+<p>There are <a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/">plenty of other fun examples</a> floating around the web, so check them out if you want to see more.</p>
+<h1>Investigating LSTM Internals</h1>
+<p>Let's dig a little deeper. We looked in the last section at examples of hidden states, but I wanted to play with LSTM cell states and their other memory mechanisms too. Do they fire when we expect, or are there surprising patterns?</p>
+<h2>Counting</h2>
+<p>To investigate, let's start by teaching an LSTM to count. (Remember how the Java and Python LSTMs were able to generate proper indentation!) So I generated sequences of the form</p>
+<div class="highlight"><pre><span></span><code><span class="err">aaaaaXbbbbb</span>
+</code></pre></div>
+
+
+<p>(N "a" characters, followed by a delimiter X, followed by N "b" characters, where 1 &lt;= N &lt;= 10), and trained a single-layer LSTM with 10 hidden neurons.</p>
+<p>As expected, the LSTM learns perfectly within its training range – and can even generalize a few steps beyond it. (Although it starts to fail once we try to get it to count to 19.)</p>
+<div class="highlight"><pre><span></span><code><span class="err">aaaaaaaaaaaaaaaXbbbbbbbbbbbbbbb</span>
+<span class="err">aaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbb</span>
+<span class="err">aaaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbbb</span>
+<span class="err">aaaaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbbbb</span>
+<span class="err">aaaaaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbbbb # Here it begins to fail: the model is given 19 &quot;a&quot;s, but outputs only 18 &quot;b&quot;s.</span>
+</code></pre></div>
+
+
+<p>We expect to find a hidden state neuron that counts the number of a's if we look at its internals. And we do:</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Neuron #2 Hidden State" src="http://i.imgur.com/JEIhBeh.png"></a></p>
+<p>I built a <a href="http://blog.echen.me/lstm-explorer">small web app</a> to play around with LSTMs, and <a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2">Neuron #2</a> seems to be counting both the number of a's it's seen, as well as the number of b's. (Remember that cells are shaded according to the neuron's activation, from dark red [-1] to dark blue [+1].)</p>
+<p>What about the cell state? It behaves similarly:</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Neuron #2 Cell State" src="http://i.imgur.com/5DB3wnJ.png"></a></p>
+<p>One interesting thing is that the working memory looks like a "sharpened" version of the long-term memory. Does this hold true in general? </p>
+<p>It does. (This is exactly as we would expect, since the long-term memory gets squashed by the tanh activation function and the output gate limits what gets passed on.) For example, here is an overview of all 10 cell state nodes at once. We see plenty of light-colored cells, representing values close to 0.</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/network?file=counter&amp;layer=1"><img alt="Counting LSTM Cell States" src="http://i.imgur.com/yGfaCh3.png"></a></p>
+<p>In contrast, <strong>the 10 working memory neurons look much more focused</strong>. Neurons 1, 3, 5, and 7 are even zeroed out entirely over the first half of the sequence.</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/network?file=counter&amp;vector=hs&amp;layer=1"><img alt="Counting LSTM Hidden States" src="http://i.imgur.com/scQXaPL.png"></a></p>
+<p>Let's go back to Neuron #2. Here are the candidate memory and input gate. They're relatively constant over each half of the sequence – as if the neuron is calculating <code>a += 1</code> or <code>b += 1</code> at each step.</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Counting LSTM Candidate Memory" src="http://i.imgur.com/Nu504g0.png"></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Input Gate" src="http://i.imgur.com/iBkuAiV.png"></a></p>
+<p>Finally, here's an overview of all of Neuron 2's internals:</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Neuron 2 Overview" src="http://i.imgur.com/VUwMnHJ.png"></a></p>
+<p>If you want to investigate the different counting neurons yourself, you can play around with the visualizer <a href="http://blog.echen.me/lstm-explorer/#/network?file=counter">here</a>.</p>
+<iframe src="http://blog.echen.me/lstm-explorer/#/network?file=counter" style="width: 100%; height: 500px"></iframe>
+
+<p>(Note: this is far from the only way an LSTM can learn to count, and I'm anthropomorphizing quite a bit here. But I think viewing the network's behavior is interesting and can help build better models – after all, many of the ideas in neural networks come from analogies to the human brain, and if we see unexpected behavior, we may be able to design more efficient learning mechanisms.)</p>
+<h2>Count von Count</h2>
+<p>Let's look at a slightly more complicated counter. This time, I generated sequences of the form</p>
+<div class="highlight"><pre><span></span><code><span class="err">aaXaXaaYbbbbb</span>
+</code></pre></div>
+
+
+<p>(N a's with X's randomly sprinkled in, followed by a delimiter Y, followed by N b's). The LSTM still has to count the number of a's, but this time needs to ignore the X's as well. </p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/network?file=selective_counter">Here's the full LSTM.</a> We expect to see <strong>a counting neuron, but one where the input gate is zero whenever it sees an X.</strong> And we do!</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20"><img alt="Counter 2 - Cell State" src="http://i.imgur.com/fFs0MNm.png"></a></p>
+<p>Above is the cell state of <a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20">Neuron 20</a>. It increases until it hits the delimiter Y, and then decreases to the end of the sequence – just like it's calculating a <code>num_bs_left_to_print</code> variable that increments on a's and decrements on b's.</p>
+<p>If we look at its input gate, it is indeed ignoring the X's:</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20"><img alt="Counter 2 - Input Gate" src="http://i.imgur.com/ccqdcn8.png"></a></p>
+<p>Interestingly, though, the candidate memory fully activates on the irrelevant X's – which shows why the input gate is needed. (Although, if the input gate weren't part of the architecture, presumably the network would have presumably learned to ignore the X's some other way, at least for this simple example.)</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20"><img alt="Counter 2 - Candidate Memory" src="http://i.imgur.com/wmjemE1.png"></a></p>
+<p>Let's also look at <a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=10">Neuron 10</a>.</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=10"><img alt="Counter 2 - Neuron 10" src="http://i.imgur.com/02ySRxl.png"></a></p>
+<p>This neuron is interesting as it only activates when reading the delimiter "Y" – and yet it still manages to encode the number of a's seen so far in the sequence. (It may be hard to tell from the picture, but when reading Y's belonging to sequences with the same number of a's, all the cell states have values either identical or within 0.1% of each other. You can see that Y's with fewer a's are lighter than those with more.) Perhaps some other neuron sees Neuron 10 slacking and helps a buddy out.</p>
+<iframe src="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&layer=1&n=20" style="width: 100%; height: 500px"></iframe>
+
+<h2>Remembering State</h2>
+<p>Next, I wanted to look at how LSTMs remember state. I generated sequences of the form</p>
+<div class="highlight"><pre><span></span><code><span class="err">AxxxxxxYa</span>
+<span class="err">BxxxxxxYb</span>
+</code></pre></div>
+
+
+<p>(i.e., an "A" or B", followed by 1-10 x's, then a delimiter "Y", ending with a lowercase version of the initial character). This way <a href="http://blog.echen.me/lstm-explorer/#/network?file=state_memorizer">the network</a> needs to remember whether it's in an "A" or "B" state.</p>
+<p>We expect to find a neuron that fires when remembering that the sequence started with an "A", and another neuron that fires when remembering that it started with a "B". We do.</p>
+<p>For example, here is an "A" neuron that activates when it reads an "A", and remembers until it needs to generate the final character. Notice that the input gate ignores all the "x" characters in between.</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&amp;layer=1&amp;n=8"><img alt="A Neuron - #8" src="http://i.imgur.com/UfGWJ9w.png"></a></p>
+<p>Here is its "B" counterpart:</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&amp;layer=1&amp;n=17"><img alt="B Neuron - #17" src="http://i.imgur.com/pAKw9Y2.png"></a></p>
+<p>One interesting point is that even though knowledge of the A vs. B state isn't needed until the network reads the "Y" delimiter, the hidden state fires throughout all the intermediate inputs anyways. This seems a bit "inefficient", but perhaps it's because the neurons are doing a bit of double-duty in counting the number of x's as well.</p>
+<iframe src="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&layer=1&n=8" style="width: 100%; height: 500px"></iframe>
+
+<h2>Copy Task</h2>
+<p>Finally, let's look at how an LSTM learns to copy information. (Recall that our Java LSTM was able to memorize and copy an Apache license.)</p>
+<p>(Note: if you think about how LSTMs work, remembering lots of individual, detailed pieces of information isn't something they're very good at. For example, you may have noticed that one major flaw of the LSTM-generated code was that it often made use of undefined variables – the LSTMs couldn't remember which variables were in scope. This isn't surprising, since it's hard to use single cells to efficiently encode multi-valued information like characters, and LSTMs don't have a natural mechanism to chain adjacent memories to form words. <a href="https://arxiv.org/abs/1503.08895">Memory networks</a> and <a href="https://arxiv.org/abs/1410.5401">neural Turing machines</a> are two extensions to neural networks that help fix this, by augmenting with external memory components. So while copying isn't something LSTMs do very efficiently, it's fun to see how they try anyways.)</p>
+<p>For this copy task, I trained a tiny 2-layer LSTM on sequences of the form</p>
+<div class="highlight"><pre><span></span><code><span class="err">baaXbaa</span>
+<span class="err">abcXabc</span>
+</code></pre></div>
+
+
+<p>(i.e., a 3-character subsequence composed of a's, b's, and c's, followed by a delimiter "X", followed by the same subsequence).</p>
+<p>I wasn't sure what "copy neurons" would look like, so in order to find neurons that were memorizing parts of the initial subsequence, I looked at their hidden states when reading the delimiter X. Since the network needs to encode the initial subsequence, its states should exhibit different patterns depending on what they're learning.</p>
+<p>The graph below, for example, plots Neuron 5's hidden state when reading the "X" delimiter. The neuron is clearly able to distinguish sequences beginning with a "c" from those that don't.</p>
+<p><img alt="Neuron 5" src="http://i.imgur.com/QdQXIVu.png"></p>
+<p>For another example, here is Neuron 20's hidden state when reading the "X". It looks like it picks out sequences beginning with a "b".</p>
+<p><img alt="Neuron 20 Hidden State" src="http://i.imgur.com/ud8NjEA.png"></p>
+<p>Interestingly, if we look at Neuron 20's <em>cell</em> state, it almost seems to capture the entire 3-character subsequence by itself (no small feat given its one-dimensionality!):</p>
+<p><img alt="Neuron 20 Cell State" src="http://i.imgur.com/PLpSocg.png"></p>
+<p>Here are <a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;layer=1&amp;n=20">Neuron 20's cell and hidden states</a>, across the entire sequence. Notice that <strong>its hidden state is turned off over the entire initial subsequence</strong> (perhaps expected, since its memory only needs to be passively kept at that point).</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;layer=1&amp;n=20"><img alt="Copy LSTM - Neuron 20 Hidden and Cell" src="http://i.imgur.com/dO0Ai6H.png"></a></p>
+<p>However, if we look more closely, the neuron actually seems to be firing whenever the <em>next</em> character is a "b". So rather than being a "the sequence started with a b" neuron, it appears to be a "the next character is a b" neuron.</p>
+<p>As far as I can tell, this pattern holds across the network – all the neurons seem to be predicting the next character, rather than memorizing characters at specific positions. For example, <a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;layer=1&amp;n=5">Neuron 5</a> seems to be a "next character is a c" predictor.</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;layer=1&amp;n=5"><img alt="Copy LSTM - Neuron 5" src="http://i.imgur.com/30LKz6j.png"></a></p>
+<p>I'm not sure if this is the default kind of behavior LSTMs learn when copying information, or what other copying mechanisms are available as well.</p>
+<iframe src="http://blog.echen.me/lstm-explorer/#/network?file=copy_machine" style="width: 100%; height: 500px"></iframe>
+
+<h1>States and Gates</h1>
+<p>To really hone in and understand the purpose of the different states and gates in an LSTM, let's repeat the previous section with a small pivot.</p>
+<h2>Cell State and Hidden State (Memories)</h2>
+<p>We originally described the cell state as a long-term memory, and the hidden state as a way to pull out and focus these memories when needed.</p>
+<p>So when a memory is currently irrelevant, we expect the hidden state to turn off – and that's exactly what happens for this sequence copying neuron.</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;layer=1&amp;n=5"><img alt="Copy Machine" src="http://i.imgur.com/30LKz6j.png"></a></p>
+<h2>Forget Gate</h2>
+<p>The forget gate discards information from the cell state (0 means to completely forget, 1 means to completely remember), so we expect it to fully activate when it needs to remember something exactly, and to turn off when information is never going to be needed again.</p>
+<p>That's what we see with this "A" memorizing neuron: the forget gate fires hard to remember that it's in an "A" state while it passes through the x's, and turns off once it's ready to generate the final "a".</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&amp;layer=1&amp;n=8"><img alt="Forget Gate" src="http://i.imgur.com/vAMXZdN.png"></a></p>
+<h2>Input Gate (Save Gate)</h2>
+<p>We described the job of the input gate (what I originally called the save gate) as deciding whether or not to save information from a new input. Thus, it should turn off at useless information.</p>
+<p>And that's what this selective counting neuron does: it counts the a's and b's, but ignores the irrelevant x's.</p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20"><img alt="Input Gate" src="http://i.imgur.com/ccqdcn8.png"></a></p>
+<p>What's amazing is that nowhere in our LSTM equations did we specify that this is how the input (save), forget (remember), and output (focus) gates should work. The network just learned what's best.</p>
+<h1>Extensions</h1>
+<p>Now let's recap how you could have discovered LSTMs by yourself.</p>
+<p>First, many of the problems we'd like to solve are sequential or temporal of some sort, so we should incorporate past learnings into our models. But we already know that the hidden layers of neural networks encode useful information, so why not use these hidden layers as the memories we pass from one time step to the next? <strong>And so we get RNNs.</strong></p>
+<p>But we know from our own behavior that we don't keep track of knowledge willy-nilly; when we read a new article about politics, we don't immediately believe whatever it tells us and incorporate it into our beliefs of the world. We selectively decide what information to save, what information to discard, and what pieces of information to use to make decisions the next time we read the news. Thus, we want to <em>learn</em> how to gather, update, and apply information – and why not learn these things through their own mini neural networks? <strong>And so we get LSTMs.</strong></p>
+<p>And now that we've gone through this process, we can come up with our own modifications.</p>
+<ul>
+<li>For example, maybe you think it's silly for LSTMs to distinguish between long-term and working memories – why not have one? Or maybe you find separate remember gates and save gates kind of redundant – anything we forget should be replaced by new information, and vice-versa. <strong>And now you've come up with one popular LSTM variant, the <a href="https://arxiv.org/abs/1412.3555">GRU</a></strong>.</li>
+<li>Or maybe you think that when deciding what information to remember, save, and focus on, we shouldn't rely on our working memory alone – why not use our long-term memory as well? <strong>And now you've discovered <a href="http://machinelearning.wustl.edu/mlpapers/paper_files/GersSS02.pdf">Peephole LSTMs</a></strong>.</li>
+</ul>
+<h1>Making Neural Nets Great Again</h1>
+<p>Let's look at one final example, using a 2-layer LSTM trained on Trump's tweets. Despite the <del>tiny</del> <em>big</em> dataset, it's enough to learn a lot of patterns.</p>
+<p>For example, here's a neuron that tracks its position within hashtags, URLs, and @mentions:</p>
+<p><a href="http://i.imgur.com/eBJQLOf.png"><img alt="Hashtags, URLs, @mentions" src="http://i.imgur.com/eBJQLOf.png"></a></p>
+<p>Here's a proper noun detector (note that it's not simply firing at capitalized words):</p>
+<p><a href="http://i.imgur.com/SC4XMHr.png"><img alt="Proper Nouns" src="http://i.imgur.com/SC4XMHr.png"></a></p>
+<p>Here's an auxiliary verb + "to be" detector ("will be", "I've always been", "has never been"):</p>
+<p><a href="http://i.imgur.com/fRdatTW.png"><img alt="Modal Verbs" src="http://i.imgur.com/fRdatTW.png"></a></p>
+<p>Here's a quote attributor:</p>
+<p><a href="http://i.imgur.com/wQA8H0Q.png"><img alt="Quotes" src="http://i.imgur.com/wQA8H0Q.png"></a></p>
+<p>There's even a MAGA and capitalization neuron:</p>
+<p><a href="http://i.imgur.com/1QdT0MS.png"><img alt="MAGA" src="http://i.imgur.com/1QdT0MS.png"></a></p>
+<p>And here are some of the proclamations the LSTM generates (okay, one of these is a real tweet):</p>
+<p><a href="http://i.imgur.com/YSVVWGp.png"><img alt="Tweets" src="http://i.imgur.com/YSVVWGp.png"></a>
+<a href="http://i.imgur.com/rhw4lTb.png"><img alt="Tweet" src="http://i.imgur.com/rhw4lTb.png"></a></p>
+<p>Unfortunately, the LSTM merely learned to ramble like a madman.</p>
+<h1>Recap</h1>
+<p>That's it. To summarize, here's what you've learned:</p>
+<p><img alt="Candidate Memory" src="http://i.imgur.com/WYVlc6w.png"></p>
+<p>Here's what you should save:</p>
+<p><img alt="Save" src="http://i.imgur.com/DqqJZAD.png"></p>
+<p>And now it's time for that donut. </p>
+<p>Thanks to <a href="https://github.com/crazydonkey200/tensorflow-char-rnn">Chen Liang</a> for some of the TensorFlow code I used, Ben Hamner and Kaggle for the <a href="https://www.kaggle.com/benhamner/clinton-trump-tweets">Trump dataset</a>, and, of course, Schmidhuber and Hochreiter for their <a href="http://www.bioinf.jku.at/publications/older/2604.pdf">original paper</a>. If you want to explore the LSTMs yourself, feel free to <a href="http://blog.echen.me/lstm-explorer">play around</a>!</p>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
+
+    var configscript = document.createElement('script');
+    configscript.type = 'text/x-mathjax-config';
+    configscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        availableFonts: ['STIX', 'TeX']," +
+        "        preferredFont: 'STIX'," +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="../2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation</a></h1>
+<div class="post-info">
 
 </div><!-- /.post-info --><p>Imagine you're building a recommendation algorithm for your new online site. How do you measure its quality, to make sure that it's sending users relevant and personalized content? Click-through rate may be your initial hope…but after a bit of thought, it's not clear that it's the best metric after all.</p>
 <p><strong>Take Google's search engine.</strong> In many cases, improving the quality of search results will <em>decrease</em> CTR! For example, the ideal scenario for queries like <a href="https://www.google.com/search?q=when%20was%20barack%20obama%20born">When was Barack Obama born?</a> is that users never have to click, since the question should be answered on the page itself.</p>
@@ -54,7 +406,7 @@
 <h1>Amazon, and Moving Beyond Log-Based Metrics</h1>
 <p>(Let's continue motivating a bit why log-based metrics are often imperfect measures of relevance and quality, as this is an important but difficult-to-understand point.)</p>
 <p>So take Amazon's <em>Customers Who Bought This Item Also Bought</em> feature, which tries to show you related books.</p>
-<p><a href="http://i.imgur.com/NoTD5Vk.png"><img alt="Amazon Related Books" src="http://i.imgur.com/NoTD5Vk.png" /></a></p>
+<p><a href="http://i.imgur.com/NoTD5Vk.png"><img alt="Amazon Related Books" src="http://i.imgur.com/NoTD5Vk.png"></a></p>
 <p>To measure its effectiveness, the standard approach is to run a live experiment and measure the change in metrics like revenue or CTR.</p>
 <p>But imagine we suddenly replace all of Amazon's book suggestions with pornography. What's going to happen? <a href="http://www.lazygamer.net/general-news/a-history-of-evony-ads-the-insanity-continues/"><em>CTR's likely to shoot through the roof!</em></a></p>
 <p>Or suppose that we replace all of Amazon's related books with shinier, more expensive items. Again, CTR and revenue are likely to increase, as the flashier content draws eyeballs. But is this anything but a short-term boost? Perhaps the change decreases total sales in the long run, as customers start to find Amazon too expensive for their tastes and move to other marketplaces.</p>
@@ -62,7 +414,7 @@
 <h1>Human Evaluation</h1>
 <p>Solution: let's inject humans into the process. Computers can't measure relatedness (if they could, we'd be done), but people of course can.</p>
 <p>For example, in the screenshot below, I asked a worker (on a crowdsourcing platform I've built on my own) to rate the first three <em>Customers Who Bought This Also Bought</em> suggestions for a book on <a href="http://www.barnesandnoble.com/">barnesandnoble.com</a>.</p>
-<p><a href="http://i.imgur.com/XBE6tvc.png"><img alt="Fool's Assassin" src="http://i.imgur.com/XBE6tvc.png" /></a></p>
+<p><a href="http://i.imgur.com/XBE6tvc.png"><img alt="Fool's Assassin" src="http://i.imgur.com/XBE6tvc.png"></a></p>
 <p>(Copying the text from the screenshot:</p>
 <ul>
 <li><strong><em>Fool's Assassin</em>, by Robin Hobb.</strong> (original book) "I only just read this recently, but it's one of my favorites of this year's releases. This book was so beautifully written. I've always been a fan of the Fantasy genre, but often times it's all stylistically similar. Hobb has a wonderful way with characters and narration. The story was absolutely heartbreaking and lead me wanting another book."</li>
@@ -93,12 +445,12 @@
 </ul>
 <p>(Note: I usually prefer a three-point or five-point Likert scale with a "neutral" option, but I was feeling a little wild.)</p>
 <p>For example, here's how a rater reviewed the related books for Anne Rice's <em>The Wolves of Midwinter</em>.</p>
-<p><a href="http://i.imgur.com/eh9VKhR.png"><img alt="Anne Rice" src="http://i.imgur.com/eh9VKhR.png" /></a></p>
+<p><a href="http://i.imgur.com/eh9VKhR.png"><img alt="Anne Rice" src="http://i.imgur.com/eh9VKhR.png"></a></p>
 <p>So how good are Amazon's recommendations? Quite good, in fact: 47% of raters said they'd definitely buy the first related book, another 29% said it was good enough that they might buy it, and only 24% of raters disliked the suggestion.</p>
-<p><a href="http://i.imgur.com/MNSGpIi.png"><img alt="A1 Ratings" src="http://i.imgur.com/MNSGpIi.png" /></a></p>
+<p><a href="http://i.imgur.com/MNSGpIi.png"><img alt="A1 Ratings" src="http://i.imgur.com/MNSGpIi.png"></a></p>
 <p>The second and third book suggestions, while a bit worse, seem to perform pretty well too: around 65% of raters rated them positive.</p>
 <p>What can we learn from the bad ratings? I ran a follow-up task that asked workers to categorize the bad related books, and here's the breakdown.</p>
-<p><a href="http://i.imgur.com/h4DOvju.png"><img alt="Bad Suggestions Breakdown" src="http://i.imgur.com/h4DOvju.png" /></a></p>
+<p><a href="http://i.imgur.com/h4DOvju.png"><img alt="Bad Suggestions Breakdown" src="http://i.imgur.com/h4DOvju.png"></a></p>
 <ul>
 <li><strong>Related but different-subtopic.</strong> These were book suggestions that were generally related to the original book, but that were in a different sub-topic that the rater wasn't interested in. For example, the first related book for Sun Tzu's <em>The Art of War</em> (a book nominally about war, but which nowadays has become more of a life hack book) was <a href="http://www.amazon.com/On-War-Carl-von-Clausewitz/dp/1469947021"><em>On War</em></a> (a war treatise), but the rater wasn't actually interested in the military aspects: <em>"I would not buy this book, because it only focuses on military war. I am not interested in that. I am interested in mental tactics that will help me prosper in life."</em></li>
 <li><strong>Completely unrelated.</strong> These were book suggestions that were completely unrelated to the original book. For example, a Scrabble dictionary appearing on <em>The Art of War</em>'s page.</li>
@@ -113,7 +465,7 @@
 <h2>Competitive Analysis</h2>
 <p>We now have a general grasp of Amazon's related book suggestions and how they could be improved, and just like we could quote a metric like a CTR of 6.2% or whatnot, we can also now quote a <em>relevance score</em> of 0.62 (or whatever). So let's turn to the question of how Amazon compares to other online booksellers like Barnes &amp; Noble and Google Play.</p>
 <p>I took the same task I used above, but this time asked raters to review the related suggestions on those two sites as well.</p>
-<p><a href="http://i.imgur.com/kdWcSPs.png"><img alt="Amazon vs. B&amp;N vs. Google" src="http://i.imgur.com/kdWcSPs.png" /></a></p>
+<p><a href="http://i.imgur.com/kdWcSPs.png"><img alt="Amazon vs. B&amp;N vs. Google" src="http://i.imgur.com/kdWcSPs.png"></a></p>
 <p>In short,</p>
 <ul>
 <li><strong>Barnes &amp; Nobles's algorithm are almost as good as Amazon's</strong>: the first three suggestions were rated positive 58% of the time, compared to 68% on Amazon.</li>
@@ -121,12 +473,12 @@
 </ul>
 <p>Why are the Play Store's suggestions so bad? Let's look at a couple examples.</p>
 <p>Here's the Play Store page for John Green's <em>The Fault in Our Stars</em>, a critics-loved-it book about cancer and romance (and now also a movie).</p>
-<p><a href="http://i.imgur.com/oYKFLeV.png"><img alt="Fault in Our Stars" src="http://i.imgur.com/oYKFLeV.png" /></a></p>
+<p><a href="http://i.imgur.com/oYKFLeV.png"><img alt="Fault in Our Stars" src="http://i.imgur.com/oYKFLeV.png"></a></p>
 <p>Two of the suggestions are completely random: a poorly-rated Excel manual and a poorly-reviewed textbook on sexual health. The others are completely unrelated cowboy books, by a different John Green.</p>
 <p>Here's the page for <em>The Strain</em>. In this case, all the suggestions are in a different language! And there are only four of them.</p>
-<p><a href="http://i.imgur.com/F1XNxPz.png"><img alt="The Strain" src="http://i.imgur.com/F1XNxPz.png" /></a></p>
+<p><a href="http://i.imgur.com/F1XNxPz.png"><img alt="The Strain" src="http://i.imgur.com/F1XNxPz.png"></a></p>
 <p>Once again asking raters to categorize all of the Play Store's bad recommendations...</p>
-<p><a href="http://i.imgur.com/1rWRQ0r.png"><img alt="Google Atrocity" src="http://i.imgur.com/1rWRQ0r.png" /></a></p>
+<p><a href="http://i.imgur.com/1rWRQ0r.png"><img alt="Google Atrocity" src="http://i.imgur.com/1rWRQ0r.png"></a></p>
 <ul>
 <li>45% of the time, the related book suggestions were completely unrelated to the original book in question. For example: displaying a physics textbook on the page for a romance novel.</li>
 <li>32% of the time, there simply wasn't a book suggestion at all. (I'm guessing the Play Bookstore's catalog is pretty limited.)</li>
@@ -189,17 +541,8 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth</a></h1>
+                        <h1 class="entry-title"><a href="../2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2014-08-15T00:00:00+02:00">
-          on&nbsp;Fri 15 August 2014
-        </li>
-
-	</ul>
 
 </div><!-- /.post-info --><p>Imagine you just started a job at a new company. You watched <a href="http://youtu.be/AcNK7M2eCI4?t=1m5s">World War Z</a> recently, so you're in a skeptical mood, and given that your last two startups failed from what you believe to be a lack of data, you're giving everything an extra critical eye.</p>
 <p>You start by thinking about the impact of the sales team. <em>How much extra revenue are they generating for the company?</em> The sales folks you've met say that over 90% of the leads they've talked to end up buying the company's product – but, you wonder, how many of those leads would have converted anyways?</p>
@@ -230,9 +573,9 @@
 <li>Finally, compare the drinkers and non-drinkers within each bucket (say, by measuring their subsequent physical activity, weight, or whatever measure of health) to estimate Soylent's causal effect.</li>
 </ul>
 <p>For example, here's a hypothetical distribution of Soylent and non-Soylent ages. We see that drinkers tend to be quite a bit older, and this confounding fact is one reason we can't simply run a correlational analysis.</p>
-<p><a href="http://i.imgur.com/vQQACqf.png"><img alt="Age Distribution" src="http://i.imgur.com/vQQACqf.png" /></a></p>
+<p><a href="http://i.imgur.com/vQQACqf.png"><img alt="Age Distribution" src="http://i.imgur.com/vQQACqf.png"></a></p>
 <p>After training a model to estimate Soylent propensity and group users into propensity buckets, this might be a graph of the effect that Soylent has on a person's weekly running mileage.</p>
-<p><a href="http://i.imgur.com/GwxpWve.png"><img alt="Soylent Effect" src="http://i.imgur.com/GwxpWve.png" /></a></p>
+<p><a href="http://i.imgur.com/GwxpWve.png"><img alt="Soylent Effect" src="http://i.imgur.com/GwxpWve.png"></a></p>
 <p>In the above (hypothetical) graph, each row represents a propensity bucket of people, and the exposure week denotes the first week of March, when the treatment group received their Soylent shipment. We see that prior to that week, both groups of people track quite well. After the treatment group (the Soylent drinkers) start their plan, however, their weekly running mileage ramps up, which forms our estimate of the drink's causal effect.</p>
 <h1>Other Methods of Causal Inference</h1>
 <p>Of course, there are many other methods of causal inference on observational data. I'll run through two of my favorites. (I originally wrote this post in response to a question on Quora, which is why I take my examples from there.)</p>
@@ -240,7 +583,7 @@
 <p>Quora recently started displaying badges of status on the profiles of its <a href="http://blog.quora.com/Announcing-Top-Writers-2013">Top Writers</a>, so suppose we want to understand the effect of this feature. (Assume that it's impossible to run an A/B test now that the feature has been launched.) Specifically, does the badge itself cause users to gain more followers?</p>
 <p>For simplicity, let's assume that the badge was given to all users who received at least 5000 upvotes in 2013. The idea behind a <strong>regression discontinuity design</strong> is that the difference between those users who just barely receive a Top Writer badge (i.e., receive 5000 upvotes) and those who just barely don't (i.e., receive 4999 upvotes) is more or less random chance, so we can use this threshold to estimate a causal effect.</p>
 <p>For example, in the imaginary graph below, the discontinuity at 5000 upvotes suggests that a Top Writer badge leads to around 100 more followers on average.</p>
-<p><a href="http://i.imgur.com/7Mprryq.png"><img alt="Regression Discontinuity" src="http://i.imgur.com/7Mprryq.png" /></a></p>
+<p><a href="http://i.imgur.com/7Mprryq.png"><img alt="Regression Discontinuity" src="http://i.imgur.com/7Mprryq.png"></a></p>
 <h2>Natural Experiments</h2>
 <p>Understanding the effect of a Top Writer badge is a fairly uninteresting question, though. (It just makes an easy example.) A deeper, more fundamental question could be to ask: what happens when a user discovers a new writer that they love? Does the writer inspire them to write some of their own content, to explore more of the same topics, and through curation lead them to engage with the site even more? How important, in other words, is the connection to a great <em>user</em> as opposed to the reading of random, great <em>posts</em>?</p>
 <p>I studied an analogous question when I was at Google, so instead of making up an imaginary Quora case study, I'll describe some of that work here.</p>
@@ -257,7 +600,7 @@
 <p>How do his subscribers respond? Do they stop watching YouTube on Wednesdays, since his channel was the sole reason for their visits? Or is their activity relatively unaffected, since they only watch his content when it appears on the front page?</p>
 <p>Imagine, instead, that the channel starts uploading a new video every Friday. Do his subscribers start to visit then as well? And now that they're on YouTube, do they merely stay for the new video, or does their visit lead to a sinkhole of searches and related content too?</p>
 <p>As it turns out, these scenarios do happen. For example, here's a calendar of when one popular channel uploads videos. You can see that in 2011, it tended to upload videos on Tuesdays and Fridays, but it shifted to uploads on Wednesday and Saturday at the end of the year.</p>
-<p><a href="http://i.imgur.com/wCiHHAD.png"><img alt="Uploads Calendar" src="http://i.imgur.com/wCiHHAD.png" /></a></p>
+<p><a href="http://i.imgur.com/wCiHHAD.png"><img alt="Uploads Calendar" src="http://i.imgur.com/wCiHHAD.png"></a></p>
 <p>By using this shift as natural experiment that "quasi-randomly" removes a well-loved channel on certain days and introduces it on others, we can try to understand the effect of successfully making the perfect recommendation.</p>
 <p>(This is probably a somewhat convoluted example of a natural experiment. For an example that perhaps illustrates the idea more clearly, suppose we want to understand the effect of income on mental health. We can't force some people to become poor or rich, and a correlational study is clearly flawed. <a href="http://opinionator.blogs.nytimes.com/2014/01/18/what-happens-when-the-poor-receive-a-stipend/">This NY Times article</a> describes a natural experiment when a group of Cherokee Indians distributed casino profits to its members, thereby "randomly" lifting some of them out of poverty.</p>
 <p>Another example, assuming there's nothing special about the period in which hack week occurs, is the use of hack week as an instrument that quasi-randomly "prevents" the sales team from doing their job, as in the scenario I described above.)</p>
@@ -294,17 +637,8 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb</a></h1>
+                        <h1 class="entry-title"><a href="../2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2014-08-14T00:00:00+02:00">
-          on&nbsp;Thu 14 August 2014
-        </li>
-
-	</ul>
 
 </div><!-- /.post-info --><p>I love studying users and products, and think data science can be extremely useful in guiding product/strategy as a whole. So I thought it would be fun to depart from the usual machine learning and engineering things I write about, and do a quick study of Airbnb.</p>
 <p>Think of this like business analysis, or strategy – from a data science point of view. </p>
@@ -321,17 +655,8 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation</a></h1>
+                        <h1 class="entry-title"><a href="../2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2013-01-08T04:15:00+01:00">
-          on&nbsp;Tue 08 January 2013
-        </li>
-
-	</ul>
 
 </div><!-- /.post-info -->
   <div class="entry-content"><p><em>(This is a post from the <a href="http://engineering.twitter.com/2013/01/improving-twitter-search-with-real-time.html">Twitter Engineering Blog</a> that I wrote with <a href="https://twitter.com/alpa">Alpa Jain</a>.)</em></p>
@@ -387,7 +712,7 @@
 
   <h2>Overview</h2>
 
-  <p>Before we delve into the details, here&#8217;s an overview of how the system works.</p>
+  <p>Before we dive into the details, here&#8217;s an overview of how the system works.</p>
 
   <p>(1) First, we monitor for which search queries are currently popular.</p>
 
@@ -498,17 +823,8 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="http://blog.echen.me/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle</a></h1>
+                        <h1 class="entry-title"><a href="../2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle</a></h1>
 <div class="post-info">
-	<ul>
-        <li class="vcard author">
-                 by&nbsp;<a class="url fn" href="http://blog.echen.me/author/edwin-chen.html">Edwin Chen</a>
-        </li>
-        <li class="published" title="2012-07-31T04:15:00+02:00">
-          on&nbsp;Tue 31 July 2012
-        </li>
-
-	</ul>
 
 </div><!-- /.post-info -->
   <div class="entry-content"><p>A couple weeks ago, Facebook launched a <a href="http://www.kaggle.com/c/FacebookRecruiting/">link prediction contest</a> on Kaggle, with the goal of recommending missing edges in a social graph. <a href="http://blog.echen.me/2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">I love investigating social networks</a>, so I dug around a little, and since I did well enough to score one of the coveted prizes, I&#8217;ll share my approach here.</p>
@@ -1488,98 +1804,1243 @@
   </ul>
 
   </div>  
-<script type= "text/javascript">
-    if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-        var mathjaxscript = document.createElement('script');
-        mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-        mathjaxscript.type = 'text/javascript';
-        mathjaxscript.src = 'https:' == document.location.protocol
-                ? 'https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-                : 'http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-        mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-            "MathJax.Hub.Config({" +
-            "    config: ['MMLorHTML.js']," +
-            "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-            "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-            "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-            "    displayAlign: 'center'," +
-            "    displayIndent: '0em'," +
-            "    showMathMenu: true," +
-            "    tex2jax: { " +
-            "        inlineMath: [ ['$','$'] ], " +
-            "        displayMath: [ ['$$','$$'] ]," +
-            "        processEscapes: true," +
-            "        preview: 'TeX'," +
-            "    }, " +
-            "    'HTML-CSS': { " +
-            "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
-            "    } " +
-            "}); ";
-        (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-    }
-</script>
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="../2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>One of the great things about Twitter is that it&#8217;s a global conversation anyone can join anytime. Eavesdropping on the world, what what!</p>
+
+  <p>Of course, it gets even better when you can <em>mine</em> all this chatter to study the way humans live and interact.</p>
+
+  <p>For example, <a href="http://blog.echen.me/2011/04/18/twifferences-between-californians-and-new-yorkers/">how do people in New York City differ from those in Silicon Valley?</a> We tend to think they&#8217;re more financially driven and restless with the world &#8211; is this true, and if so, <a href="http://blog.echen.me/2011/04/18/twifferences-between-californians-and-new-yorkers/">how much more</a>?</p>
+
+  <p>Or how does language change as you travel to different regions? Recall the classic soda vs. pop. vs. coke question: some people use the word &#8220;soda&#8221; to describe their soft drinks, others use &#8220;pop&#8221;, and still others use &#8220;coke&#8221;. Who says what where?</p>
+
+  <p>Let&#8217;s take a look.</p>
+
+  <p><a href="http://i.imgur.com/OgNjpqI.png"><img src="http://i.imgur.com/OgNjpqI.png" alt="United States" /></a></p>
+
+  <p>To make this map, I sampled geo-tagged tweets containing the words &#8220;soda&#8221;, &#8220;pop&#8221;, or &#8220;coke&#8221;, performed some state-of-the-art NLP technology to ensure the tweets were soft drink related (e.g., the tweets had to contain &#8220;drink soda&#8221; or &#8220;drink a pop&#8221;), and tried to filter out coke tweets that were specifically about the Coke brand (e.g., Coke Zero).</p>
+
+  <p>It&#8217;s a little cluttered, though, so let&#8217;s clean it up by aggregating nearby tweets.</p>
+
+  <p><a href="http://i.imgur.com/iWesmoA.png"><img src="http://i.imgur.com/iWesmoA.png" alt="United States Binned" /></a></p>
+
+  <p>Here, I bucketed all tweets within a 0.333 latitude/longitude radius, calculated the term distribution within each bucket, and colored each bucket with the word furthest from its overall mean. I also sized each point according to the (log-transformed) number of tweets in the bucket.</p>
+
+  <p>We can see that:</p>
+
+  <ul>
+  <li>The South is pretty Coke-heavy.</li>
+  <li>Soda belongs to the Northeast and far West.</li>
+  <li>Pop gets the mid-West, except for some interesting spots of blue around Wisconsin and the Illinois-Missouri border.</li>
+  </ul>
+
+
+  <p>For comparison, here&#8217;s another map based on a survey at <a href="http://www.popvssoda.com/">popvssoda.com</a>.</p>
+
+  <p><a href="http://i.imgur.com/5jAbC0G.png"><img src="http://i.imgur.com/5jAbC0G.png" alt="Pop vs. Soda Map" /></a></p>
+
+  <p>We can see similar patterns, though interestingly, our map has less Coke in the Southeast and less pop in the Northwest.</p>
+
+  <p>Finally, here&#8217;s a world map of the terms, bucketed again. Notice that &#8220;pop&#8221; seems to be prevalent only in parts of the United States and Canada.</p>
+
+  <p><a href="http://i.imgur.com/GewG65x.png"><img src="http://i.imgur.com/GewG65x.png" alt="World" /></a></p>
+
+  <p>As some astute readers noted, though, the seeming dominance of coke is probably due to the difficulty in distinguishing the generic use of coke for soft drinks in general from the particular use of coke for referring to the Coca-Cola brand.</p>
+
+  <p>So let&#8217;s instead look at a world map of a couple other soft drink terms (&#8220;fizzy drink&#8221;, &#8220;mineral&#8221;, and &#8220;tonic&#8221;):</p>
+
+  <p><a href="http://i.imgur.com/R0CASuw.png"><img src="http://i.imgur.com/R0CASuw.png" alt="Fizzy Drink vs. Mineral vs. Tonic" /></a></p>
+
+  <p>Notice that:</p>
+
+  <ul>
+  <li>&#8220;Fizzy drink&#8221; shows up for the UK, New Zealand, and Maine.</li>
+  <li>&#8220;Tonic&#8221; appears in Massachusetts.</li>
+  <li>While South Africa gets &#8220;fizzy drink&#8221;, Nigeria gets &#8220;mineral&#8221;.</li>
+  </ul>
+
+
+  <p>I&#8217;ve been getting a lot of questions lately about interesting things you can do with the Twitter API, so this was just one small project I&#8217;ve worked on to illustrate. <a href="http://www.cc.gatech.edu/~jeisenst/papers/emnlp2010.pdf">This paper</a> contains another awesome application of Twitter data to geographic language variation, and just for fun, here are a few other cute mini-projects:</p>
+
+  <p>What do people eat during the Super Bowl? (wings and beer, apparently)</p>
+
+  <p><a href="https://twitter.com/echen/status/166343879547822080"><img src="http://i.imgur.com/6D3D4OJ.png" alt="Superbowl Snacks" /></a></p>
+
+  <p>What do people want for Christmas, compared to what they actually get?</p>
+
+  <p><a href="https://twitter.com/echen/status/153683967315419136"><img src="http://i.imgur.com/rJmfMTA.png" alt="Christmas" /></a></p>
+
+  <p>What do guys and girls <em>really</em> say?</p>
+
+  <p><a href="https://twitter.com/echen/status/261667822793551873/photo/1"><img src="http://i.imgur.com/awPZdyj.png" alt="Shit Guys and Girls Say" /></a></p>
+
+  <p>When were people losing and gaining power during Hurricane Sandy? (<a href="http://blog.echen.me/hurricane-sandy-outages/">click</a> the image to interact)</p>
+
+  <p><a href="http://blog.echen.me/hurricane-sandy-outages/"><img src="http://i.imgur.com/6MzIHww.png" alt="Sandy Power Outages" /></a></p>
+
+  <p>How does information of a <em>geographic</em>-specific nature spread? (<a href="http://hurricanesandy.herokuapp.com/">click</a> the image to see a dynamic visualization of when and where tweets related to surviving Hurricane Sandy were shared)</p>
+
+  <p><a href="http://hurricanesandy.herokuapp.com/"><img src="http://i.imgur.com/x3Z2Kpe.png" alt="Hurricane Sandy Retweets" /></a></p>
+
+  <p>Can we use Twitter to measure presidential votes? (yes!)</p>
+
+  <p><a href="https://twitter.com/echen/status/265894918382305284/photo/1"><img src="http://i.imgur.com/D7GhNLR.png" alt="Electoral Map" /></a></p>
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="../2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>Imagine you&#8217;re a budding chef. A data-curious one, of course, so you start by taking a set of foods (pizza, salad, spaghetti, etc.) and ask 10 friends how much of each they ate in the past day.</p>
+
+  <p>Your goal: to find natural <em>groups</em> of foodies, so that you can better cater to each cluster&#8217;s tastes. For example, your fratboy friends might love <a href="https://twitter.com/#!/edchedch/status/166343879547822080">wings and beer</a>, your anime friends might love soba and sushi, your hipster friends probably dig tofu, and so on.</p>
+
+  <p>So how can you use the data you&#8217;ve gathered to discover different kinds of groups?</p>
+
+  <p><a href="http://i.imgur.com/sxBfR1R.png"><img src="http://i.imgur.com/sxBfR1R.png" alt="Clustering Example" /></a></p>
+
+  <p>One way is to use a standard clustering algorithm like <strong>k-means</strong> or <strong>Gaussian mixture modeling</strong> (see <a href="http://blog.echen.me/2011/03/19/counting-clusters/">this previous post</a> for a brief introduction). The problem is that these both assume a <em>fixed</em> number of clusters, which they need to be told to find. There are a couple methods for selecting the number of clusters to learn (e.g., the <a href="http://blog.echen.me/2011/03/19/counting-clusters/">gap and prediction strength statistics</a>), but the problem is a more fundamental one: most real-world data simply doesn&#8217;t have a fixed number of clusters.</p>
+
+  <p>That is, suppose we&#8217;ve asked 10 of our friends what they ate in the past day, and we want to find groups of eating preferences. There&#8217;s really an infinite number of foodie types (carnivore, vegan, snacker, Italian, healthy, fast food, heavy eaters, light eaters, and so on), but with only 10 friends, we simply don&#8217;t have enough data to detect them all. (Indeed, we&#8217;re limited to 10 clusters!) So whereas k-means starts with the incorrect assumption that there&#8217;s a fixed, finite number of clusters that our points come from, <em>no matter if we feed it more data</em>, what we&#8217;d really like is a method positing an infinite number of hidden clusters that naturally arise as we ask more friends about their food habits. (For example, with only 2 data points, we might not be able to tell the difference between vegans and vegetarians, but with 200 data points, we probably could.)</p>
+
+  <p>Luckily for us, this is precisely the purview of <strong>nonparametric Bayes</strong>.*</p>
+
+  <p>*Nonparametric Bayes refers to a class of techniques that allow some parameters to change with the data. In our case, for example, instead of fixing the number of clusters to be discovered, we allow it to grow as more data comes in.</p>
+
+  <h1>A Generative Story</h1>
+
+  <p>Let&#8217;s describe a generative model for finding clusters in any set of data. We assume an infinite set of latent groups, where each group is described by some set of parameters. For example, each group could be a Gaussian with a specified mean $\mu_i$ and standard deviation $\sigma_i$, and these group parameters themselves are assumed to come from some base distribution $G_0$. Data is then generated in the following manner:</p>
+
+  <ul>
+  <li>Select a cluster.</li>
+  <li>Sample from that cluster to generate a new point.</li>
+  </ul>
+
+
+  <p>(Note the resemblance to a <a href="http://en.wikipedia.org/wiki/Mixture_model">finite mixture model</a>.)</p>
+
+  <p>For example, suppose we ask 10 friends how many calories of pizza, salad, and rice they ate yesterday. Our groups could be:</p>
+
+  <ul>
+  <li>A Gaussian centered at (pizza = 5000, salad = 100, rice = 500) (i.e., a pizza lovers group).</li>
+  <li>A Gaussian centered at (pizza = 100, salad = 3000, rice = 1000) (maybe a vegan group).</li>
+  <li>A Gaussian centered at (pizza = 100, salad = 100, rice = 10000) (definitely Asian).</li>
+  <li>&#8230;</li>
+  </ul>
+
+
+  <p>When deciding what to eat when she woke up yesterday, Alice could have thought <em>girl, I&#8217;m in the mood for pizza</em> and her food consumption yesterday would have been a sample from the pizza Gaussian. Similarly, Bob could have spent the day in Chinatown, thereby sampling from the Asian Gaussian for his day&#8217;s meals. And so on.</p>
+
+  <p>The big question, then, is: how do we assign each friend to a group?</p>
+
+  <h1>Assigning Groups</h1>
+
+  <h2>Chinese Restaurant Process</h2>
+
+  <p>One way to assign friends to groups is to use a <strong>Chinese Restaurant Process</strong>. This works as follows: Imagine a restaurant where all your friends went to eat yesterday&#8230;</p>
+
+  <ul>
+  <li>Initially the restaurant is empty.</li>
+  <li>The first person to enter (Alice) sits down at a table (selects a group). She then orders food for the table (i.e., she selects parameters for the group); everyone else who joins the table will then be limited to eating from the food she ordered.</li>
+  <li>The second person to enter (Bob) sits down at a table. Which table does he sit at? With probability $\alpha / (1 + \alpha)$ he sits down at a new table (i.e., selects a new group) and orders food for the table; with probability $1 / (1 + \alpha)$ he sits with Alice and eats from the food she&#8217;s already ordered (i.e., he&#8217;s in the same group as Alice).</li>
+  <li>&#8230;</li>
+  <li>The (n+1)-st person sits down at a new table with probability $\alpha / (n + \alpha)$, and at table k with probability $n_k / (n + \alpha)$, where $n_k$ is the number of people currently sitting at table k.</li>
+  </ul>
+
+
+  <p>Note a couple things:</p>
+
+  <ul>
+  <li>The more people (data points) there are at a table (cluster), the more likely it is that people (new data points) will join it. In other words, our groups satisfy a <strong>rich get richer</strong> property.</li>
+  <li>There&#8217;s always a small probability that someone joins an entirely new table (i.e., a new group is formed).</li>
+  <li>The probability of a new group depends on $\alpha$. So we can think of $\alpha$ as a <strong>dispersion parameter</strong> that affects the dispersion of our datapoints. The lower alpha is, the more tightly clustered our data points; the higher it is, the more clusters we have in any finite set of points.</li>
+  </ul>
+
+
+  <p>(Also notice the resemblance between table selection probabilities and a Dirichlet distribution&#8230;)</p>
+
+  <p>Just to summarize, given n data points, the Chinese Restaurant Process specifies a distribution over partitions (table assignments) of these points. We can also generate parameters for each partition/table from a base distribution $G_0$ (for example, each table could represent a Gaussian whose mean and standard deviation are sampled from $G_0$), though to be clear, this is not part of the CRP itself.</p>
+
+  <h3>Code</h3>
+
+  <p>Since code makes everything better, here&#8217;s some Ruby to simulate a CRP:</p>
+
+  <figcaption><span>Chinese Restaurant Process </span><a href="https://github.com/echen/dirichlet-process/blob/master/chinese_restaurant_process.rb">chinese_restaurant_process.rb</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  <span class="line-number">24</span>
+  <span class="line-number">25</span>
+  <span class="line-number">26</span>
+  <span class="line-number">27</span>
+  </pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="c1"># Generate table assignments for `num_customers` customers, according to</span>
+  </span><span class="line"><span class="c1"># a Chinese Restaurant Process with dispersion parameter `alpha`.</span>
+  </span><span class="line"><span class="c1">#</span>
+  </span><span class="line"><span class="c1"># returns an array of integer table assignments</span>
+  </span><span class="line"><span class="k">def</span> <span class="nf">chinese_restaurant_process</span><span class="p">(</span><span class="n">num_customers</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+  </span><span class="line"> <span class="k">return</span> <span class="o">[]</span> <span class="k">if</span> <span class="n">num_customers</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+  </span><span class="line">
+  </span><span class="line"> <span class="n">table_assignments</span> <span class="o">=</span> <span class="o">[</span><span class="mi">1</span><span class="o">]</span> <span class="c1"># first customer sits at table 1</span>
+  </span><span class="line"> <span class="n">next_open_table</span> <span class="o">=</span> <span class="mi">2</span> <span class="c1"># index of the next empty table</span>
+  </span><span class="line">
+  </span><span class="line"> <span class="c1"># Now generate table assignments for the rest of the customers.</span>
+  </span><span class="line"> <span class="mi">1</span><span class="o">.</span><span class="n">upto</span><span class="p">(</span><span class="n">num_customers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+  </span><span class="line">   <span class="k">if</span> <span class="nb">rand</span> <span class="o">&lt;</span> <span class="n">alpha</span><span class="o">.</span><span class="n">to_f</span> <span class="o">/</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span>
+  </span><span class="line">     <span class="c1"># Customer sits at new table.</span>
+  </span><span class="line">     <span class="n">table_assignments</span> <span class="o">&lt;&lt;</span> <span class="n">next_open_table</span>
+  </span><span class="line">     <span class="n">next_open_table</span> <span class="o">+=</span> <span class="mi">1</span>
+  </span><span class="line">   <span class="k">else</span>
+  </span><span class="line">     <span class="c1"># Customer sits at an existing table.</span>
+  </span><span class="line">     <span class="c1"># He chooses which table to sit at by giving equal weight to each</span>
+  </span><span class="line">     <span class="c1"># customer already sitting at a table. </span>
+  </span><span class="line">     <span class="n">which_table</span> <span class="o">=</span> <span class="n">table_assignments</span><span class="o">[</span><span class="nb">rand</span><span class="p">(</span><span class="n">table_assignments</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="o">]</span>
+  </span><span class="line">     <span class="n">table_assignments</span> <span class="o">&lt;&lt;</span> <span class="n">which_table</span>
+  </span><span class="line">   <span class="k">end</span>
+  </span><span class="line"> <span class="k">end</span>
+  </span><span class="line">
+  </span><span class="line"> <span class="n">table_assignments</span>
+  </span><span class="line"><span class="k">end</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>And here&#8217;s some sample output:</p>
+
+  <figcaption><span>Chinese Restaurant Process </span><a href="https://github.com/echen/dirichlet-process/blob/master/chinese_restaurant_process.rb">chinese_restaurant_process.rb</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  </pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="o">&gt;</span> <span class="n">chinese_restaurant_process</span><span class="p">(</span><span class="n">num_customers</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span> <span class="c1"># table assignments from run 1</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span> <span class="c1"># table assignments from run 2</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span> <span class="c1"># table assignments from run 3</span>
+  </span><span class="line">
+  </span><span class="line"><span class="o">&gt;</span> <span class="n">chinese_restaurant_process</span><span class="p">(</span><span class="n">num_customers</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span>
+  </span><span class="line">
+  </span><span class="line"><span class="o">&gt;</span> <span class="n">chinese_restaurant_process</span><span class="p">(</span><span class="n">num_customers</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">8</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span>
+  </span><span class="line"><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Notice that as we increase $\alpha$, so too does the number of distinct tables increase.</p>
+
+  <h2>Polya Urn Model</h2>
+
+  <p>Another method for assigning friends to groups is to follow the <strong>Polya Urn Model</strong>. This is basically the same model as the Chinese Restaurant Process, just with a different metaphor.</p>
+
+  <ul>
+  <li>We start with an urn containing $\alpha G_0(x)$ balls of &#8220;color&#8221; $x$, for each possible value of $x$. ($G_0$ is our base distribution, and $G_0(x)$ is the probability of sampling $x$ from $G_0$). Note that these are possibly fractional balls.</li>
+  <li>At each time step, draw a ball from the urn, note its color, and then drop both the original ball plus a new ball of the same color back into the urn.</li>
+  </ul>
+
+
+  <p>Note the connection between this process and the CRP: balls correspond to people (i.e., data points), colors correspond to table assignments (i.e., clusters), alpha is again a dispersion parameter (put differently, a prior), colors satisfy a rich-get-richer property (since colors with many balls are more likely to get drawn), and so on. (Again, there&#8217;s also a connection between this urn model and <a href="http://en.wikipedia.org/wiki/Dirichlet_distribution#P.C3.B3lya.27s_urn">the urn model for the (finite) Dirichlet distribution</a>&#8230;)</p>
+
+  <p>To be precise, the difference between the CRP and the Polya Urn Model is that the CRP specifies only a distribution over <em>partitions</em> (i.e., table assignments), but doesn&#8217;t assign parameters to each group, whereas the Polya Urn Model does both.</p>
+
+  <h3>Code</h3>
+
+  <p>Again, here&#8217;s some code for simulating a Polya Urn Model:</p>
+
+  <figcaption><span>Polya Urn Model </span><a href="https://github.com/echen/dirichlet-process/blob/master/polya_urn_model.rb">polya_urn_model.rb</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  <span class="line-number">21</span>
+  <span class="line-number">22</span>
+  <span class="line-number">23</span>
+  </pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="c1"># Draw `num_balls` colored balls according to a Polya Urn Model</span>
+  </span><span class="line"><span class="c1"># with a specified base color distribution and dispersion parameter</span>
+  </span><span class="line"><span class="c1"># `alpha`.</span>
+  </span><span class="line"><span class="c1">#</span>
+  </span><span class="line"><span class="c1"># returns an array of ball colors</span>
+  </span><span class="line"><span class="k">def</span> <span class="nf">polya_urn_model</span><span class="p">(</span><span class="n">base_color_distribution</span><span class="p">,</span> <span class="n">num_balls</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+  </span><span class="line">  <span class="k">return</span> <span class="o">[]</span> <span class="k">if</span> <span class="n">num_balls</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="n">balls_in_urn</span> <span class="o">=</span> <span class="o">[]</span>
+  </span><span class="line">  <span class="mi">0</span><span class="o">.</span><span class="n">upto</span><span class="p">(</span><span class="n">num_balls</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+  </span><span class="line">    <span class="k">if</span> <span class="nb">rand</span> <span class="o">&lt;</span> <span class="n">alpha</span><span class="o">.</span><span class="n">to_f</span> <span class="o">/</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">+</span> <span class="n">balls_in_urn</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+  </span><span class="line">      <span class="c1"># Draw a new color, put a ball of this color in the urn.</span>
+  </span><span class="line">      <span class="n">new_color</span> <span class="o">=</span> <span class="n">base_color_distribution</span><span class="o">.</span><span class="n">call</span>
+  </span><span class="line">      <span class="n">balls_in_urn</span> <span class="o">&lt;&lt;</span> <span class="n">new_color</span>
+  </span><span class="line">    <span class="k">else</span>
+  </span><span class="line">      <span class="c1"># Draw a ball from the urn, add another ball of the same color.</span>
+  </span><span class="line">      <span class="n">ball</span> <span class="o">=</span> <span class="n">balls_in_urn</span><span class="o">[</span><span class="nb">rand</span><span class="p">(</span><span class="n">balls_in_urn</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="o">]</span>
+  </span><span class="line">      <span class="n">balls_in_urn</span> <span class="o">&lt;&lt;</span> <span class="n">ball</span>
+  </span><span class="line">    <span class="k">end</span>
+  </span><span class="line">  <span class="k">end</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="n">balls_in_urn</span>
+  </span><span class="line"><span class="k">end</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>And here&#8217;s some sample output, using a uniform distribution over the unit interval as the color distribution to sample from:</p>
+
+  <figcaption><span>Polya Urn Model </span><a href="https://github.com/echen/dirichlet-process/blob/master/polya_urn_model.rb">polya_urn_model.rb</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  </pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="o">&gt;</span> <span class="n">unit_uniform</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="p">(</span><span class="nb">rand</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">to_i</span> <span class="o">/</span> <span class="mi">100</span><span class="o">.</span><span class="mi">0</span> <span class="p">}</span>
+  </span><span class="line">
+  </span><span class="line"><span class="o">&gt;</span> <span class="n">polya_urn_model</span><span class="p">(</span><span class="n">unit_uniform</span><span class="p">,</span> <span class="n">num_balls</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+  </span><span class="line"><span class="mi">0</span><span class="o">.</span><span class="mi">27</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">89</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">89</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">89</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">73</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">98</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">43</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">98</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">89</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">53</span> <span class="c1"># colors in the urn from run 1</span>
+  </span><span class="line"><span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">46</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">85</span> <span class="c1"># colors in the urn from run 2</span>
+  </span><span class="line"><span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">87</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">87</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">87</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span><span class="p">,</span> <span class="mi">0</span><span class="o">.</span><span class="mi">96</span> <span class="c1"># colors in the urn from run 3</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <h3>Code, Take 2</h3>
+
+  <p>Here&#8217;s the same code for a Polya Urn Model, but in R:</p>
+
+  <figcaption><span>Polya Urn Model </span><a href="https://github.com/echen/dirichlet-process/blob/master/polya_urn_model.R">polya_urn_model.R</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  <span class="line-number">14</span>
+  <span class="line-number">15</span>
+  <span class="line-number">16</span>
+  <span class="line-number">17</span>
+  <span class="line-number">18</span>
+  <span class="line-number">19</span>
+  <span class="line-number">20</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># Return a vector of `num_balls` ball colors according to a Polya Urn Model</span>
+  </span><span class="line"><span class="c1"># with dispersion `alpha`, sampling from a specified base color distribution.</span>
+  </span><span class="line">polya_urn_model <span class="o">=</span> <span class="kr">function</span><span class="p">(</span>base_color_distribution<span class="p">,</span> num_balls<span class="p">,</span> alpha<span class="p">)</span> <span class="p">{</span>
+  </span><span class="line">  balls <span class="o">=</span> c<span class="p">()</span>
+  </span><span class="line">
+  </span><span class="line">  <span class="kr">for</span> <span class="p">(</span>i in <span class="m">1</span>:num_balls<span class="p">)</span> <span class="p">{</span>
+  </span><span class="line">    <span class="kr">if</span> <span class="p">(</span>runif<span class="p">(</span><span class="m">1</span><span class="p">)</span> <span class="o">&lt;</span> alpha <span class="o">/</span> <span class="p">(</span>alpha <span class="o">+</span> length<span class="p">(</span>balls<span class="p">)))</span> <span class="p">{</span>
+  </span><span class="line">      <span class="c1"># Add a new ball color.</span>
+  </span><span class="line">      new_color <span class="o">=</span> base_color_distribution<span class="p">()</span>
+  </span><span class="line">      balls <span class="o">=</span> c<span class="p">(</span>balls<span class="p">,</span> new_color<span class="p">)</span>
+  </span><span class="line">    <span class="p">}</span> <span class="kr">else</span> <span class="p">{</span>
+  </span><span class="line">      <span class="c1"># Pick out a ball from the urn, and add back a</span>
+  </span><span class="line">      <span class="c1"># ball of the same color.</span>
+  </span><span class="line">      ball <span class="o">=</span> balls<span class="p">[</span>sample<span class="p">(</span><span class="m">1</span>:length<span class="p">(</span>balls<span class="p">),</span> <span class="m">1</span><span class="p">)]</span>
+  </span><span class="line">      balls <span class="o">=</span> c<span class="p">(</span>balls<span class="p">,</span> ball<span class="p">)</span>
+  </span><span class="line">    <span class="p">}</span>
+  </span><span class="line">  <span class="p">}</span>
+  </span><span class="line">
+  </span><span class="line">  balls
+  </span><span class="line"><span class="p">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>Here are some sample density plots of the colors in the urn, when using a unit normal as the base color distribution:</p>
+
+  <p><a href="http://i.imgur.com/4aOd7TI.png"><img src="http://i.imgur.com/4aOd7TI.png" alt="Polya Urn Model, Alpha = 1" /></a></p>
+
+  <p><a href="http://i.imgur.com/vTLeppf.png"><img src="http://i.imgur.com/vTLeppf.png" alt="Polya Urn Model, Alpha = 5" /></a></p>
+
+  <p><a href="http://i.imgur.com/SQPZY95.png"><img src="http://i.imgur.com/SQPZY95.png" alt="Polya Urn Model, Alpha = 25" /></a></p>
+
+  <p><a href="http://i.imgur.com/PFmE0q3.png"><img src="http://i.imgur.com/PFmE0q3.png" alt="Polya Urn Model, Alpha = 50" /></a></p>
+
+  <p>Notice that as alpha increases (i.e., we sample more new ball colors from our base; i.e., as we place more weight on our prior), the colors in the urn tend to a unit normal (our base color distribution).</p>
+
+  <p>And here are some sample plots of points generated by the urn, for varying values of alpha:</p>
+
+  <ul>
+  <li>Each color in the urn is sampled from a uniform distribution over [0,10]x[0,10] (i.e., a [0, 10] square).</li>
+  <li>Each group is a Gaussian with standard deviation 0.1 and mean equal to its associated color, and these Gaussian groups generate points.</li>
+  </ul>
+
+
+  <p><a href="http://i.imgur.com/QdRnCbn.png"><img src="http://i.imgur.com/QdRnCbn.png" alt="Alpha 0.1" /></a></p>
+
+  <p><a href="http://i.imgur.com/n0CLgfs.png"><img src="http://i.imgur.com/n0CLgfs.png" alt="Alpha 0.2" /></a></p>
+
+  <p><a href="http://i.imgur.com/yp9XINd.png"><img src="http://i.imgur.com/yp9XINd.png" alt="Alpha 0.3" /></a></p>
+
+  <p><a href="http://i.imgur.com/MkoA8kP.png"><img src="http://i.imgur.com/MkoA8kP.png" alt="Alpha 0.5" /></a></p>
+
+  <p><a href="http://i.imgur.com/UEmRqQU.png"><img src="http://i.imgur.com/UEmRqQU.png" alt="Alpha 1.0" /></a></p>
+
+  <p>Notice that the points clump together in fewer clusters for low values of alpha, but become more dispersed as alpha increases.</p>
+
+  <h2>Stick-Breaking Process</h2>
+
+  <p>Imagine running either the Chinese Restaurant Process or the Polya Urn Model without stop. For each group $i$, this gives a proportion $w_i$ of points that fall into group $i$.</p>
+
+  <p>So instead of running the CRP or Polya Urn model to figure out these proportions, can we simply generate them directly?</p>
+
+  <p>This is exactly what the Stick-Breaking Process does:</p>
+
+  <ul>
+  <li>Start with a stick of length one.</li>
+  <li>Generate a random variable $\beta_1 \sim Beta(1, \alpha)$. By the definition of the <a href="http://en.wikipedia.org/wiki/Beta_distribution">Beta distribution</a>, this will be a real number between 0 and 1, with expected value $1 / (1 + \alpha)$. Break off the stick at $\beta_1$; $w_1$ is then the length of the stick on the left.</li>
+  <li>Now take the stick to the right, and generate $\beta_2 \sim Beta(1, \alpha)$. Break off the stick $\beta_2$ into the stick. Again, $w_2$ is the length of the stick to the left, i.e., $w_2 = (1 - \beta_1) \beta_2$.</li>
+  <li>And so on.</li>
+  </ul>
+
+
+  <p>Thus, the Stick-Breaking process is simply the CRP or Polya Urn Model from a different point of view. For example, assigning customers to table 1 according to the Chinese Restaurant Process is equivalent to assigning customers to table 1 with probability $w_1$.</p>
+
+  <h3>Code</h3>
+
+  <p>Here&#8217;s some R code for simulating a Stick-Breaking process:</p>
+
+  <figcaption><span>Stick-Breaking Process </span><a href="https://github.com/echen/dirichlet-process/blob/master/stick_breaking_process.R">stick_breaking_process.R</a></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <span class="line-number">2</span>
+  <span class="line-number">3</span>
+  <span class="line-number">4</span>
+  <span class="line-number">5</span>
+  <span class="line-number">6</span>
+  <span class="line-number">7</span>
+  <span class="line-number">8</span>
+  <span class="line-number">9</span>
+  <span class="line-number">10</span>
+  <span class="line-number">11</span>
+  <span class="line-number">12</span>
+  <span class="line-number">13</span>
+  </pre></td><td class="code"><pre><code class="r"><span class="line"><span class="c1"># Return a vector of weights drawn from a stick-breaking process</span>
+  </span><span class="line"><span class="c1"># with dispersion `alpha`.</span>
+  </span><span class="line"><span class="c1">#</span>
+  </span><span class="line"><span class="c1"># Recall that the kth weight is</span>
+  </span><span class="line"><span class="c1">#   \beta_k = (1 - \beta_1) * (1 - \beta_2) * ... * (1 - \beta_{k-1}) * beta_k</span>
+  </span><span class="line"><span class="c1"># where each $\\beta\_i$ is drawn from a Beta distribution</span>
+  </span><span class="line"><span class="c1">#   \beta_i ~ Beta(1, \alpha)</span>
+  </span><span class="line">stick_breaking_process <span class="o">=</span> <span class="kr">function</span><span class="p">(</span>num_weights<span class="p">,</span> alpha<span class="p">)</span> <span class="p">{</span>
+  </span><span class="line">  betas <span class="o">=</span> rbeta<span class="p">(</span>num_weights<span class="p">,</span> <span class="m">1</span><span class="p">,</span> alpha<span class="p">)</span>
+  </span><span class="line">  remaining_stick_lengths <span class="o">=</span> c<span class="p">(</span><span class="m">1</span><span class="p">,</span> cumprod<span class="p">(</span><span class="m">1</span> <span class="o">-</span> betas<span class="p">))[</span><span class="m">1</span>:num_weights<span class="p">]</span>
+  </span><span class="line">  weights <span class="o">=</span> remaining_stick_lengths <span class="o">*</span> betas
+  </span><span class="line">  weights
+  </span><span class="line"><span class="p">}</span>
+  </span></code></pre></td></tr></table></div>
+
+
+  <p>And here&#8217;s some sample output:</p>
+
+  <p><a href="http://i.imgur.com/8gzowzf.png"><img src="http://i.imgur.com/8gzowzf.png" alt="Stick-Breaking Process, alpha = 1" /></a></p>
+
+  <p><a href="http://i.imgur.com/yM0Wckw.png"><img src="http://i.imgur.com/yM0Wckw.png" alt="Stick-Breaking Process, alpha = 3" /></a></p>
+
+  <p><a href="http://i.imgur.com/8tATMw6.png"><img src="http://i.imgur.com/8tATMw6.png" alt="Stick-Breaking Process, alpha = 5" /></a></p>
+
+  <p>Notice that for low values of alpha, the stick weights are concentrated on the first few weights (meaning our data points are concentrated on a few clusters), while the weights become more evenly dispersed as we increase alpha (meaning we posit more clusters in our data points).</p>
+
+  <h2>Dirichlet Process</h2>
+
+  <p>Suppose we run a Polya Urn Model several times, where we sample colors from a base distribution $G_0$. Each run produces a distribution of colors in the urn (say, 5% blue balls, 3% red balls, 2% pink balls, etc.), and the distribution will be different each time (for example, 5% blue balls in run 1, but 1% blue balls in run 2).</p>
+
+  <p>For example, let&#8217;s look again at the plots from above, where I generated samples from a Polya Urn Model with the standard unit normal as the base distribution:</p>
+
+  <p><a href="http://i.imgur.com/4aOd7TI.png"><img src="http://i.imgur.com/4aOd7TI.png" alt="Polya Urn Model, Alpha = 1" /></a></p>
+
+  <p><a href="http://i.imgur.com/vTLeppf.png"><img src="http://i.imgur.com/vTLeppf.png" alt="Polya Urn Model, Alpha = 5" /></a></p>
+
+  <p><a href="http://i.imgur.com/SQPZY95.png"><img src="http://i.imgur.com/SQPZY95.png" alt="Polya Urn Model, Alpha = 25" /></a></p>
+
+  <p><a href="http://i.imgur.com/PFmE0q3.png"><img src="http://i.imgur.com/PFmE0q3.png" alt="Polya Urn Model, Alpha = 50" /></a></p>
+
+  <p>Each run of the Polya Urn Model produces a slighly different distribution, though each is &#8220;centered&#8221; in some fashion around the standard Gaussian I used as base. In other words, the Polya Urn Model gives us a <strong>distribution over distributions</strong> (we get a distribution of ball colors, and this distribution of colors changes each time) &#8211; and so we finally get to the Dirichlet Process.</p>
+
+  <p>Formally, given a base distribution $G_0$ and a dispersion parameter $\alpha$, a sample from the Dirichlet Process $DP(G_0, \alpha)$ is a distribution $G \sim DP(G_0, \alpha)$. This sample $G$ can be thought of as a distribution of colors in a single simulation of the Polya Urn Model; sampling from $G$ gives us the balls in the urn.</p>
+
+  <p>So here&#8217;s the connection between the Chinese Restaurant Process, the Polya Urn Model, the Stick-Breaking Process, and the Dirichlet Process:</p>
+
+  <ul>
+  <li><strong>Dirichlet Process</strong>: Suppose we want samples $x_i \sim G$, where $G$ is a distribution sampled from the Dirichlet Process $G \sim DP(G_0, \alpha)$.</li>
+  <li><strong>Polya Urn Model</strong>: One way to generate these values $x_i$ would be to take a Polya Urn Model with color distribution $G_0$ and dispersion $\alpha$. ($x_i$ would be the color of the ith ball in the urn.)</li>
+  <li><strong>Chinese Restaurant Process</strong>: Another way to generate $x_i$ would be to first assign tables to customers according to a Chinese Restaurant Process with dispersion $\alpha$. Every customer at the nth table would then be given the same value (color) sampled from $G_0$. ($x_i$ would be the value given to the ith customer; $x_i$ can also be thought of as the food at table $i$, or as the parameters of table $i$.)</li>
+  <li><strong>Stick-Breaking Process</strong>: Finally, we could generate weights $w_k$ according to a Stick-Breaking Process with dispersion $\alpha$. Next, we would give each weight $w_k$ a value (or color) $v_k$ sampled from $G_0$. Finally, we would assign $x_i$ to value (color) $v_k$ with probability $w_k$.</li>
+  </ul>
+
+
+  <h1>Recap</h1>
+
+  <p>Let&#8217;s summarize what we&#8217;ve discussed so far.</p>
+
+  <p>We have a bunch of data points $p_i$ that we want to cluster, and we&#8217;ve described four essentially equivalent generative models that allow us to describe how each cluster and point could have arisen.</p>
+
+  <p>In the <strong>Chinese Restaurant Process</strong>:</p>
+
+  <ul>
+  <li>We generate table assignments $g_1, \ldots, g_n \sim CRP(\alpha)$ according to a Chinese Restaurant Process. ($g_i$ is the table assigned to datapoint $i$.)</li>
+  <li>We generate table parameters $\phi_1, \ldots, \phi_m \sim G_0$ according to the base distribution $G_0$, where $\phi_k$ is the parameter for the kth distinct group.</li>
+  <li>Given table assignments and table parameters, we generate each datapoint $p_i \sim F(\phi_{g_i})$ from a distribution $F$ with the specified table parameters. (For example, $F$ could be a Gaussian, and $\phi_i$ could be a parameter vector specifying the mean and standard deviation).</li>
+  </ul>
+
+
+  <p>In the <strong>Polya Urn Model</strong>:</p>
+
+  <ul>
+  <li>We generate colors $\phi_1, \ldots, \phi_n \sim Polya(G_0, \alpha)$ according to a Polya Urn Model. ($\phi_i$ is the color of the ith ball.)</li>
+  <li>Given ball colors, we generate each datapoint $p_i \sim F(\phi_i)$.</li>
+  </ul>
+
+
+  <p>In the <strong>Stick-Breaking Process</strong>:</p>
+
+  <ul>
+  <li>We generate group probabilities (stick lengths) $w_1, \ldots, w_{\infty} \sim Stick(\alpha)$ according to a Stick-Breaking process.</li>
+  <li>We generate group parameters $\phi_1, \ldots, \phi_{\infty} \sim G_0$ from $G_0$, where $\phi_k$ is the parameter for the kth distinct group.</li>
+  <li>We generate group assignments $g_1, \ldots, g_n \sim Multinomial(w_1, \ldots, w_{\infty})$ for each datapoint.</li>
+  <li>Given group assignments and group parameters, we generate each datapoint $p_i \sim F(\phi_{g_i})$.</li>
+  </ul>
+
+
+  <p>In the <strong>Dirichlet Process</strong>:</p>
+
+  <ul>
+  <li>We generate a distribution $G \sim DP(G_0, \alpha)$ from a Dirichlet Process with base distribution $G_0$ and dispersion parameter $\alpha$.</li>
+  <li>We generate group-level parameters $x_i \sim G$ from $G$, where $x_i$ is the group parameter for the ith datapoint. (Note: this is not the same as $\phi_i$. $x_i$ is the parameter associated to the group that the ith datapoint belongs to, whereas $\phi_k$ is the parameter of the kth distinct group.)</li>
+  <li>Given group-level parameters $x_i$, we generate each datapoint $p_i \sim F(x_i)$.</li>
+  </ul>
+
+
+  <p>Also, remember that each model naturally allows the number of clusters to grow as more points come in.</p>
+
+  <h1>Inference in the Dirichlet Process Mixture</h1>
+
+  <p>So we&#8217;ve described a generative model that allows us to calculate the probability of any particular set of group assignments to data points, but we haven&#8217;t described how to actually learn a good set of group assignments.</p>
+
+  <p>Let&#8217;s briefly do this now. Very roughly, the <strong>Gibbs sampling</strong> approach works as follows:</p>
+
+  <ul>
+  <li>Take the set of data points, and randomly initialize group assignments.</li>
+  <li>Pick a point. Fix the group assignments of all the other points, and assign the chosen point a new group (which can be either an existing cluster or a new cluster) with a CRP-ish probability (as described in the models above) that depends on the group assignments and values of all the other points.</li>
+  <li>We will eventually converge on a good set of group assignments, so repeat the previous step until happy.</li>
+  </ul>
+
+
+  <p>For more details, <a href="http://www.cs.toronto.edu/~radford/ftp/mixmc.pdf">this paper</a> provides a good description. Philip Resnick and Eric Hardisty also have a friendlier, more general description of Gibbs sampling (plus an application to naive Bayes) <a href="http://www.cs.umd.edu/~hardisty/papers/gsfu.pdf">here</a>.</p>
+
+  <h1>Fast Food Application: Clustering the McDonald&#8217;s Menu</h1>
+
+  <p>Finally, let&#8217;s show an application of the Dirichlet Process Mixture. Unfortunately, I didn&#8217;t have a data set of people&#8217;s food habits offhand, so instead I took <a href="http://nutrition.mcdonalds.com/nutritionexchange/nutritionfacts.pdf">this list</a> of McDonald&#8217;s foods and nutrition facts.</p>
+
+  <p>After normalizing each item to have an equal number of calories, and representing each item as a vector of <strong>(total fat, cholesterol, sodium, dietary fiber, sugars, protein, vitamin A, vitamin C, calcium, iron, calories from fat, satured fat, trans fat, carbohydrates)</strong>, I ran <a href="http://scikit-learn.sourceforge.net/dev/index.html">scikit-learn</a>&#8217;s <a href="http://scikit-learn.sourceforge.net/dev/modules/mixture.html">Dirichlet Process Gaussian Mixture Model</a> to cluster McDonald&#8217;s menu based on nutritional value.</p>
+
+  <p>First, how does the number of clusters inferred by the Dirichlet Process mixture vary as we feed in more (randomly ordered) points?</p>
+
+  <p><a href="http://i.imgur.com/36Pxuq3.png"><img src="http://i.imgur.com/36Pxuq3.png" alt="Growth of Number of Clusters" /></a></p>
+
+  <p>As expected, the Dirichlet Process model discovers more and more clusters as more and more food items arrive. (And indeed, the number of clusters appears to grow logarithmically, which can in fact be proved.)</p>
+
+  <p>How many clusters does the mixture model infer from the entire dataset? Running the Gibbs sampler several times, we find that the number of clusters tends around 11:</p>
+
+  <p><a href="http://i.imgur.com/qbkq1uo.png"><img src="http://i.imgur.com/qbkq1uo.png" alt="Number of clusters" /></a></p>
+
+  <p>Let&#8217;s dive into one of these clusterings.</p>
+
+  <p><strong>Cluster 1 (Desserts)</strong></p>
+
+  <p>Looking at a sample of foods from the first cluster, we find a lot of desserts and dessert-y drinks:</p>
+
+  <ul>
+  <li>Caramel Mocha</li>
+  <li>Frappe Caramel</li>
+  <li>Iced Hazelnut Latte</li>
+  <li>Iced Coffee</li>
+  <li>Strawberry Triple Thick Shake</li>
+  <li>Snack Size McFlurry</li>
+  <li>Hot Caramel Sundae</li>
+  <li>Baked Hot Apple Pie</li>
+  <li>Cinnamon Melts</li>
+  <li>Kiddie Cone</li>
+  <li>Strawberry Sundae</li>
+  </ul>
+
+
+  <p>We can also look at the nutritional profile of some foods from this cluster (after <a href="http://en.wikipedia.org/wiki/Standard_score">z-scaling</a> each nutrition dimension to have mean 0 and standard deviation 1):</p>
+
+  <p><a href="http://i.imgur.com/oM1aPCE.png"><img src="http://i.imgur.com/oM1aPCE.png" alt="Cluster 1" /></a></p>
+
+  <p>We see that foods in this cluster tend to be high in trans fat and low in vitamins, protein, fiber, and sodium.</p>
+
+  <p><strong>Cluster 2 (Sauces)</strong></p>
+
+  <p>Here&#8217;s a sample from the second cluster, which contains a lot of sauces:</p>
+
+  <ul>
+  <li>Hot Mustard Sauce</li>
+  <li>Spicy Buffalo Sauce</li>
+  <li>Newman&#8217;s Own Low Fat Balsamic Vinaigrette</li>
+  </ul>
+
+
+  <p>And looking at the nutritional profile of points in this cluster, we see that it&#8217;s heavy in sodium and fat:</p>
+
+  <p><a href="http://i.imgur.com/3bOYEBz.png"><img src="http://i.imgur.com/3bOYEBz.png" alt="Cluster 2" /></a></p>
+
+  <p><strong>Cluster 3 (Burgers, Crispy Foods, High-Cholesterol)</strong></p>
+
+  <p>The third cluster is very burgery:</p>
+
+  <ul>
+  <li>Hamburger</li>
+  <li>Cheeseburger</li>
+  <li>Filet-O-Fish</li>
+  <li>Quarter Pounder with Cheese</li>
+  <li>Premium Grilled Chicken Club Sandwich</li>
+  <li>Ranch Snack Wrap</li>
+  <li>Premium Asian Salad with Crispy Chicken</li>
+  <li>Butter Garlic Croutons</li>
+  <li>Sausage McMuffin</li>
+  <li>Sausage McGriddles</li>
+  </ul>
+
+
+  <p>It&#8217;s also high in fat and sodium, and low in carbs and sugar</p>
+
+  <p><a href="http://i.imgur.com/XdoVfXG.png"><img src="http://i.imgur.com/XdoVfXG.png" alt="Cluster 3" /></a></p>
+
+  <p><strong>Cluster 4 (Creamy Sauces)</strong></p>
+
+  <p>Interestingly, even though we already found a cluster of sauces above, we discover another one as well. These sauces appear to be much more cream-based:</p>
+
+  <ul>
+  <li>Creamy Ranch Sauce</li>
+  <li>Newman&#8217;s Own Creamy Caesar Dressing</li>
+  <li>Coffee Cream</li>
+  <li>Iced Coffee with Sugar Free Vanilla Syrup</li>
+  </ul>
+
+
+  <p>Nutritionally, these sauces are higher in calories from fat, and much lower in sodium:</p>
+
+  <p><a href="http://i.imgur.com/4gQzyLO.png"><img src="http://i.imgur.com/4gQzyLO.png" alt="Cluster 4" /></a></p>
+
+  <p><strong>Cluster 5 (Salads)</strong></p>
+
+  <p>Here&#8217;s a salad cluster. A lot of salads also appeared in the third cluster (along with hamburgers and McMuffins), but that&#8217;s because those salads also all contained crispy chicken. The salads in this cluster are either crisp-free or have their chicken grilled instead:</p>
+
+  <ul>
+  <li>Premium Southwest Salad with Grilled Chicken</li>
+  <li>Premium Caesar Salad with Grilled Chicken</li>
+  <li>Side Salad</li>
+  <li>Premium Asian Salad without Chicken</li>
+  <li>Premium Bacon Ranch Salad without Chicken</li>
+  </ul>
+
+
+  <p>This is reflected in the higher content of iron, vitamin A, and fiber:</p>
+
+  <p><a href="http://i.imgur.com/hqkpKz5.png"><img src="http://i.imgur.com/hqkpKz5.pngg" alt="Cluster 5" /></a></p>
+
+  <p><strong>Cluster 6 (More Sauces)</strong></p>
+
+  <p>Again, we find another cluster of sauces:</p>
+
+  <ul>
+  <li>Ketchup Packet</li>
+  <li>Barbeque Sauce</li>
+  <li>Chipotle Barbeque Sauce</li>
+  </ul>
+
+
+  <p>These are still high in sodium, but much lower in fat compared to the other sauce clusters:</p>
+
+  <p><a href="http://i.imgur.com/i2Y2M6u.png"><img src="http://i.imgur.com/i2Y2M6u.png" alt="Cluster 6" /></a></p>
+
+  <p><strong>Cluster 7 (Fruit and Maple Oatmeal)</strong></p>
+
+  <p>Amusingly, fruit and maple oatmeal is in a cluster by itself:</p>
+
+  <ul>
+  <li>Fruit &amp; Maple Oatmeal</li>
+  </ul>
+
+
+  <p><a href="http://i.imgur.com/qoyNFK4.png"><img src="http://i.imgur.com/qoyNFK4.png" alt="Cluster 7" /></a></p>
+
+  <p><strong>Cluster 8 (Sugary Drinks)</strong></p>
+
+  <p>We also get a cluster of sugary drinks:</p>
+
+  <ul>
+  <li>Strawberry Banana Smoothie</li>
+  <li>Wild Berry Smoothie</li>
+  <li>Iced Nonfat Vanilla Latte</li>
+  <li>Nonfat Hazelnut</li>
+  <li>Nonfat Vanilla Cappuccino</li>
+  <li>Nonfat Caramel Cappuccino</li>
+  <li>Sweet Tea</li>
+  <li>Frozen Strawberry Lemonade</li>
+  <li>Coca-Cola</li>
+  <li>Minute Maid Orange Juice</li>
+  </ul>
+
+
+  <p>In addition to high sugar content, this cluster is also high in carbohydrates and calcium, and low in fat.</p>
+
+  <p><a href="http://i.imgur.com/MNdKmrr.png"><img src="http://i.imgur.com/MNdKmrr.png" alt="Cluster 8" /></a></p>
+
+  <p><strong>Cluster 9 (Breakfast Foods)</strong></p>
+
+  <p>Here&#8217;s a cluster of high-cholesterol breakfast foods:</p>
+
+  <ul>
+  <li>Sausage McMuffin with Egg</li>
+  <li>Sausage Burrito</li>
+  <li>Egg McMuffin</li>
+  <li>Bacon, Egg &amp; Cheese Biscuit</li>
+  <li>McSkillet Burrito with Sausage</li>
+  <li>Big Breakfast with Hotcakes</li>
+  </ul>
+
+
+  <p><a href="http://i.imgur.com/m67oVsY.png"><img src="http://i.imgur.com/m67oVsY.png" alt="Cluster 9" /></a></p>
+
+  <p><strong>Cluster 10 (Coffee Drinks)</strong></p>
+
+  <p>We find a group of coffee drinks next:</p>
+
+  <ul>
+  <li>Nonfat Cappuccino</li>
+  <li>Nonfat Latte</li>
+  <li>Nonfat Latte with Sugar Free Vanilla Syrup</li>
+  <li>Iced Nonfat Latte</li>
+  </ul>
+
+
+  <p>These are much higher in calcium and protein, and lower in sugar, than the other drink cluster above:</p>
+
+  <p><a href="http://i.imgur.com/UB8i5j4.png"><img src="http://i.imgur.com/UB8i5j4.png" alt="Cluster 11" /></a></p>
+
+  <p><strong>Cluster 11 (Apples)</strong></p>
+
+  <p>Here&#8217;s a cluster of apples:</p>
+
+  <ul>
+  <li>Apple Dippers with Low Fat Caramel Dip</li>
+  <li>Apple Slices</li>
+  </ul>
+
+
+  <p>Vitamin C, check.</p>
+
+  <p><a href="http://i.imgur.com/w6VBaBt.png"><img src="http://i.imgur.com/w6VBaBt.png" alt="Cluster 10" /></a></p>
+
+  <p>And finally, here&#8217;s an overview of all the clusters at once (using a different clustering run):</p>
+
+  <p><a href="http://i.imgur.com/RJ6FuGH.png"><img src="http://i.imgur.com/RJ6FuGH.png" alt="All Clusters" /></a></p>
+
+  <h1>No More!</h1>
+
+  <p>I&#8217;ll end with a couple notes:</p>
+
+  <ul>
+  <li>Kevin Knight has a <a href="http://www.isi.edu/natural-language/people/bayes-with-tears.pdf">hilarious introduction</a> to Bayesian inference that describes some applications of nonparametric Bayesian techniques to computational linguistics (though I don&#8217;t think he ever quite says &#8220;nonparametric Bayes&#8221; directly).</li>
+  <li>In the Chinese Restaurant Process, each customer sits at a single table. The <a href="http://en.wikipedia.org/wiki/Chinese_restaurant_process#The_Indian_buffet_process">Indian Buffet Process</a> is an extension that allows customers to sample food from multiple tables (i.e., belong to multiple clusters).</li>
+  <li>The Chinese Restaurant Process, the Polya Urn Model, and the Stick-Breaking Process are all <em>sequential</em> models for generating groups: to figure out table parameters in the CRP, for example, you wait for customer 1 to come in, then customer 2, then customer 3, and so on. The equivalent Dirichlet Process, on the other hand, is a <em>parallel</em> model for generating groups: just sample $G \sim DP(G_0, alpha)$, and then all your group parameters can be independently generated by sampling from $G$ at once. This duality is an instance of a more general phenomenon known as <a href="http://en.wikipedia.org/wiki/De_Finetti's_theorem">de Finetti&#8217;s theorem</a>.</li>
+  </ul>
+
+
+  <p>And that&#8217;s it.</p>
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="../2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>It&#8217;s often easier to understand a chart than a table. So why is it still so hard to make a simple data graphic, and why am I still bombarded by mind-numbing reams of raw <em>numbers</em>?</p>
+
+  <p>(Yeah, I love <a href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">ggplot2</a> to death. But sometimes I want a little more interaction, and sometimes all I want is to drag-and-drop and be done.)</p>
+
+  <p>So I&#8217;ve been experimenting with <a href="http://minifolds.herokuapp.com/graphs/1?x=health&amp;y=speed&amp;size=intelligence&amp;color=age&amp;group=height">a small, ggplot2-inspired d3 app</a>.</p>
+
+  <p>Simply drop a file, and bam! Instant scatterplot:</p>
+
+  <p><a href="http://minifolds.herokuapp.com/graphs/1?x=health&amp;y=speed"><img src="http://i.imgur.com/Dakasn5.png" alt="Swiss Roll B&amp;W" /></a></p>
+
+  <p>But wait &#8211; that&#8217;s only 2 dimensions. You can add some more through color, size, and groups:</p>
+
+  <p><a href="http://minifolds.herokuapp.com/graphs/1?x=health&amp;y=speed&amp;size=intelligence&amp;color=age&amp;group=height"><img src="http://i.imgur.com/f6iCgHw.png" alt="Swiss Roll Edit" /></a></p>
+
+  <p>(Click <a href="http://minifolds.herokuapp.com/graphs/1?x=health&amp;y=speed&amp;size=intelligence&amp;color=age&amp;group=height">here</a> to play with the data yourself.)</p>
+
+  <p>And you can easily switch which variables are getting plotted, and see all the information associated with each point.</p>
+
+  <p><a href="http://minifolds.herokuapp.com/graphs/1?x=weight&amp;y=speed&amp;size=health&amp;color=age&amp;group=height"><img src="http://i.imgur.com/7W7OZwZ.png" alt="Swiss Roll Pivot" /></a></p>
+
+  <p>(Same dataset, different aesthetic assignments.)</p>
+
+  <p>I&#8217;m thinking of adding more kinds of charts, support for categorical variables, more interactivity (sliders to interact with other dimensions?!), and making the UI even easier (e.g., simplify column naming). In the meantime, the code is <a href="https://github.com/echen/minifolds">here</a> on Github, and tips and suggestions are welcome!</p>
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="../2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p><em>Scalding is an in-house MapReduce framework that Twitter recently open-sourced. Like <a href="http://pig.apache.org/">Pig</a>, it provides an abstraction on top of MapReduce that makes it easy to write big data jobs in a syntax that&#8217;s simple and concise. Unlike Pig, Scalding is written in pure Scala &#8211; which means all the power of Scala and the JVM is already built-in. No more UDFs, folks!</em></p>
+
+  <p>This is going to be an in-your-face introduction to <a href="https://github.com/twitter/scalding">Scalding</a>, Twitter&#8217;s (Scala + Cascading) MapReduce framework.</p>
+
+  <p>In 140: instead of forcing you to write raw <code>map</code> and <code>reduce</code> functions, Scalding allows you to write <em>natural</em> code like</p>
+  
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="Example.scala" data-gist-hide-footer="true"></code>
+
+  <p>Not much different from the Ruby you&#8217;d write to compute tweet distributions over <em>small</em> data? <strong>Exactly.</strong></p>
+
+  <p>Two notes before we begin:</p>
+
+  <ul>
+  <li><a href="https://github.com/echen/scaldingale">This Github repository</a> contains all the code used.</li>
+  <li>For a gentler introduction to Scalding, see <a href="https://github.com/twitter/scalding/wiki/Getting-Started">this Getting Started guide</a> on the Scalding wiki.</li>
+  </ul>
+
+
+  <h1>Movie Similarities</h1>
+
+  <p>Imagine you run an online movie business, and you want to generate movie recommendations. You have a rating system (people can rate movies with 1 to 5 stars), and we&#8217;ll assume for simplicity that all of the ratings are stored in a TSV file somewhere.</p>
+
+  <p>Let&#8217;s start by reading the ratings into a Scalding job.</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities1.scala" data-gist-hide-footer="true"></code>
+
+  <p>You want to calculate how similar pairs of movies are, so that if someone watches <em>The Lion King</em>, you can recommend films like <em>Toy Story</em>. So how should you define the similarity between two movies?</p>
+
+  <p>One way is to use their <strong>correlation</strong>:</p>
+
+  <ul>
+  <li>For every pair of movies A and B, find all the people who rated both A and B.</li>
+  <li>Use these ratings to form a Movie A vector and a Movie B vector.</li>
+  <li>Calculate the correlation between these two vectors.</li>
+  <li>Whenever someone watches a movie, you can then recommend the movies most correlated with it.</li>
+  </ul>
+
+
+  <p>Let&#8217;s start with the first two steps.</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities2.scala" data-gist-hide-footer="true"></code>
+
+  <p>Before using these rating pairs to calculate correlation, let&#8217;s stop for a bit.</p>
+
+  <p>Since we&#8217;re explicitly thinking of movies as <strong>vectors</strong> of ratings, it&#8217;s natural to compute some very vector-y things like norms and dot products, as well as the length of each vector and the sum over all elements in each vector. So let&#8217;s compute these:</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities3.scala" data-gist-hide-footer="true"></code>
+
+  <p>To summarize, each row in <code>vectorCalcs</code> now contains the following fields:</p>
+
+  <ul>
+  <li><strong>movie, movie2</strong></li>
+  <li><strong>numRaters, numRaters2</strong>: the total number of people who rated each movie</li>
+  <li><strong>size</strong>: the number of people who rated both movie and movie2</li>
+  <li><strong>dotProduct</strong>: dot product between the movie vector (a vector of ratings) and the movie2 vector (also a vector of ratings)</li>
+  <li><strong>ratingSum, rating2sum</strong>: sum over all elements in each ratings vector</li>
+  <li><strong>ratingNormSq, rating2Normsq</strong>: squared norm of each vector</li>
+  </ul>
+
+
+  <p>So let&#8217;s go back to calculating the correlation between movie and movie2. We could, of course, calculate correlation in the standard way: find the covariance between the movie and movie2 ratings, and divide by their standard deviations.</p>
+
+  <p>But recall that we can also write correlation in the following form:</p>
+
+  <p>$Corr(X, Y) = \frac{n \sum xy - \sum x \sum y}{\sqrt{n \sum x^2 - (\sum x)^2} \sqrt{n \sum y^2 - (\sum y)^2}}$</p>
+
+  <p>(See the <a href="http://en.wikipedia.org/wiki/Correlation_and_dependence">Wikipedia page</a> on correlation.)</p>
+
+  <p>Notice that every one of the elements in this formula is a field in <code>vectorCalcs</code>! So instead of using the standard calculation, we can use this form instead:</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities4.scala" data-gist-hide-footer="true"></code>
+
+
+  <p>And that&#8217;s it! To see the full code, check out the Github repository <a href="https://github.com/echen/scaldingale">here</a>.</p>
+
+  <h1>Book Similarities</h1>
+
+  <p>Let&#8217;s run this code over some real data. Unfortunately, I didn&#8217;t have a clean source of movie ratings available, so instead I used <a href="http://www.informatik.uni-freiburg.de/~cziegler/BX/">this dataset</a> of 1 million book ratings.</p>
+
+  <p>I ran a quick command, using the handy <a href="https://github.com/twitter/scalding/wiki/Scald.rb">scald.rb script</a> that Scalding provides&#8230;</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="scald.rb" data-gist-hide-footer="true"></code>
+
+
+
+  <p>&#8230;and here&#8217;s a sample of the top output I got:</p>
+
+  <p><a href="http://i.imgur.com/e6wpQOt.png"><img src="http://i.imgur.com/e6wpQOt.png" alt="Top Book-Crossing Pairs" /></a></p>
+
+  <p>As we&#8217;d expect, we see that</p>
+
+  <ul>
+  <li><em>Harry Potter</em> books are similar to other <em>Harry Potter</em> books</li>
+  <li><em>Lord of the Rings</em> books are similar to other <em>Lord of the Rings</em> books</li>
+  <li>Tom Clancy is similar to John Grisham</li>
+  <li>Chick lit (<em>Summer Sisters</em>, by Judy Blume) is similar to chick lit (<em>Bridget Jones</em>)</li>
+  </ul>
+
+
+  <p>Just for fun, let&#8217;s also look at books similar to <em>The Great Gatsby</em>:</p>
+
+  <p><a href="http://i.imgur.com/FFzySua.png"><img src="http://i.imgur.com/FFzySua.png" alt="Great Gatsby" /></a></p>
+
+  <p>(Schoolboy memories, exactly.)</p>
+
+  <h1>More Similarity Measures</h1>
+
+  <p>Of course, there are lots of other similarity measures we could use besides correlation.</p>
+
+  <h2>Cosine Similarity</h2>
+
+  <p><a href="http://en.wikipedia.org/wiki/Cosine_similarity">Cosine similarity</a> is a another common vector-based similarity measure.</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities5.scala" data-gist-hide-footer="true"></code>
+
+
+
+  <h2>Correlation, Take II</h2>
+
+  <p>We can also also add a <em>regularized</em> correlation, by (say) adding N virtual movie pairs that have zero correlation. This helps avoid noise if some movie pairs have very few raters in common (for example, <em>The Great Gatsby</em> had an unlikely raw correlation of 1 with many other books, due simply to the fact that those book pairs had very few ratings).</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities6.scala" data-gist-hide-footer="true"></code>
+
+
+
+  <h2>Jaccard Similarity</h2>
+
+  <p>Recall that <a href="http://blog.echen.me/blog/2011/10/24/winning-the-netflix-prize-a-summary/">one of the lessons of the Netflix prize</a> was that implicit data can be quite useful &#8211; the mere fact that you rate a James Bond movie, even if you rate it quite horribly, suggests that you&#8217;d probably be interested in similar action films. So we can also ignore the value itself of each rating and use a <em>set</em>-based similarity measure like <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard similarity</a>.</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities7.scala" data-gist-hide-footer="true"></code>
+  
+
+  <h2>Incorporation</h2>
+
+  <p>Finally, let&#8217;s add all these similarity measures to our output.</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities8.scala" data-gist-hide-footer="true"></code>
+  
+
+  <h1>Book Similarities Revisited</h1>
+
+  <p>Let&#8217;s take another look at the book similarities above, now that we have these new fields.</p>
+
+  <p>Here are some of the top Book-Crossing pairs, sorted by their shrunk correlation:</p>
+
+  <p><a href="http://i.imgur.com/aR4xIBL.png"><img src="http://i.imgur.com/aR4xIBL.png" alt="Top Book-Crossing Pairs" /></a></p>
+
+  <p>Notice how regularization affects things: the <em>Dark Tower</em> pair has a pretty high raw correlation, but relatively few ratings (reducing our confidence in the raw correlation), so it ends up below the others.</p>
+
+  <p>And here are books similar to <em>The Great Gatsby</em>, this time ordered by cosine similarity:</p>
+
+  <p><a href="http://i.imgur.com/lzZdXU5.png"><img src="http://i.imgur.com/lzZdXU5.png" alt="Great Gatsby" /></a></p>
+
+  <h1>Input Abstraction</h1>
+
+  <p>So our code right now is tied to our specific <code>ratings.tsv</code> input. But what if we change the way we store our ratings, or what if we want to generate similarities for something entirely different?</p>
+
+  <p>Let&#8217;s abstract away our input. We&#8217;ll create a <a href="https://github.com/echen/scaldingale/blob/master/VectorSimilarities.scala">VectorSimilarities class</a> that represents input data in the following format:</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="VectorSimilarities.scala" data-gist-hide-footer="true"></code>
+  
+
+
+  <p>Whenever we want to define a new input format, we simply subclass <code>VectorSimilarities</code> and provide a concrete implementation of the <code>input</code> method.</p>
+
+  <h2>Book-Crossings</h2>
+
+  <p>For example, here&#8217;s a class I could have used to generate the book recommendations above:</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="BookCrossing.scala" data-gist-hide-footer="true"></code>
+  
+
+
+  <p>The input method simply reads from a TSV file and lets the <code>VectorSimilarities</code> superclass do all the work. Instant recommendations, BOOM.</p>
+
+  <h2>Song Similarities with Twitter + iTunes</h2>
+
+  <p>But why limit ourselves to books? We do, after all, have Twitter at our fingertips&#8230;</p>
+
+  <blockquote class="twitter-tweet"><p>rated Born This Way by Lady GaGa 5 stars <a href="http://t.co/wTYAwWqm" title="http://itun.es/iSg92N">itun.es/iSg92N</a> <a href="https://twitter.com/search/%2523iTunes">#iTunes</a></p>&mdash; gggf (@GalMusic92) <a href="https://twitter.com/GalMusic92/status/167267017865428996" data-datetime="2012-02-08T15:22:19+00:00">February 8, 2012</a></blockquote>
+
+
+  <script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+  <p>Since iTunes lets you send a tweet whenever you rate a song, we can use these to generate music recommendations!</p>
+
+  <p>Again, we create a new class that overrides the abstract <code>input</code> defined in <code>VectorSimilarities</code>&#8230;</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="iTunes.scala" data-gist-hide-footer="true"></code>
+  
+
+
+  <p>&#8230;and snap! Here are some songs you might like if you recently listened to <strong>Beyoncé</strong>:</p>
+
+  <p><a href="http://i.imgur.com/8E8q4y1.png"><img src="http://i.imgur.com/8E8q4y1.png" alt="Jason Mraz" /></a></p>
+
+  <p>And some recommended songs if you like <strong>Lady Gaga</strong>:</p>
+
+  <p><a href="http://i.imgur.com/AUPR87F.png"><img src="http://i.imgur.com/AUPR87F.png" alt="Lady Gaga" /></a></p>
+
+  <p>GG Pandora.</p>
+
+  <h2>Location Similarities with Foursquare Check-ins</h2>
+
+  <p>But what if we don&#8217;t have explicit ratings? For example, we could be a news site that wants to generate article recommendations, and maybe we only have user <em>visits</em> on each story.</p>
+
+  <p>Or what if we want to generate restaurant or tourist recommendations, when all we know is who visits each location?</p>
+
+  <blockquote class="twitter-tweet"><p>I&#8217;m at Empire State Building (350 5th Ave., btwn 33rd & 34th St., New York) <a href="http://t.co/q6tXzf3n" title="http://4sq.com/zZ5xGd">4sq.com/zZ5xGd</a></p>&mdash; Simon Ackerman (@SimonAckerman) <a href="https://twitter.com/SimonAckerman/status/167232054247956481" data-datetime="2012-02-08T13:03:23+00:00">February 8, 2012</a></blockquote>
+
+
+  <script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+  <p>Let&#8217;s finally make Foursquare check-ins useful. (I kid, I kid.)</p>
+
+  <p>Instead of using an explicit rating given to us, we can simply generate a dummy rating of 1 for each check-in. Correlation doesn&#8217;t make sense any more, but we can still pay attention to a measure like Jaccard simiilarity.</p>
+
+  <p>So we simply create a new class that scrapes tweets for Foursquare check-in information&#8230;</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="Foursquare.scala" data-gist-hide-footer="true"></code>
+  
+
+
+  <p>&#8230;and bam! Here are locations similar to the <strong>Empire State Building</strong>:</p>
+
+  <p><a href="http://i.imgur.com/BkcbCnB.png"><img src="http://i.imgur.com/BkcbCnB.png" alt="Empire State Building" /></a></p>
+
+  <p>Here are places you might want to check out, if you check-in at <strong>Bergdorf Goodman</strong>:</p>
+
+  <p><a href="http://i.imgur.com/1IZBlUS.png"><img src="http://i.imgur.com/1IZBlUS.png" alt="Bergdorf Goodman" /></a></p>
+
+  <p>And here&#8217;s where to go after the <strong>Statue of Liberty</strong>:</p>
+
+  <p><a href="http://i.imgur.com/SktVYlM.png"><img src="http://i.imgur.com/SktVYlM.png" alt="Statue of Liberty" /></a></p>
+
+  <p>Power of Twitter, yo.</p>
+
+  <h1>RottenTomatoes Similarities</h1>
+
+  <p>UPDATE: I found some movie data after all&#8230;</p>
+
+  <blockquote class="twitter-tweet"><p>My review for &#8216;How to Train Your Dragon&#8217; on Rotten Tomatoes: 4 1/2 stars &gt;<a href="http://t.co/YTOKWLEt" title="http://bit.ly/xtw3d3">bit.ly/xtw3d3</a></p>&mdash; Benjamin West (@BenTheWest) <a href="https://twitter.com/BenTheWest/status/171772890121895936" data-datetime="2012-02-21T01:47:03+00:00">February 21, 2012</a></blockquote>
+
+
+  <p>So let&#8217;s use RottenTomatoes tweets to recommend movies! Here&#8217;s the code for a class that searches for RottenTomatoes tweets:</p>
+
+  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="RottenTomatoes.scala" data-gist-hide-footer="true"></code>
+  
+
+  <p>And here are the most similar movies discovered:</p>
+
+  <p><a href="http://i.imgur.com/QwWgZqP.png"><img src="http://i.imgur.com/QwWgZqP.png" alt="Top RottenTomatoes Movies" /></a></p>
+
+  <p>We see that</p>
+
+  <ul>
+  <li><em>Lord of the Rings</em>, <em>Harry Potter</em>, and <em>Star Wars</em> movies are similar to other <em>Lord of the Rings</em>, <em>Harry Potter</em>, and <em>Star Wars</em> movies</li>
+  <li>Big science fiction blockbusters (<em>Avatar</em>) are similar to big science fiction blockbusters (<em>Inception</em>)</li>
+  <li>People who like one Justin Timberlake movie (<em>Bad Teacher</em>) also like other Justin Timberlake Movies (<em>In Time</em>). Similarly with Michael Fassbender (<em>A Dangerous Method</em>, <em>Shame</em>)</li>
+  <li>Art house movies (<em>The Tree of Life</em>) stick together (<em>Tinker Tailor Soldier Spy</em>)</li>
+  </ul>
+
+
+  <p>Let&#8217;s also look at the movies with the most <em>negative</em> correlation:</p>
+
+  <p><a href="http://i.imgur.com/Ln7ZZrZ.png"><img src="http://i.imgur.com/Ln7ZZrZ.png" alt="Negative RottenTomatoes Movies" /></a></p>
+
+  <p>(The more you like loud and dirty popcorn movies (<em>Thor</em>) and vamp romance (<em>Twilight</em>), the less you like arthouse? SGTM.)</p>
+
+  <h1>Next Steps</h1>
+
+  <p>Hopefully I gave you a taste of the awesomeness of Scalding. To learn even more:</p>
+
+  <ul>
+  <li>Check out <a href="https://github.com/twitter/scalding">Scalding on Github</a>.</li>
+  <li>Read <a href="https://github.com/twitter/scalding/wiki/Getting-Started">this Getting Started Guide</a> on the Scalding wiki.</li>
+  <li>Run through <a href="https://github.com/twitter/scalding/tree/master/tutorial">this code-based introduction</a>, complete with Scalding jobs that you can run in local mode.</li>
+  <li>Browse <a href="https://github.com/twitter/scalding/wiki/API-Reference">the API reference</a>, which also contains many code snippets illustrating different Scalding functions (e.g., <code>map</code>, <code>filter</code>, <code>flatMap</code>, <code>groupBy</code>, <code>count</code>, <code>join</code>).</li>
+  <li>And all the code for this post is <a href="https://github.com/echen/scaldingale">here</a>.</li>
+  </ul>
+
+
+  <p>Watch out for more documentation soon, and you should most definitely <a href="https://twitter.com/#!/scalding">follow @Scalding</a> on Twitter for updates or to ask any questions.</p>
+
+  <h1>Mad Props</h1>
+
+  <p>And finally, a huge shoutout to <a href="https://twitter.com/argyris">Argyris Zymnis</a>, <a href="https://twitter.com/avibryant">Avi Bryant</a>, and <a href="https://twitter.com/posco">Oscar Boykin</a>, the mastermind hackers who have spent (and continue spending!) unimaginable hours making Scalding a joy to use.</p>
+
+  <p>@argyris, @avibryant, @posco: Thanks for it all. #awesomejobguys #loveit</p>
+  </div>  
 
                     </article>
  
 <div class="paginator">
-    <div class="navButton">Page 1 / 7</div>
-        <div class="navButton"><a href="http://blog.echen.me/author/edwin-chen2.html" >Next</a></div>
+    <div class="navButton">Page 1 / 4</div>
+        <div class="navButton"><a href="../author/edwin-chen2.html" >Next</a></div>
 </div>
                 </div>
             </aside><!-- /#featured -->
             
         
-  
+
 	      <div class="LaunchyardDetail">
 	        <p>
-	          <a style="text-align: left" class="title" href="http://blog.echen.me/">Edwin Chen</a>	          
+	          <a style="text-align: left" class="title" href="../">Edwin Chen</a>
 	          <br/>
+
 	        </p>
-	        
-	        <div id="about" style="text-align: left">              	          
+
+	        <div id="about" style="text-align: left !important">
+	          <p>
+	            Building human/AI infrastructure at <a href="https://www.surgehq.ai">Surge</a>.
+            </p>
+            <br />
+            <p>
+              Need obsessively high-quality human-labeled data? Interested in a self-serve data labeling platform? <a href="https://www.surgehq.ai">Just reach out!</a> We help top companies create massive datasets to train and measure their AI.
+	          </p>
+            <br />
+            <p>
+              Former AI & engineering lead at Google, Facebook, Twitter, and Dropbox. Pure math and linguistics research at MIT.
+            </p>
+            <br />
 	          <div style="text-align: center">
-              <a href="mailto:hello[at]echen.me">Email</a><br />
-              <a href="https://twitter.com/#!/echen">Twitter</a><br/>
+              <a href="https://quora.com/edwin-chen-1">Quora</a><br />
+              <a href="https://twitter.com/echen">Twitter</a><br/>
               <a href="https://github.com/echen">Github</a><br/>
-              <a href="https://plus.google.com/113804726252165471503/">Google+</a><br/>
-              <a href="http://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
-              <a href="http://quora.com/edwin-chen-1">Quora</a><br/>
-              <br />
-              <a href="http://blog.echen.me/feeds/all.atom.xml">Atom</a> / <a href="http://blog.echen.me/feeds/all.rss.xml">RSS</a>
+              <a href="https://www.linkedin.com/in/edwinzchen">LinkedIn</a><br/>
+              <a href="mailto:hello[&aelig;]echen.me">Email</a><br/>
             </div>
           </div>
 
           <div id="recent_posts">
               <h3>Recent Posts</h3>
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
-                <a style="font-size: 0.9em" href="http://blog.echen.me/2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
-            
+                <a style="font-size: 0.9em" href="../2017/05/30/exploring-lstms/">Exploring LSTMs  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
           </div>
         </div>
 
 
         <section id="extras" >
-       
-        
+
+
         </section><!-- /#extras -->
-	
+
         <footer id="contentinfo" >
                 <address id="about" class="vcard ">
                 Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
                 great advantage of <a href="http://python.org" target="_blank">Python</a>.
-		
-                </address><!-- /#about -->
-		
 
-                
+                </address><!-- /#about -->
+
+
+
         </footer><!-- /#contentinfo -->
 
 </body>
