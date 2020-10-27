@@ -8,7 +8,7 @@
         <link href="http://blog.echen.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Edwin Chen's Blog Atom Feed" />
         <link href="http://blog.echen.me/feeds/all.rss.xml" type="application/rss+xml" rel="alternate" title="Edwin Chen's Blog RSS Feed" />
 
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>  
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
 
         <!--[if IE]>
                 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
@@ -25,7 +25,7 @@
 </head>
 
 <body id="index" class="home">
-	
+
         
         
 
@@ -529,19 +529,33 @@
 <p>How can you figure out which words refer to gifts?</p>
 <p>To gather data for the graphs above, I simply looked for phrases of the form “I want XXX for Christmas” and “I got XXX for Christmas”. However, a more sophisticated CRF variant could use a GIFT part-of-speech-like tag (even adding other tags like GIFT-GIVER and GIFT-RECEIVER, to get even more information on who got what from whom) and treat this like a POS tagging problem. Features could be based around things like “this word is a GIFT if the previous word was a GIFT-RECEIVER and the word before that was ‘gave’” or “this word is a GIFT if the next two words are ‘for Christmas’”.</p>
 <script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
     var mathjaxscript = document.createElement('script');
     mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
     mathjaxscript.type = 'text/javascript';
-    mathjaxscript.src = '//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
+
+    var configscript = document.createElement('script');
+    configscript.type = 'text/x-mathjax-config';
+    configscript[(window.opera ? "innerHTML" : "text")] =
         "MathJax.Hub.Config({" +
         "    config: ['MMLorHTML.js']," +
-        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
         "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
         "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-        "    displayAlign: 'center'," +
-        "    displayIndent: '0em'," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
         "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
         "    tex2jax: { " +
         "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
         "        displayMath: [ ['$$','$$'] ]," +
@@ -549,9 +563,30 @@
         "        preview: 'TeX'," +
         "    }, " +
         "    'HTML-CSS': { " +
-        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }, linebreaks: { automatic: false, width: 'container' }" +
-        "    } " +
-        "}); ";
+        "        availableFonts: ['STIX', 'TeX']," +
+        "        preferredFont: 'STIX'," +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
     (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
 }
 </script>
@@ -1527,7 +1562,7 @@
 </ul>
 <p>Furthermore, each visible unit is connected to all the hidden units (this connection is undirected, so each hidden unit is also connected to all the visible units), and the bias unit is connected to all the visible units and all the hidden units. To make learning easier, we restrict the network so that no visible unit is connected to any other visible unit and no hidden unit is connected to any other hidden unit.</p>
 <p>For example, suppose we have a set of six movies (Harry Potter, Avatar, LOTR 3, Gladiator, Titanic, and Glitter) and we ask users to tell us which ones they want to watch. If we want to learn two latent units underlying movie preferences – for example, two natural groups in our set of six movies appear to be SF/fantasy (containing Harry Potter, Avatar, and LOTR 3) and Oscar winners (containing LOTR 3, Gladiator, and Titanic), so we might hope that our latent units will correspond to these categories – then our RBM would look like the following:</p>
-<p><img alt="RBM Example" src="http://i.imgur.com/sadnLks.png" /></p>
+<p><img alt="RBM Example" src="http://i.imgur.com/sadnLks.png"></p>
 <p>(Note the resemblance to a factor analysis graphical model.)</p>
 <h1>State Activation</h1>
 <p>Restricted Boltzmann Machines, and neural networks in general, work by updating the states of some neurons given the states of others, so let’s talk about how the states of individual units change. Assuming we know the connection weights in our RBM (we’ll explain how to learn these below), to update the state of unit <span class="math">\(i\)</span>:</p>
@@ -1571,7 +1606,7 @@
 <li>Fred: (Harry Potter = 0, Avatar = 0, LOTR 3 = 1, Gladiator = 1, Titanic = 1, Glitter = 0). Big Oscar winners fan.</li>
 </ul>
 <p>The network learned the following weights:</p>
-<p><img alt="Weights" src="http://i.imgur.com/mbsjJmX.png" /></p>
+<p><img alt="Weights" src="http://i.imgur.com/mbsjJmX.png"></p>
 <p>Note that the first hidden unit seems to correspond to the Oscar winners, and the second hidden unit seems to correspond to the SF/fantasy movies, just as we were hoping.</p>
 <p>What happens if we give the RBM a new user, George, who has (Harry Potter = 0, Avatar = 0, LOTR 3 = 0, Gladiator = 1, Titanic = 1, Glitter = 0) as his preferences? It turns the Oscar winners unit on (but not the SF/fantasy unit), correctly guessing that George probably likes movies that are Oscar winners.</p>
 <p>What happens if we activate only the SF/fantasy unit, and run the RBM a bunch of different times? In my trials, it turned on Harry Potter, Avatar, and LOTR 3 three times; it turned on Avatar and LOTR 3, but not Harry Potter, once; and it turned on Harry Potter and LOTR 3, but not Avatar, twice. Note that, based on our training examples, these generated preferences do indeed match what we might expect real SF/fantasy fans want to watch.</p>
@@ -1585,19 +1620,33 @@
 <li>Instead of using only one training example in each epoch, we could use batches of examples in each epoch, and only update the network’s weights after passing through all the examples in the batch. This can speed up the learning by taking advantage of fast matrix-multiplication algorithms.</li>
 </ul>
 <script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
     var mathjaxscript = document.createElement('script');
     mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
     mathjaxscript.type = 'text/javascript';
-    mathjaxscript.src = '//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
+
+    var configscript = document.createElement('script');
+    configscript.type = 'text/x-mathjax-config';
+    configscript[(window.opera ? "innerHTML" : "text")] =
         "MathJax.Hub.Config({" +
         "    config: ['MMLorHTML.js']," +
-        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
         "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
         "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-        "    displayAlign: 'center'," +
-        "    displayIndent: '0em'," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
         "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
         "    tex2jax: { " +
         "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
         "        displayMath: [ ['$$','$$'] ]," +
@@ -1605,9 +1654,30 @@
         "        preview: 'TeX'," +
         "    }, " +
         "    'HTML-CSS': { " +
-        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }, linebreaks: { automatic: false, width: 'container' }" +
-        "    } " +
-        "}); ";
+        "        availableFonts: ['STIX', 'TeX']," +
+        "        preferredFont: 'STIX'," +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
     (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
 }
 </script>
@@ -1823,28 +1893,32 @@
             </aside><!-- /#featured -->
             
         
-  
+
 	      <div class="LaunchyardDetail">
 	        <p>
-	          <a style="text-align: left" class="title" href="../">Edwin Chen</a>	          
+	          <a style="text-align: left" class="title" href="../">Edwin Chen</a>
 	          <br/>
 
 	        </p>
-	        
-	        <div id="about" style="text-align: left">              	          
+
+	        <div id="about" style="text-align: left !important">
 	          <p>
-	            AI, stats, data science, human computation.
+	            Building human/AI infrastructure at <a href="https://www.surgehq.ai">Surge</a>.
+            </p>
+            <br />
+            <p>
+              Need obsessively high-quality human-labeled data? Interested in a self-serve data labeling platform? <a href="https://www.surgehq.ai">Just reach out!</a> We help top companies create massive datasets to train and measure their AI.
 	          </p>
             <br />
             <p>
-              Math/CS/linguistics at MIT, speech recognition at MSR, quant trading at Clarium, ads at Twitter, data science at Dropbox, stats/ML at Google.
+              Former AI & engineering lead at Google, Facebook, Twitter, and Dropbox. Pure math and linguistics research at MIT.
             </p>
-            <br />	          
+            <br />
 	          <div style="text-align: center">
               <a href="https://quora.com/edwin-chen-1">Quora</a><br />
               <a href="https://twitter.com/echen">Twitter</a><br/>
               <a href="https://github.com/echen">Github</a><br/>
-              <a href="https://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
+              <a href="https://www.linkedin.com/in/edwinzchen">LinkedIn</a><br/>
               <a href="mailto:hello[&aelig;]echen.me">Email</a><br/>
             </div>
           </div>
@@ -1866,25 +1940,24 @@
                 <a style="font-size: 0.9em" href="../2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
-            
           </div>
         </div>
 
 
         <section id="extras" >
-       
-        
+
+
         </section><!-- /#extras -->
-	
+
         <footer id="contentinfo" >
                 <address id="about" class="vcard ">
                 Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
                 great advantage of <a href="http://python.org" target="_blank">Python</a>.
-		
-                </address><!-- /#about -->
-		
 
-                
+                </address><!-- /#about -->
+
+
+
         </footer><!-- /#contentinfo -->
 
 </body>

@@ -8,7 +8,7 @@
         <link href="http://blog.echen.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Edwin Chen's Blog Atom Feed" />
         <link href="http://blog.echen.me/feeds/all.rss.xml" type="application/rss+xml" rel="alternate" title="Edwin Chen's Blog RSS Feed" />
 
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>  
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
 
         <!--[if IE]>
                 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
@@ -25,7 +25,7 @@
 </head>
 
 <body id="index" class="home">
-	
+
 <section id="content" >
     <div class="body">
       <article>
@@ -135,19 +135,33 @@
 <p>How can you figure out which words refer to gifts?</p>
 <p>To gather data for the graphs above, I simply looked for phrases of the form “I want XXX for Christmas” and “I got XXX for Christmas”. However, a more sophisticated CRF variant could use a GIFT part-of-speech-like tag (even adding other tags like GIFT-GIVER and GIFT-RECEIVER, to get even more information on who got what from whom) and treat this like a POS tagging problem. Features could be based around things like “this word is a GIFT if the previous word was a GIFT-RECEIVER and the word before that was ‘gave’” or “this word is a GIFT if the next two words are ‘for Christmas’”.</p>
 <script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
     var mathjaxscript = document.createElement('script');
     mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
     mathjaxscript.type = 'text/javascript';
-    mathjaxscript.src = '//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
+
+    var configscript = document.createElement('script');
+    configscript.type = 'text/x-mathjax-config';
+    configscript[(window.opera ? "innerHTML" : "text")] =
         "MathJax.Hub.Config({" +
         "    config: ['MMLorHTML.js']," +
-        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
         "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
         "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-        "    displayAlign: 'center'," +
-        "    displayIndent: '0em'," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
         "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
         "    tex2jax: { " +
         "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
         "        displayMath: [ ['$$','$$'] ]," +
@@ -155,9 +169,30 @@
         "        preview: 'TeX'," +
         "    }, " +
         "    'HTML-CSS': { " +
-        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }, linebreaks: { automatic: false, width: 'container' }" +
-        "    } " +
-        "}); ";
+        "        availableFonts: ['STIX', 'TeX']," +
+        "        preferredFont: 'STIX'," +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
     (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
 }
 </script>
@@ -166,28 +201,32 @@
       </article>
     </div>
 </section>
-  
+
 	      <div class="LaunchyardDetail">
 	        <p>
-	          <a style="text-align: left" class="title" href="../../../../">Edwin Chen</a>	          
+	          <a style="text-align: left" class="title" href="../../../../">Edwin Chen</a>
 	          <br/>
 
 	        </p>
-	        
-	        <div id="about" style="text-align: left">              	          
+
+	        <div id="about" style="text-align: left !important">
 	          <p>
-	            AI, stats, data science, human computation.
+	            Building human/AI infrastructure at <a href="https://www.surgehq.ai">Surge</a>.
+            </p>
+            <br />
+            <p>
+              Need obsessively high-quality human-labeled data? Interested in a self-serve data labeling platform? <a href="https://www.surgehq.ai">Just reach out!</a> We help top companies create massive datasets to train and measure their AI.
 	          </p>
             <br />
             <p>
-              Math/CS/linguistics at MIT, speech recognition at MSR, quant trading at Clarium, ads at Twitter, data science at Dropbox, stats/ML at Google.
+              Former AI & engineering lead at Google, Facebook, Twitter, and Dropbox. Pure math and linguistics research at MIT.
             </p>
-            <br />	          
+            <br />
 	          <div style="text-align: center">
               <a href="https://quora.com/edwin-chen-1">Quora</a><br />
               <a href="https://twitter.com/echen">Twitter</a><br/>
               <a href="https://github.com/echen">Github</a><br/>
-              <a href="https://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
+              <a href="https://www.linkedin.com/in/edwinzchen">LinkedIn</a><br/>
               <a href="mailto:hello[&aelig;]echen.me">Email</a><br/>
             </div>
           </div>
@@ -209,25 +248,24 @@
                 <a style="font-size: 0.9em" href="../../../../2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
                 <a style="font-size: 0.9em" href="../../../../2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
                 <a style="font-size: 0.9em" href="../../../../2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
-            
           </div>
         </div>
 
 
         <section id="extras" >
-       
-        
+
+
         </section><!-- /#extras -->
-	
+
         <footer id="contentinfo" >
                 <address id="about" class="vcard ">
                 Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
                 great advantage of <a href="http://python.org" target="_blank">Python</a>.
-		
-                </address><!-- /#about -->
-		
 
-                
+                </address><!-- /#about -->
+
+
+
         </footer><!-- /#contentinfo -->
 
 </body>

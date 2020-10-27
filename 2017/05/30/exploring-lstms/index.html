@@ -8,7 +8,7 @@
         <link href="http://blog.echen.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Edwin Chen's Blog Atom Feed" />
         <link href="http://blog.echen.me/feeds/all.rss.xml" type="application/rss+xml" rel="alternate" title="Edwin Chen's Blog RSS Feed" />
 
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>  
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
 
         <!--[if IE]>
                 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
@@ -25,7 +25,7 @@
 </head>
 
 <body id="index" class="home">
-	
+
 <section id="content" >
     <div class="body">
       <article>
@@ -43,7 +43,7 @@
 
 <p>LSTMs are behind a lot of the amazing achievements deep learning has made in the past few years, and they're a fairly simple extension to neural networks under the right view. So I'll try to present them as intuitively as possible – in such a way that you could have discovered them yourself.</p>
 <p>But first, a picture:</p>
-<p><img alt="LSTM" src="http://i.imgur.com/lnBi8OZ.png" /></p>
+<p><img alt="LSTM" src="http://i.imgur.com/lnBi8OZ.png"></p>
 <p>Aren't LSTMs beautiful? Let's go.</p>
 <p>(Note: if you're already familiar with neural networks and LSTMs, skip to the middle – the first half of this post is a tutorial.)</p>
 <h1>Neural Networks</h1>
@@ -75,7 +75,7 @@
 <li>Common activation functions for <span class="math">\(\phi\)</span> are the <a href="https://en.wikipedia.org/wiki/Sigmoid_function">sigmoid function</a>, <span class="math">\(\sigma(x)\)</span>, which squashes numbers into the range (0, 1); the <a href="https://en.wikipedia.org/wiki/Hyperbolic_function#Standard_analytic_expressions">hyperbolic tangent</a>, <span class="math">\(tanh(x)\)</span>, which squashes numbers into the range (-1, 1), and the <a href="https://en.wikipedia.org/wiki/Rectifier_(neural_networks)">rectified linear unit</a>, <span class="math">\(ReLU(x) = max(0, x)\)</span>.</li>
 </ul>
 <p>Here's a pictorial view:</p>
-<p><img alt="Neural Network" src="http://i.imgur.com/tFMQMOn.png" /></p>
+<p><img alt="Neural Network" src="http://i.imgur.com/tFMQMOn.png"></p>
 <p>(Note: to make the notation a little cleaner, I assume x and h each contain an extra bias neuron fixed at 1 for learning bias weights.)</p>
 <h1>Remembering Information with RNNs</h1>
 <p>Ignoring the sequential aspect of the movie images is pretty ML 101, though. If we see a scene of a beach, we should boost beach activities in future frames: an image of someone in the water should probably be labeled <em>swimming</em>, not <em>bathing</em>, and an image of someone lying with their eyes closed is probably <em>suntanning</em>. If we remember that Bob just arrived at a supermarket, then even without any distinctive supermarket features, an image of Bob holding a slab of bacon should probably be categorized as <em>shopping</em> instead of <em>cooking</em>.</p>
@@ -91,7 +91,7 @@
 <div class="math">$$h_t = \phi(Wx_t + Uh_{t-1})$$</div>
 <div class="math">$$y_t = Vh_t$$</div>
 <p>Note that the hidden state computed at time <span class="math">\(t\)</span> (<span class="math">\(h_t\)</span>, our internal knowledge) is fed back at the next time step. (Also, I'll use concepts like hidden state, knowledge, memories, and beliefs to describe <span class="math">\(h_t\)</span> interchangeably.)</p>
-<p><img alt="RNN" src="http://i.imgur.com/ifQrKRR.png" /></p>
+<p><img alt="RNN" src="http://i.imgur.com/ifQrKRR.png"></p>
 <h1>Longer Memories through LSTMs</h1>
 <p>Let's think about how our model updates its knowledge of the world. So far, we've placed no constraints on this update, so its knowledge can change pretty chaotically: at one frame it thinks the characters are in the US, at the next frame it sees the characters eating sushi and thinks they're in Japan, and at the next frame it sees polar bears and thinks they're on Hydra Island. Or perhaps it has a wealth of information to suggest that Alice is an investment analyst, but decides she's a professional assassin after seeing her cook.</p>
 <p>This chaos means information quickly transforms and vanishes, and it's difficult for the model to keep a long-term memory. So what we'd like is for the network to <em>learn</em> how to update its beliefs (scenes without Bob shouldn't change Bob-related information, scenes with Alice should focus on gathering details about her), in a way that its knowledge of the world evolves more gently. </p>
@@ -125,7 +125,7 @@
 <div class="math">$$wm_t = focus_t \circ \phi(ltm_t)$$</div>
 <p>In other words, we pay full attention to elements where the focus is 1, and ignore elements where the focus is 0.</p>
 <p>And we're done! Hopefully this made it into your long-term memory as well.</p>
-<hr />
+<hr>
 <p>To summarize, whereas a vanilla RNN uses one equation to update its hidden state/memory:</p>
 <div class="math">$$h_t = \phi(Wx_t + Uh_{t-1})$$</div>
 <p>An LSTM uses several:</p>
@@ -145,15 +145,15 @@
 <li>The focus vector, <span class="math">\(focus_t\)</span>, is usually called the <strong>output gate</strong>, denoted <span class="math">\(o_t\)</span>.
 )</li>
 </ul>
-<p><img alt="LSTM" src="http://i.imgur.com/vsqgLYn.png" /></p>
+<p><img alt="LSTM" src="http://i.imgur.com/vsqgLYn.png"></p>
 <h1>Snorlax</h1>
 <p>I could have caught a hundred Pidgeys in the time it took me to write this post, so here's a cartoon.</p>
 <h2>Neural Networks</h2>
-<p><img alt="Neural Network" src="http://i.imgur.com/cOGzJxk.png" /></p>
+<p><img alt="Neural Network" src="http://i.imgur.com/cOGzJxk.png"></p>
 <h2>Recurrent Neural Networks</h2>
-<p><img alt="RNN" src="http://i.imgur.com/PnWiSCf.png" /></p>
+<p><img alt="RNN" src="http://i.imgur.com/PnWiSCf.png"></p>
 <h2>LSTMs</h2>
-<p><img alt="LSTM" src="http://i.imgur.com/EGZIUuc.pngg" /></p>
+<p><img alt="LSTM" src="http://i.imgur.com/EGZIUuc.pngg"></p>
 <h2>Learning to Code</h2>
 <p>Let's look at a few examples of what an LSTM can do. Following Andrej Karpathy's <a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/">terrific post</a>, I'll use character-level LSTM models that are fed sequences of characters and trained to predict the next character in the sequence. </p>
 <p>While this may seem a bit toyish, character-level models can actually be very useful, even on top of word models. For example:</p>
@@ -172,9 +172,9 @@
 <p>How does the model do this? Let's look at a few of the hidden states.</p>
 <p>Here's a neuron that seems to track the code's <em>outer</em> level of indentation:</p>
 <p>(As the LSTM moves through the sequence, its neurons fire at varying intensities. The picture represents one particular neuron, where each row is a sequence and characters are color-coded according to the neuron's intensity; dark blue shades indicate large, positive activations, and dark red shades indicate very negative activations.)</p>
-<p><img alt="Outer Level of Indentation" src="http://i.imgur.com/szJnfAY.png" /></p>
+<p><img alt="Outer Level of Indentation" src="http://i.imgur.com/szJnfAY.png"></p>
 <p>And here's a neuron that counts down the spaces between tabs:</p>
-<p><img alt="Tab Spaces" src="http://i.imgur.com/EBbM9Kx.png" /></p>
+<p><img alt="Tab Spaces" src="http://i.imgur.com/EBbM9Kx.png"></p>
 <p>For kicks, here's the output of a different 3-layer LSTM trained on TensorFlow's codebase:</p>
 <p><code data-gist-id="926b34e5bec6cd2b304cdecabda255b1" data-gist-hide-footer="true"></code></p>
 <p>There are <a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/">plenty of other fun examples</a> floating around the web, so check them out if you want to see more.</p>
@@ -182,71 +182,71 @@
 <p>Let's dig a little deeper. We looked in the last section at examples of hidden states, but I wanted to play with LSTM cell states and their other memory mechanisms too. Do they fire when we expect, or are there surprising patterns?</p>
 <h2>Counting</h2>
 <p>To investigate, let's start by teaching an LSTM to count. (Remember how the Java and Python LSTMs were able to generate proper indentation!) So I generated sequences of the form</p>
-<div class="highlight"><pre><span class="n">aaaaaXbbbbb</span>
-</pre></div>
+<div class="highlight"><pre><span></span><code><span class="err">aaaaaXbbbbb</span>
+</code></pre></div>
 
 
 <p>(N "a" characters, followed by a delimiter X, followed by N "b" characters, where 1 &lt;= N &lt;= 10), and trained a single-layer LSTM with 10 hidden neurons.</p>
 <p>As expected, the LSTM learns perfectly within its training range – and can even generalize a few steps beyond it. (Although it starts to fail once we try to get it to count to 19.)</p>
-<div class="highlight"><pre><span class="n">aaaaaaaaaaaaaaaXbbbbbbbbbbbbbbb</span>
-<span class="n">aaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbb</span>
-<span class="n">aaaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbbb</span>
-<span class="n">aaaaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbbbb</span>
-<span class="n">aaaaaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbbbb</span> <span class="err">#</span> <span class="n">Here</span> <span class="n">it</span> <span class="n">begins</span> <span class="n">to</span> <span class="n">fail</span><span class="o">:</span> <span class="n">the</span> <span class="n">model</span> <span class="n">is</span> <span class="n">given</span> <span class="mi">19</span> <span class="s">&quot;a&quot;</span><span class="n">s</span><span class="p">,</span> <span class="n">but</span> <span class="n">outputs</span> <span class="n">only</span> <span class="mi">18</span> <span class="s">&quot;b&quot;</span><span class="n">s</span><span class="p">.</span>
-</pre></div>
+<div class="highlight"><pre><span></span><code><span class="err">aaaaaaaaaaaaaaaXbbbbbbbbbbbbbbb</span>
+<span class="err">aaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbb</span>
+<span class="err">aaaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbbb</span>
+<span class="err">aaaaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbbbb</span>
+<span class="err">aaaaaaaaaaaaaaaaaaaXbbbbbbbbbbbbbbbbbb # Here it begins to fail: the model is given 19 &quot;a&quot;s, but outputs only 18 &quot;b&quot;s.</span>
+</code></pre></div>
 
 
 <p>We expect to find a hidden state neuron that counts the number of a's if we look at its internals. And we do:</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Neuron #2 Hidden State" src="http://i.imgur.com/JEIhBeh.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Neuron #2 Hidden State" src="http://i.imgur.com/JEIhBeh.png"></a></p>
 <p>I built a <a href="http://blog.echen.me/lstm-explorer">small web app</a> to play around with LSTMs, and <a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2">Neuron #2</a> seems to be counting both the number of a's it's seen, as well as the number of b's. (Remember that cells are shaded according to the neuron's activation, from dark red [-1] to dark blue [+1].)</p>
 <p>What about the cell state? It behaves similarly:</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Neuron #2 Cell State" src="http://i.imgur.com/5DB3wnJ.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Neuron #2 Cell State" src="http://i.imgur.com/5DB3wnJ.png"></a></p>
 <p>One interesting thing is that the working memory looks like a "sharpened" version of the long-term memory. Does this hold true in general? </p>
 <p>It does. (This is exactly as we would expect, since the long-term memory gets squashed by the tanh activation function and the output gate limits what gets passed on.) For example, here is an overview of all 10 cell state nodes at once. We see plenty of light-colored cells, representing values close to 0.</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/network?file=counter&amp;layer=1"><img alt="Counting LSTM Cell States" src="http://i.imgur.com/yGfaCh3.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/network?file=counter&amp;layer=1"><img alt="Counting LSTM Cell States" src="http://i.imgur.com/yGfaCh3.png"></a></p>
 <p>In contrast, <strong>the 10 working memory neurons look much more focused</strong>. Neurons 1, 3, 5, and 7 are even zeroed out entirely over the first half of the sequence.</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/network?file=counter&amp;vector=hs&amp;layer=1"><img alt="Counting LSTM Hidden States" src="http://i.imgur.com/scQXaPL.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/network?file=counter&amp;vector=hs&amp;layer=1"><img alt="Counting LSTM Hidden States" src="http://i.imgur.com/scQXaPL.png"></a></p>
 <p>Let's go back to Neuron #2. Here are the candidate memory and input gate. They're relatively constant over each half of the sequence – as if the neuron is calculating <code>a += 1</code> or <code>b += 1</code> at each step.</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Counting LSTM Candidate Memory" src="http://i.imgur.com/Nu504g0.png" /></a></p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Input Gate" src="http://i.imgur.com/iBkuAiV.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Counting LSTM Candidate Memory" src="http://i.imgur.com/Nu504g0.png"></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Input Gate" src="http://i.imgur.com/iBkuAiV.png"></a></p>
 <p>Finally, here's an overview of all of Neuron 2's internals:</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Neuron 2 Overview" src="http://i.imgur.com/VUwMnHJ.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=counter&amp;layer=1&amp;n=2"><img alt="Neuron 2 Overview" src="http://i.imgur.com/VUwMnHJ.png"></a></p>
 <p>If you want to investigate the different counting neurons yourself, you can play around with the visualizer <a href="http://blog.echen.me/lstm-explorer/#/network?file=counter">here</a>.</p>
 <iframe src="http://blog.echen.me/lstm-explorer/#/network?file=counter" style="width: 100%; height: 500px"></iframe>
 
 <p>(Note: this is far from the only way an LSTM can learn to count, and I'm anthropomorphizing quite a bit here. But I think viewing the network's behavior is interesting and can help build better models – after all, many of the ideas in neural networks come from analogies to the human brain, and if we see unexpected behavior, we may be able to design more efficient learning mechanisms.)</p>
 <h2>Count von Count</h2>
 <p>Let's look at a slightly more complicated counter. This time, I generated sequences of the form</p>
-<div class="highlight"><pre><span class="n">aaXaXaaYbbbbb</span>
-</pre></div>
+<div class="highlight"><pre><span></span><code><span class="err">aaXaXaaYbbbbb</span>
+</code></pre></div>
 
 
 <p>(N a's with X's randomly sprinkled in, followed by a delimiter Y, followed by N b's). The LSTM still has to count the number of a's, but this time needs to ignore the X's as well. </p>
 <p><a href="http://blog.echen.me/lstm-explorer/#/network?file=selective_counter">Here's the full LSTM.</a> We expect to see <strong>a counting neuron, but one where the input gate is zero whenever it sees an X.</strong> And we do!</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20"><img alt="Counter 2 - Cell State" src="http://i.imgur.com/fFs0MNm.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20"><img alt="Counter 2 - Cell State" src="http://i.imgur.com/fFs0MNm.png"></a></p>
 <p>Above is the cell state of <a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20">Neuron 20</a>. It increases until it hits the delimiter Y, and then decreases to the end of the sequence – just like it's calculating a <code>num_bs_left_to_print</code> variable that increments on a's and decrements on b's.</p>
 <p>If we look at its input gate, it is indeed ignoring the X's:</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20"><img alt="Counter 2 - Input Gate" src="http://i.imgur.com/ccqdcn8.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20"><img alt="Counter 2 - Input Gate" src="http://i.imgur.com/ccqdcn8.png"></a></p>
 <p>Interestingly, though, the candidate memory fully activates on the irrelevant X's – which shows why the input gate is needed. (Although, if the input gate weren't part of the architecture, presumably the network would have presumably learned to ignore the X's some other way, at least for this simple example.)</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20"><img alt="Counter 2 - Candidate Memory" src="http://i.imgur.com/wmjemE1.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20"><img alt="Counter 2 - Candidate Memory" src="http://i.imgur.com/wmjemE1.png"></a></p>
 <p>Let's also look at <a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=10">Neuron 10</a>.</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=10"><img alt="Counter 2 - Neuron 10" src="http://i.imgur.com/02ySRxl.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=10"><img alt="Counter 2 - Neuron 10" src="http://i.imgur.com/02ySRxl.png"></a></p>
 <p>This neuron is interesting as it only activates when reading the delimiter "Y" – and yet it still manages to encode the number of a's seen so far in the sequence. (It may be hard to tell from the picture, but when reading Y's belonging to sequences with the same number of a's, all the cell states have values either identical or within 0.1% of each other. You can see that Y's with fewer a's are lighter than those with more.) Perhaps some other neuron sees Neuron 10 slacking and helps a buddy out.</p>
 <iframe src="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&layer=1&n=20" style="width: 100%; height: 500px"></iframe>
 
 <h2>Remembering State</h2>
 <p>Next, I wanted to look at how LSTMs remember state. I generated sequences of the form</p>
-<div class="highlight"><pre><span class="n">AxxxxxxYa</span>
-<span class="n">BxxxxxxYb</span>
-</pre></div>
+<div class="highlight"><pre><span></span><code><span class="err">AxxxxxxYa</span>
+<span class="err">BxxxxxxYb</span>
+</code></pre></div>
 
 
 <p>(i.e., an "A" or B", followed by 1-10 x's, then a delimiter "Y", ending with a lowercase version of the initial character). This way <a href="http://blog.echen.me/lstm-explorer/#/network?file=state_memorizer">the network</a> needs to remember whether it's in an "A" or "B" state.</p>
 <p>We expect to find a neuron that fires when remembering that the sequence started with an "A", and another neuron that fires when remembering that it started with a "B". We do.</p>
 <p>For example, here is an "A" neuron that activates when it reads an "A", and remembers until it needs to generate the final character. Notice that the input gate ignores all the "x" characters in between.</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&amp;layer=1&amp;n=8"><img alt="A Neuron - #8" src="http://i.imgur.com/UfGWJ9w.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&amp;layer=1&amp;n=8"><img alt="A Neuron - #8" src="http://i.imgur.com/UfGWJ9w.png"></a></p>
 <p>Here is its "B" counterpart:</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&amp;layer=1&amp;n=17"><img alt="B Neuron - #17" src="http://i.imgur.com/pAKw9Y2.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&amp;layer=1&amp;n=17"><img alt="B Neuron - #17" src="http://i.imgur.com/pAKw9Y2.png"></a></p>
 <p>One interesting point is that even though knowledge of the A vs. B state isn't needed until the network reads the "Y" delimiter, the hidden state fires throughout all the intermediate inputs anyways. This seems a bit "inefficient", but perhaps it's because the neurons are doing a bit of double-duty in counting the number of x's as well.</p>
 <iframe src="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&layer=1&n=8" style="width: 100%; height: 500px"></iframe>
 
@@ -254,24 +254,24 @@
 <p>Finally, let's look at how an LSTM learns to copy information. (Recall that our Java LSTM was able to memorize and copy an Apache license.)</p>
 <p>(Note: if you think about how LSTMs work, remembering lots of individual, detailed pieces of information isn't something they're very good at. For example, you may have noticed that one major flaw of the LSTM-generated code was that it often made use of undefined variables – the LSTMs couldn't remember which variables were in scope. This isn't surprising, since it's hard to use single cells to efficiently encode multi-valued information like characters, and LSTMs don't have a natural mechanism to chain adjacent memories to form words. <a href="https://arxiv.org/abs/1503.08895">Memory networks</a> and <a href="https://arxiv.org/abs/1410.5401">neural Turing machines</a> are two extensions to neural networks that help fix this, by augmenting with external memory components. So while copying isn't something LSTMs do very efficiently, it's fun to see how they try anyways.)</p>
 <p>For this copy task, I trained a tiny 2-layer LSTM on sequences of the form</p>
-<div class="highlight"><pre><span class="n">baaXbaa</span>
-<span class="n">abcXabc</span>
-</pre></div>
+<div class="highlight"><pre><span></span><code><span class="err">baaXbaa</span>
+<span class="err">abcXabc</span>
+</code></pre></div>
 
 
 <p>(i.e., a 3-character subsequence composed of a's, b's, and c's, followed by a delimiter "X", followed by the same subsequence).</p>
 <p>I wasn't sure what "copy neurons" would look like, so in order to find neurons that were memorizing parts of the initial subsequence, I looked at their hidden states when reading the delimiter X. Since the network needs to encode the initial subsequence, its states should exhibit different patterns depending on what they're learning.</p>
 <p>The graph below, for example, plots Neuron 5's hidden state when reading the "X" delimiter. The neuron is clearly able to distinguish sequences beginning with a "c" from those that don't.</p>
-<p><img alt="Neuron 5" src="http://i.imgur.com/QdQXIVu.png" /></p>
+<p><img alt="Neuron 5" src="http://i.imgur.com/QdQXIVu.png"></p>
 <p>For another example, here is Neuron 20's hidden state when reading the "X". It looks like it picks out sequences beginning with a "b".</p>
-<p><img alt="Neuron 20 Hidden State" src="http://i.imgur.com/ud8NjEA.png" /></p>
+<p><img alt="Neuron 20 Hidden State" src="http://i.imgur.com/ud8NjEA.png"></p>
 <p>Interestingly, if we look at Neuron 20's <em>cell</em> state, it almost seems to capture the entire 3-character subsequence by itself (no small feat given its one-dimensionality!):</p>
-<p><img alt="Neuron 20 Cell State" src="http://i.imgur.com/PLpSocg.png" /></p>
+<p><img alt="Neuron 20 Cell State" src="http://i.imgur.com/PLpSocg.png"></p>
 <p>Here are <a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;layer=1&amp;n=20">Neuron 20's cell and hidden states</a>, across the entire sequence. Notice that <strong>its hidden state is turned off over the entire initial subsequence</strong> (perhaps expected, since its memory only needs to be passively kept at that point).</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;layer=1&amp;n=20"><img alt="Copy LSTM - Neuron 20 Hidden and Cell" src="http://i.imgur.com/dO0Ai6H.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;layer=1&amp;n=20"><img alt="Copy LSTM - Neuron 20 Hidden and Cell" src="http://i.imgur.com/dO0Ai6H.png"></a></p>
 <p>However, if we look more closely, the neuron actually seems to be firing whenever the <em>next</em> character is a "b". So rather than being a "the sequence started with a b" neuron, it appears to be a "the next character is a b" neuron.</p>
 <p>As far as I can tell, this pattern holds across the network – all the neurons seem to be predicting the next character, rather than memorizing characters at specific positions. For example, <a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;layer=1&amp;n=5">Neuron 5</a> seems to be a "next character is a c" predictor.</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;layer=1&amp;n=5"><img alt="Copy LSTM - Neuron 5" src="http://i.imgur.com/30LKz6j.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;layer=1&amp;n=5"><img alt="Copy LSTM - Neuron 5" src="http://i.imgur.com/30LKz6j.png"></a></p>
 <p>I'm not sure if this is the default kind of behavior LSTMs learn when copying information, or what other copying mechanisms are available as well.</p>
 <iframe src="http://blog.echen.me/lstm-explorer/#/network?file=copy_machine" style="width: 100%; height: 500px"></iframe>
 
@@ -280,15 +280,15 @@
 <h2>Cell State and Hidden State (Memories)</h2>
 <p>We originally described the cell state as a long-term memory, and the hidden state as a way to pull out and focus these memories when needed.</p>
 <p>So when a memory is currently irrelevant, we expect the hidden state to turn off – and that's exactly what happens for this sequence copying neuron.</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;layer=1&amp;n=5"><img alt="Copy Machine" src="http://i.imgur.com/30LKz6j.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=copy_machine&amp;layer=1&amp;n=5"><img alt="Copy Machine" src="http://i.imgur.com/30LKz6j.png"></a></p>
 <h2>Forget Gate</h2>
 <p>The forget gate discards information from the cell state (0 means to completely forget, 1 means to completely remember), so we expect it to fully activate when it needs to remember something exactly, and to turn off when information is never going to be needed again.</p>
 <p>That's what we see with this "A" memorizing neuron: the forget gate fires hard to remember that it's in an "A" state while it passes through the x's, and turns off once it's ready to generate the final "a".</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&amp;layer=1&amp;n=8"><img alt="Forget Gate" src="http://i.imgur.com/vAMXZdN.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=state_memorizer&amp;layer=1&amp;n=8"><img alt="Forget Gate" src="http://i.imgur.com/vAMXZdN.png"></a></p>
 <h2>Input Gate (Save Gate)</h2>
 <p>We described the job of the input gate (what I originally called the save gate) as deciding whether or not to save information from a new input. Thus, it should turn off at useless information.</p>
 <p>And that's what this selective counting neuron does: it counts the a's and b's, but ignores the irrelevant x's.</p>
-<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20"><img alt="Input Gate" src="http://i.imgur.com/ccqdcn8.png" /></a></p>
+<p><a href="http://blog.echen.me/lstm-explorer/#/neuron?file=selective_counter&amp;layer=1&amp;n=20"><img alt="Input Gate" src="http://i.imgur.com/ccqdcn8.png"></a></p>
 <p>What's amazing is that nowhere in our LSTM equations did we specify that this is how the input (save), forget (remember), and output (focus) gates should work. The network just learned what's best.</p>
 <h1>Extensions</h1>
 <p>Now let's recap how you could have discovered LSTMs by yourself.</p>
@@ -302,40 +302,54 @@
 <h1>Making Neural Nets Great Again</h1>
 <p>Let's look at one final example, using a 2-layer LSTM trained on Trump's tweets. Despite the <del>tiny</del> <em>big</em> dataset, it's enough to learn a lot of patterns.</p>
 <p>For example, here's a neuron that tracks its position within hashtags, URLs, and @mentions:</p>
-<p><a href="http://i.imgur.com/eBJQLOf.png"><img alt="Hashtags, URLs, @mentions" src="http://i.imgur.com/eBJQLOf.png" /></a></p>
+<p><a href="http://i.imgur.com/eBJQLOf.png"><img alt="Hashtags, URLs, @mentions" src="http://i.imgur.com/eBJQLOf.png"></a></p>
 <p>Here's a proper noun detector (note that it's not simply firing at capitalized words):</p>
-<p><a href="http://i.imgur.com/SC4XMHr.png"><img alt="Proper Nouns" src="http://i.imgur.com/SC4XMHr.png" /></a></p>
+<p><a href="http://i.imgur.com/SC4XMHr.png"><img alt="Proper Nouns" src="http://i.imgur.com/SC4XMHr.png"></a></p>
 <p>Here's an auxiliary verb + "to be" detector ("will be", "I've always been", "has never been"):</p>
-<p><a href="http://i.imgur.com/fRdatTW.png"><img alt="Modal Verbs" src="http://i.imgur.com/fRdatTW.png" /></a></p>
+<p><a href="http://i.imgur.com/fRdatTW.png"><img alt="Modal Verbs" src="http://i.imgur.com/fRdatTW.png"></a></p>
 <p>Here's a quote attributor:</p>
-<p><a href="http://i.imgur.com/wQA8H0Q.png"><img alt="Quotes" src="http://i.imgur.com/wQA8H0Q.png" /></a></p>
+<p><a href="http://i.imgur.com/wQA8H0Q.png"><img alt="Quotes" src="http://i.imgur.com/wQA8H0Q.png"></a></p>
 <p>There's even a MAGA and capitalization neuron:</p>
-<p><a href="http://i.imgur.com/1QdT0MS.png"><img alt="MAGA" src="http://i.imgur.com/1QdT0MS.png" /></a></p>
+<p><a href="http://i.imgur.com/1QdT0MS.png"><img alt="MAGA" src="http://i.imgur.com/1QdT0MS.png"></a></p>
 <p>And here are some of the proclamations the LSTM generates (okay, one of these is a real tweet):</p>
-<p><a href="http://i.imgur.com/YSVVWGp.png"><img alt="Tweets" src="http://i.imgur.com/YSVVWGp.png" /></a>
-<a href="http://i.imgur.com/rhw4lTb.png"><img alt="Tweet" src="http://i.imgur.com/rhw4lTb.png" /></a></p>
+<p><a href="http://i.imgur.com/YSVVWGp.png"><img alt="Tweets" src="http://i.imgur.com/YSVVWGp.png"></a>
+<a href="http://i.imgur.com/rhw4lTb.png"><img alt="Tweet" src="http://i.imgur.com/rhw4lTb.png"></a></p>
 <p>Unfortunately, the LSTM merely learned to ramble like a madman.</p>
 <h1>Recap</h1>
 <p>That's it. To summarize, here's what you've learned:</p>
-<p><img alt="Candidate Memory" src="http://i.imgur.com/WYVlc6w.png" /></p>
+<p><img alt="Candidate Memory" src="http://i.imgur.com/WYVlc6w.png"></p>
 <p>Here's what you should save:</p>
-<p><img alt="Save" src="http://i.imgur.com/DqqJZAD.png" /></p>
+<p><img alt="Save" src="http://i.imgur.com/DqqJZAD.png"></p>
 <p>And now it's time for that donut. </p>
 <p>Thanks to <a href="https://github.com/crazydonkey200/tensorflow-char-rnn">Chen Liang</a> for some of the TensorFlow code I used, Ben Hamner and Kaggle for the <a href="https://www.kaggle.com/benhamner/clinton-trump-tweets">Trump dataset</a>, and, of course, Schmidhuber and Hochreiter for their <a href="http://www.bioinf.jku.at/publications/older/2604.pdf">original paper</a>. If you want to explore the LSTMs yourself, feel free to <a href="http://blog.echen.me/lstm-explorer">play around</a>!</p>
 <script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
     var mathjaxscript = document.createElement('script');
     mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
     mathjaxscript.type = 'text/javascript';
-    mathjaxscript.src = '//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
+
+    var configscript = document.createElement('script');
+    configscript.type = 'text/x-mathjax-config';
+    configscript[(window.opera ? "innerHTML" : "text")] =
         "MathJax.Hub.Config({" +
         "    config: ['MMLorHTML.js']," +
-        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
         "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
         "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-        "    displayAlign: 'center'," +
-        "    displayIndent: '0em'," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
         "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
         "    tex2jax: { " +
         "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
         "        displayMath: [ ['$$','$$'] ]," +
@@ -343,9 +357,30 @@
         "        preview: 'TeX'," +
         "    }, " +
         "    'HTML-CSS': { " +
-        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }, linebreaks: { automatic: false, width: 'container' }" +
-        "    } " +
-        "}); ";
+        "        availableFonts: ['STIX', 'TeX']," +
+        "        preferredFont: 'STIX'," +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
     (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
 }
 </script>
@@ -354,28 +389,32 @@
       </article>
     </div>
 </section>
-  
+
 	      <div class="LaunchyardDetail">
 	        <p>
-	          <a style="text-align: left" class="title" href="../../../../">Edwin Chen</a>	          
+	          <a style="text-align: left" class="title" href="../../../../">Edwin Chen</a>
 	          <br/>
 
 	        </p>
-	        
-	        <div id="about" style="text-align: left">              	          
+
+	        <div id="about" style="text-align: left !important">
 	          <p>
-	            AI, stats, data science, human computation.
+	            Building human/AI infrastructure at <a href="https://www.surgehq.ai">Surge</a>.
+            </p>
+            <br />
+            <p>
+              Need obsessively high-quality human-labeled data? Interested in a self-serve data labeling platform? <a href="https://www.surgehq.ai">Just reach out!</a> We help top companies create massive datasets to train and measure their AI.
 	          </p>
             <br />
             <p>
-              Math/CS/linguistics at MIT, speech recognition at MSR, quant trading at Clarium, ads at Twitter, data science at Dropbox, stats/ML at Google.
+              Former AI & engineering lead at Google, Facebook, Twitter, and Dropbox. Pure math and linguistics research at MIT.
             </p>
-            <br />	          
+            <br />
 	          <div style="text-align: center">
               <a href="https://quora.com/edwin-chen-1">Quora</a><br />
               <a href="https://twitter.com/echen">Twitter</a><br/>
               <a href="https://github.com/echen">Github</a><br/>
-              <a href="https://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
+              <a href="https://www.linkedin.com/in/edwinzchen">LinkedIn</a><br/>
               <a href="mailto:hello[&aelig;]echen.me">Email</a><br/>
             </div>
           </div>
@@ -397,25 +436,24 @@
                 <a style="font-size: 0.9em" href="../../../../2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
                 <a style="font-size: 0.9em" href="../../../../2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
                 <a style="font-size: 0.9em" href="../../../../2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
-            
           </div>
         </div>
 
 
         <section id="extras" >
-       
-        
+
+
         </section><!-- /#extras -->
-	
+
         <footer id="contentinfo" >
                 <address id="about" class="vcard ">
                 Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
                 great advantage of <a href="http://python.org" target="_blank">Python</a>.
-		
-                </address><!-- /#about -->
-		
 
-                
+                </address><!-- /#about -->
+
+
+
         </footer><!-- /#contentinfo -->
 
 </body>

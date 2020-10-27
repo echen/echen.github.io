@@ -8,7 +8,7 @@
         <link href="http://blog.echen.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Edwin Chen's Blog Atom Feed" />
         <link href="http://blog.echen.me/feeds/all.rss.xml" type="application/rss+xml" rel="alternate" title="Edwin Chen's Blog RSS Feed" />
 
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>  
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
 
         <!--[if IE]>
                 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
@@ -25,7 +25,7 @@
 </head>
 
 <body id="index" class="home">
-	
+
 <section id="content" >
     <div class="body">
       <article>
@@ -50,7 +50,7 @@
 <h1>Amazon, and Moving Beyond Log-Based Metrics</h1>
 <p>(Let's continue motivating a bit why log-based metrics are often imperfect measures of relevance and quality, as this is an important but difficult-to-understand point.)</p>
 <p>So take Amazon's <em>Customers Who Bought This Item Also Bought</em> feature, which tries to show you related books.</p>
-<p><a href="http://i.imgur.com/NoTD5Vk.png"><img alt="Amazon Related Books" src="http://i.imgur.com/NoTD5Vk.png" /></a></p>
+<p><a href="http://i.imgur.com/NoTD5Vk.png"><img alt="Amazon Related Books" src="http://i.imgur.com/NoTD5Vk.png"></a></p>
 <p>To measure its effectiveness, the standard approach is to run a live experiment and measure the change in metrics like revenue or CTR.</p>
 <p>But imagine we suddenly replace all of Amazon's book suggestions with pornography. What's going to happen? <a href="http://www.lazygamer.net/general-news/a-history-of-evony-ads-the-insanity-continues/"><em>CTR's likely to shoot through the roof!</em></a></p>
 <p>Or suppose that we replace all of Amazon's related books with shinier, more expensive items. Again, CTR and revenue are likely to increase, as the flashier content draws eyeballs. But is this anything but a short-term boost? Perhaps the change decreases total sales in the long run, as customers start to find Amazon too expensive for their tastes and move to other marketplaces.</p>
@@ -58,7 +58,7 @@
 <h1>Human Evaluation</h1>
 <p>Solution: let's inject humans into the process. Computers can't measure relatedness (if they could, we'd be done), but people of course can.</p>
 <p>For example, in the screenshot below, I asked a worker (on a crowdsourcing platform I've built on my own) to rate the first three <em>Customers Who Bought This Also Bought</em> suggestions for a book on <a href="http://www.barnesandnoble.com/">barnesandnoble.com</a>.</p>
-<p><a href="http://i.imgur.com/XBE6tvc.png"><img alt="Fool's Assassin" src="http://i.imgur.com/XBE6tvc.png" /></a></p>
+<p><a href="http://i.imgur.com/XBE6tvc.png"><img alt="Fool's Assassin" src="http://i.imgur.com/XBE6tvc.png"></a></p>
 <p>(Copying the text from the screenshot:</p>
 <ul>
 <li><strong><em>Fool's Assassin</em>, by Robin Hobb.</strong> (original book) "I only just read this recently, but it's one of my favorites of this year's releases. This book was so beautifully written. I've always been a fan of the Fantasy genre, but often times it's all stylistically similar. Hobb has a wonderful way with characters and narration. The story was absolutely heartbreaking and lead me wanting another book."</li>
@@ -89,12 +89,12 @@
 </ul>
 <p>(Note: I usually prefer a three-point or five-point Likert scale with a "neutral" option, but I was feeling a little wild.)</p>
 <p>For example, here's how a rater reviewed the related books for Anne Rice's <em>The Wolves of Midwinter</em>.</p>
-<p><a href="http://i.imgur.com/eh9VKhR.png"><img alt="Anne Rice" src="http://i.imgur.com/eh9VKhR.png" /></a></p>
+<p><a href="http://i.imgur.com/eh9VKhR.png"><img alt="Anne Rice" src="http://i.imgur.com/eh9VKhR.png"></a></p>
 <p>So how good are Amazon's recommendations? Quite good, in fact: 47% of raters said they'd definitely buy the first related book, another 29% said it was good enough that they might buy it, and only 24% of raters disliked the suggestion.</p>
-<p><a href="http://i.imgur.com/MNSGpIi.png"><img alt="A1 Ratings" src="http://i.imgur.com/MNSGpIi.png" /></a></p>
+<p><a href="http://i.imgur.com/MNSGpIi.png"><img alt="A1 Ratings" src="http://i.imgur.com/MNSGpIi.png"></a></p>
 <p>The second and third book suggestions, while a bit worse, seem to perform pretty well too: around 65% of raters rated them positive.</p>
 <p>What can we learn from the bad ratings? I ran a follow-up task that asked workers to categorize the bad related books, and here's the breakdown.</p>
-<p><a href="http://i.imgur.com/h4DOvju.png"><img alt="Bad Suggestions Breakdown" src="http://i.imgur.com/h4DOvju.png" /></a></p>
+<p><a href="http://i.imgur.com/h4DOvju.png"><img alt="Bad Suggestions Breakdown" src="http://i.imgur.com/h4DOvju.png"></a></p>
 <ul>
 <li><strong>Related but different-subtopic.</strong> These were book suggestions that were generally related to the original book, but that were in a different sub-topic that the rater wasn't interested in. For example, the first related book for Sun Tzu's <em>The Art of War</em> (a book nominally about war, but which nowadays has become more of a life hack book) was <a href="http://www.amazon.com/On-War-Carl-von-Clausewitz/dp/1469947021"><em>On War</em></a> (a war treatise), but the rater wasn't actually interested in the military aspects: <em>"I would not buy this book, because it only focuses on military war. I am not interested in that. I am interested in mental tactics that will help me prosper in life."</em></li>
 <li><strong>Completely unrelated.</strong> These were book suggestions that were completely unrelated to the original book. For example, a Scrabble dictionary appearing on <em>The Art of War</em>'s page.</li>
@@ -109,7 +109,7 @@
 <h2>Competitive Analysis</h2>
 <p>We now have a general grasp of Amazon's related book suggestions and how they could be improved, and just like we could quote a metric like a CTR of 6.2% or whatnot, we can also now quote a <em>relevance score</em> of 0.62 (or whatever). So let's turn to the question of how Amazon compares to other online booksellers like Barnes &amp; Noble and Google Play.</p>
 <p>I took the same task I used above, but this time asked raters to review the related suggestions on those two sites as well.</p>
-<p><a href="http://i.imgur.com/kdWcSPs.png"><img alt="Amazon vs. B&amp;N vs. Google" src="http://i.imgur.com/kdWcSPs.png" /></a></p>
+<p><a href="http://i.imgur.com/kdWcSPs.png"><img alt="Amazon vs. B&amp;N vs. Google" src="http://i.imgur.com/kdWcSPs.png"></a></p>
 <p>In short,</p>
 <ul>
 <li><strong>Barnes &amp; Nobles's algorithm are almost as good as Amazon's</strong>: the first three suggestions were rated positive 58% of the time, compared to 68% on Amazon.</li>
@@ -117,12 +117,12 @@
 </ul>
 <p>Why are the Play Store's suggestions so bad? Let's look at a couple examples.</p>
 <p>Here's the Play Store page for John Green's <em>The Fault in Our Stars</em>, a critics-loved-it book about cancer and romance (and now also a movie).</p>
-<p><a href="http://i.imgur.com/oYKFLeV.png"><img alt="Fault in Our Stars" src="http://i.imgur.com/oYKFLeV.png" /></a></p>
+<p><a href="http://i.imgur.com/oYKFLeV.png"><img alt="Fault in Our Stars" src="http://i.imgur.com/oYKFLeV.png"></a></p>
 <p>Two of the suggestions are completely random: a poorly-rated Excel manual and a poorly-reviewed textbook on sexual health. The others are completely unrelated cowboy books, by a different John Green.</p>
 <p>Here's the page for <em>The Strain</em>. In this case, all the suggestions are in a different language! And there are only four of them.</p>
-<p><a href="http://i.imgur.com/F1XNxPz.png"><img alt="The Strain" src="http://i.imgur.com/F1XNxPz.png" /></a></p>
+<p><a href="http://i.imgur.com/F1XNxPz.png"><img alt="The Strain" src="http://i.imgur.com/F1XNxPz.png"></a></p>
 <p>Once again asking raters to categorize all of the Play Store's bad recommendations...</p>
-<p><a href="http://i.imgur.com/1rWRQ0r.png"><img alt="Google Atrocity" src="http://i.imgur.com/1rWRQ0r.png" /></a></p>
+<p><a href="http://i.imgur.com/1rWRQ0r.png"><img alt="Google Atrocity" src="http://i.imgur.com/1rWRQ0r.png"></a></p>
 <ul>
 <li>45% of the time, the related book suggestions were completely unrelated to the original book in question. For example: displaying a physics textbook on the page for a romance novel.</li>
 <li>32% of the time, there simply wasn't a book suggestion at all. (I'm guessing the Play Bookstore's catalog is pretty limited.)</li>
@@ -179,28 +179,32 @@
       </article>
     </div>
 </section>
-  
+
 	      <div class="LaunchyardDetail">
 	        <p>
-	          <a style="text-align: left" class="title" href="../../../../">Edwin Chen</a>	          
+	          <a style="text-align: left" class="title" href="../../../../">Edwin Chen</a>
 	          <br/>
 
 	        </p>
-	        
-	        <div id="about" style="text-align: left">              	          
+
+	        <div id="about" style="text-align: left !important">
 	          <p>
-	            AI, stats, data science, human computation.
+	            Building human/AI infrastructure at <a href="https://www.surgehq.ai">Surge</a>.
+            </p>
+            <br />
+            <p>
+              Need obsessively high-quality human-labeled data? Interested in a self-serve data labeling platform? <a href="https://www.surgehq.ai">Just reach out!</a> We help top companies create massive datasets to train and measure their AI.
 	          </p>
             <br />
             <p>
-              Math/CS/linguistics at MIT, speech recognition at MSR, quant trading at Clarium, ads at Twitter, data science at Dropbox, stats/ML at Google.
+              Former AI & engineering lead at Google, Facebook, Twitter, and Dropbox. Pure math and linguistics research at MIT.
             </p>
-            <br />	          
+            <br />
 	          <div style="text-align: center">
               <a href="https://quora.com/edwin-chen-1">Quora</a><br />
               <a href="https://twitter.com/echen">Twitter</a><br/>
               <a href="https://github.com/echen">Github</a><br/>
-              <a href="https://www.linkedin.com/in/edwinchen1">LinkedIn</a><br/>
+              <a href="https://www.linkedin.com/in/edwinzchen">LinkedIn</a><br/>
               <a href="mailto:hello[&aelig;]echen.me">Email</a><br/>
             </div>
           </div>
@@ -222,25 +226,24 @@
                 <a style="font-size: 0.9em" href="../../../../2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
                 <a style="font-size: 0.9em" href="../../../../2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
                 <a style="font-size: 0.9em" href="../../../../2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
-            
           </div>
         </div>
 
 
         <section id="extras" >
-       
-        
+
+
         </section><!-- /#extras -->
-	
+
         <footer id="contentinfo" >
                 <address id="about" class="vcard ">
                 Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
                 great advantage of <a href="http://python.org" target="_blank">Python</a>.
-		
-                </address><!-- /#about -->
-		
 
-                
+                </address><!-- /#about -->
+
+
+
         </footer><!-- /#contentinfo -->
 
 </body>
