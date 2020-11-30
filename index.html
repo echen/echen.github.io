@@ -33,6 +33,39 @@
             <aside id="featured">
                 <div class="body">
                     <article>
+                        <h1 class="entry-title"><a href="./2020/11/30/surge-data-labeling-you-can-trust/">Surge: Data Labeling You Can Trust</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info --><p><em><strong>tl;dr</strong> I started <a href="https://www.surgehq.ai">Surge</a> earlier this year to fix the problems I've always encountered with getting <em>high-quality, human-labeled data at scale</em>. Think MTurk 2.0—but with an obsessive focus on quality and speed, and an elite workforce you can trust. If you've ever had problems getting human-annotated data, or wish you had a labeling platform you could use with your own workforce, reach out at <a href="mailto:edwin@surgehq.ai">edwin@surgehq.ai</a> or get started <a href="https:/www.surgehq.ai">here</a>! I'd love to hear from you and chat.</em></p>
+<p>Getting <strong>trustworthy human-labeled data</strong> has constantly been one of my biggest blockers, through a decade of working on real-world AI. Whether at Google, Facebook, or Twitter:</p>
+<ul>
+<li>Getting ground truth for training our ML models, and measuring their relevance and precision, invariably took months from backlogged teams of in-house labelers.</li>
+<li>Speed and scale weren't the only issues—in-house labelers often weren't high quality either! When your labeling software is just an Excel spreadsheet, it's difficult to monitor and motivate performance.</li>
+<li>The quality and speed of external labeling companies were even worse. We'd wait 3 months to get 10K rows of text labeled for a new NLP model, only to find that 50% of the labels were complete spam.</li>
+</ul>
+<p>This was a huge bottleneck for our AI and data science teams. If it takes months to get the data your ML needs, how can you iterate and move fast?</p>
+<p>So I built our human evaluation platforms at YouTube and Twitter to fix these problems. And we used them to do amazing things: from <a href="https://blog.echen.me/2013/01/08/improving-twitter-search-with-real-time-human-computation">real-time human/AI search and advertising systems</a>, to <a href="https://blog.echen.me/2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">shifting our recommender objectives from clickbait to human preferences</a> (<a href="https://surge-ai.medium.com/we-need-new-infrastructure-for-the-next-ai-revolution-e1879f72550f">especially important in this age of political polarization!</a>), and more.</p>
+<p>A cornerstone of these data labeling platforms was the premise that in order to build increasingly sophisticated real-world AI—for complex problems like hate speech and misinformation—we need skilled, motivated human workforces to measure and train them. So when COVID hit, and a huge educated population became out of a job or stuck at home, we realized there was an opportunity to turn the platforms we'd built into a startup, and created <a href="https://www.surgehq.ai">Surge</a>.</p>
+<p>We've grown 10x in the past 6 months, and have worked with an amazing set of early customers on amazing things:</p>
+<ul>
+<li>We've helped companies <strong>boost their ML model performance by 50%</strong>, simply by relabeling their existing datasets.</li>
+<li>Our customers have dropped their time waiting for new labels—their biggest bottleneck in training new models—from <strong>3-6 months to just a few days</strong>.</li>
+<li>We label millions of images and pieces of text every week, in over a <strong>dozen languages</strong>.</li>
+<li>We're not limited to content labeling: we help our customers with everything from <strong>content moderation and AI fairness, to making phone calls to gather business and medical information, to core image recognition and NLP</strong>.</li>
+<li>Teams even use our API to gather human judgments in real time!</li>
+</ul>
+<p>So if you need a high-quality labeling workforce you can trust, or want to use our labeling software for your own agents, please <a href="mailto:edwin@surgehq.ai">reach out</a> or <a href="https:/www.surgehq.ai">get started</a>! I'd love to help you get the datasets and machine learning models you need, or even just hear more about your own problems and experiences.</p>
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
                         <h1 class="entry-title"><a href="./2017/05/30/exploring-lstms/">Exploring LSTMs</a></h1>
 <div class="post-info">
 
@@ -2659,314 +2692,6 @@
   </div>  
 
                     </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="./2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding</a></h1>
-<div class="post-info">
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p><em>Scalding is an in-house MapReduce framework that Twitter recently open-sourced. Like <a href="http://pig.apache.org/">Pig</a>, it provides an abstraction on top of MapReduce that makes it easy to write big data jobs in a syntax that&#8217;s simple and concise. Unlike Pig, Scalding is written in pure Scala &#8211; which means all the power of Scala and the JVM is already built-in. No more UDFs, folks!</em></p>
-
-  <p>This is going to be an in-your-face introduction to <a href="https://github.com/twitter/scalding">Scalding</a>, Twitter&#8217;s (Scala + Cascading) MapReduce framework.</p>
-
-  <p>In 140: instead of forcing you to write raw <code>map</code> and <code>reduce</code> functions, Scalding allows you to write <em>natural</em> code like</p>
-  
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="Example.scala" data-gist-hide-footer="true"></code>
-
-  <p>Not much different from the Ruby you&#8217;d write to compute tweet distributions over <em>small</em> data? <strong>Exactly.</strong></p>
-
-  <p>Two notes before we begin:</p>
-
-  <ul>
-  <li><a href="https://github.com/echen/scaldingale">This Github repository</a> contains all the code used.</li>
-  <li>For a gentler introduction to Scalding, see <a href="https://github.com/twitter/scalding/wiki/Getting-Started">this Getting Started guide</a> on the Scalding wiki.</li>
-  </ul>
-
-
-  <h1>Movie Similarities</h1>
-
-  <p>Imagine you run an online movie business, and you want to generate movie recommendations. You have a rating system (people can rate movies with 1 to 5 stars), and we&#8217;ll assume for simplicity that all of the ratings are stored in a TSV file somewhere.</p>
-
-  <p>Let&#8217;s start by reading the ratings into a Scalding job.</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities1.scala" data-gist-hide-footer="true"></code>
-
-  <p>You want to calculate how similar pairs of movies are, so that if someone watches <em>The Lion King</em>, you can recommend films like <em>Toy Story</em>. So how should you define the similarity between two movies?</p>
-
-  <p>One way is to use their <strong>correlation</strong>:</p>
-
-  <ul>
-  <li>For every pair of movies A and B, find all the people who rated both A and B.</li>
-  <li>Use these ratings to form a Movie A vector and a Movie B vector.</li>
-  <li>Calculate the correlation between these two vectors.</li>
-  <li>Whenever someone watches a movie, you can then recommend the movies most correlated with it.</li>
-  </ul>
-
-
-  <p>Let&#8217;s start with the first two steps.</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities2.scala" data-gist-hide-footer="true"></code>
-
-  <p>Before using these rating pairs to calculate correlation, let&#8217;s stop for a bit.</p>
-
-  <p>Since we&#8217;re explicitly thinking of movies as <strong>vectors</strong> of ratings, it&#8217;s natural to compute some very vector-y things like norms and dot products, as well as the length of each vector and the sum over all elements in each vector. So let&#8217;s compute these:</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities3.scala" data-gist-hide-footer="true"></code>
-
-  <p>To summarize, each row in <code>vectorCalcs</code> now contains the following fields:</p>
-
-  <ul>
-  <li><strong>movie, movie2</strong></li>
-  <li><strong>numRaters, numRaters2</strong>: the total number of people who rated each movie</li>
-  <li><strong>size</strong>: the number of people who rated both movie and movie2</li>
-  <li><strong>dotProduct</strong>: dot product between the movie vector (a vector of ratings) and the movie2 vector (also a vector of ratings)</li>
-  <li><strong>ratingSum, rating2sum</strong>: sum over all elements in each ratings vector</li>
-  <li><strong>ratingNormSq, rating2Normsq</strong>: squared norm of each vector</li>
-  </ul>
-
-
-  <p>So let&#8217;s go back to calculating the correlation between movie and movie2. We could, of course, calculate correlation in the standard way: find the covariance between the movie and movie2 ratings, and divide by their standard deviations.</p>
-
-  <p>But recall that we can also write correlation in the following form:</p>
-
-  <p>$Corr(X, Y) = \frac{n \sum xy - \sum x \sum y}{\sqrt{n \sum x^2 - (\sum x)^2} \sqrt{n \sum y^2 - (\sum y)^2}}$</p>
-
-  <p>(See the <a href="http://en.wikipedia.org/wiki/Correlation_and_dependence">Wikipedia page</a> on correlation.)</p>
-
-  <p>Notice that every one of the elements in this formula is a field in <code>vectorCalcs</code>! So instead of using the standard calculation, we can use this form instead:</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities4.scala" data-gist-hide-footer="true"></code>
-
-
-  <p>And that&#8217;s it! To see the full code, check out the Github repository <a href="https://github.com/echen/scaldingale">here</a>.</p>
-
-  <h1>Book Similarities</h1>
-
-  <p>Let&#8217;s run this code over some real data. Unfortunately, I didn&#8217;t have a clean source of movie ratings available, so instead I used <a href="http://www.informatik.uni-freiburg.de/~cziegler/BX/">this dataset</a> of 1 million book ratings.</p>
-
-  <p>I ran a quick command, using the handy <a href="https://github.com/twitter/scalding/wiki/Scald.rb">scald.rb script</a> that Scalding provides&#8230;</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="scald.rb" data-gist-hide-footer="true"></code>
-
-
-
-  <p>&#8230;and here&#8217;s a sample of the top output I got:</p>
-
-  <p><a href="http://i.imgur.com/e6wpQOt.png"><img src="http://i.imgur.com/e6wpQOt.png" alt="Top Book-Crossing Pairs" /></a></p>
-
-  <p>As we&#8217;d expect, we see that</p>
-
-  <ul>
-  <li><em>Harry Potter</em> books are similar to other <em>Harry Potter</em> books</li>
-  <li><em>Lord of the Rings</em> books are similar to other <em>Lord of the Rings</em> books</li>
-  <li>Tom Clancy is similar to John Grisham</li>
-  <li>Chick lit (<em>Summer Sisters</em>, by Judy Blume) is similar to chick lit (<em>Bridget Jones</em>)</li>
-  </ul>
-
-
-  <p>Just for fun, let&#8217;s also look at books similar to <em>The Great Gatsby</em>:</p>
-
-  <p><a href="http://i.imgur.com/FFzySua.png"><img src="http://i.imgur.com/FFzySua.png" alt="Great Gatsby" /></a></p>
-
-  <p>(Schoolboy memories, exactly.)</p>
-
-  <h1>More Similarity Measures</h1>
-
-  <p>Of course, there are lots of other similarity measures we could use besides correlation.</p>
-
-  <h2>Cosine Similarity</h2>
-
-  <p><a href="http://en.wikipedia.org/wiki/Cosine_similarity">Cosine similarity</a> is a another common vector-based similarity measure.</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities5.scala" data-gist-hide-footer="true"></code>
-
-
-
-  <h2>Correlation, Take II</h2>
-
-  <p>We can also also add a <em>regularized</em> correlation, by (say) adding N virtual movie pairs that have zero correlation. This helps avoid noise if some movie pairs have very few raters in common (for example, <em>The Great Gatsby</em> had an unlikely raw correlation of 1 with many other books, due simply to the fact that those book pairs had very few ratings).</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities6.scala" data-gist-hide-footer="true"></code>
-
-
-
-  <h2>Jaccard Similarity</h2>
-
-  <p>Recall that <a href="http://blog.echen.me/blog/2011/10/24/winning-the-netflix-prize-a-summary/">one of the lessons of the Netflix prize</a> was that implicit data can be quite useful &#8211; the mere fact that you rate a James Bond movie, even if you rate it quite horribly, suggests that you&#8217;d probably be interested in similar action films. So we can also ignore the value itself of each rating and use a <em>set</em>-based similarity measure like <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard similarity</a>.</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities7.scala" data-gist-hide-footer="true"></code>
-  
-
-  <h2>Incorporation</h2>
-
-  <p>Finally, let&#8217;s add all these similarity measures to our output.</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="MovieSimilarities8.scala" data-gist-hide-footer="true"></code>
-  
-
-  <h1>Book Similarities Revisited</h1>
-
-  <p>Let&#8217;s take another look at the book similarities above, now that we have these new fields.</p>
-
-  <p>Here are some of the top Book-Crossing pairs, sorted by their shrunk correlation:</p>
-
-  <p><a href="http://i.imgur.com/aR4xIBL.png"><img src="http://i.imgur.com/aR4xIBL.png" alt="Top Book-Crossing Pairs" /></a></p>
-
-  <p>Notice how regularization affects things: the <em>Dark Tower</em> pair has a pretty high raw correlation, but relatively few ratings (reducing our confidence in the raw correlation), so it ends up below the others.</p>
-
-  <p>And here are books similar to <em>The Great Gatsby</em>, this time ordered by cosine similarity:</p>
-
-  <p><a href="http://i.imgur.com/lzZdXU5.png"><img src="http://i.imgur.com/lzZdXU5.png" alt="Great Gatsby" /></a></p>
-
-  <h1>Input Abstraction</h1>
-
-  <p>So our code right now is tied to our specific <code>ratings.tsv</code> input. But what if we change the way we store our ratings, or what if we want to generate similarities for something entirely different?</p>
-
-  <p>Let&#8217;s abstract away our input. We&#8217;ll create a <a href="https://github.com/echen/scaldingale/blob/master/VectorSimilarities.scala">VectorSimilarities class</a> that represents input data in the following format:</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="VectorSimilarities.scala" data-gist-hide-footer="true"></code>
-  
-
-
-  <p>Whenever we want to define a new input format, we simply subclass <code>VectorSimilarities</code> and provide a concrete implementation of the <code>input</code> method.</p>
-
-  <h2>Book-Crossings</h2>
-
-  <p>For example, here&#8217;s a class I could have used to generate the book recommendations above:</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="BookCrossing.scala" data-gist-hide-footer="true"></code>
-  
-
-
-  <p>The input method simply reads from a TSV file and lets the <code>VectorSimilarities</code> superclass do all the work. Instant recommendations, BOOM.</p>
-
-  <h2>Song Similarities with Twitter + iTunes</h2>
-
-  <p>But why limit ourselves to books? We do, after all, have Twitter at our fingertips&#8230;</p>
-
-  <blockquote class="twitter-tweet"><p>rated Born This Way by Lady GaGa 5 stars <a href="http://t.co/wTYAwWqm" title="http://itun.es/iSg92N">itun.es/iSg92N</a> <a href="https://twitter.com/search/%2523iTunes">#iTunes</a></p>&mdash; gggf (@GalMusic92) <a href="https://twitter.com/GalMusic92/status/167267017865428996" data-datetime="2012-02-08T15:22:19+00:00">February 8, 2012</a></blockquote>
-
-
-  <script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-
-
-  <p>Since iTunes lets you send a tweet whenever you rate a song, we can use these to generate music recommendations!</p>
-
-  <p>Again, we create a new class that overrides the abstract <code>input</code> defined in <code>VectorSimilarities</code>&#8230;</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="iTunes.scala" data-gist-hide-footer="true"></code>
-  
-
-
-  <p>&#8230;and snap! Here are some songs you might like if you recently listened to <strong>Beyoncé</strong>:</p>
-
-  <p><a href="http://i.imgur.com/8E8q4y1.png"><img src="http://i.imgur.com/8E8q4y1.png" alt="Jason Mraz" /></a></p>
-
-  <p>And some recommended songs if you like <strong>Lady Gaga</strong>:</p>
-
-  <p><a href="http://i.imgur.com/AUPR87F.png"><img src="http://i.imgur.com/AUPR87F.png" alt="Lady Gaga" /></a></p>
-
-  <p>GG Pandora.</p>
-
-  <h2>Location Similarities with Foursquare Check-ins</h2>
-
-  <p>But what if we don&#8217;t have explicit ratings? For example, we could be a news site that wants to generate article recommendations, and maybe we only have user <em>visits</em> on each story.</p>
-
-  <p>Or what if we want to generate restaurant or tourist recommendations, when all we know is who visits each location?</p>
-
-  <blockquote class="twitter-tweet"><p>I&#8217;m at Empire State Building (350 5th Ave., btwn 33rd & 34th St., New York) <a href="http://t.co/q6tXzf3n" title="http://4sq.com/zZ5xGd">4sq.com/zZ5xGd</a></p>&mdash; Simon Ackerman (@SimonAckerman) <a href="https://twitter.com/SimonAckerman/status/167232054247956481" data-datetime="2012-02-08T13:03:23+00:00">February 8, 2012</a></blockquote>
-
-
-  <script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-
-
-  <p>Let&#8217;s finally make Foursquare check-ins useful. (I kid, I kid.)</p>
-
-  <p>Instead of using an explicit rating given to us, we can simply generate a dummy rating of 1 for each check-in. Correlation doesn&#8217;t make sense any more, but we can still pay attention to a measure like Jaccard simiilarity.</p>
-
-  <p>So we simply create a new class that scrapes tweets for Foursquare check-in information&#8230;</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="Foursquare.scala" data-gist-hide-footer="true"></code>
-  
-
-
-  <p>&#8230;and bam! Here are locations similar to the <strong>Empire State Building</strong>:</p>
-
-  <p><a href="http://i.imgur.com/BkcbCnB.png"><img src="http://i.imgur.com/BkcbCnB.png" alt="Empire State Building" /></a></p>
-
-  <p>Here are places you might want to check out, if you check-in at <strong>Bergdorf Goodman</strong>:</p>
-
-  <p><a href="http://i.imgur.com/1IZBlUS.png"><img src="http://i.imgur.com/1IZBlUS.png" alt="Bergdorf Goodman" /></a></p>
-
-  <p>And here&#8217;s where to go after the <strong>Statue of Liberty</strong>:</p>
-
-  <p><a href="http://i.imgur.com/SktVYlM.png"><img src="http://i.imgur.com/SktVYlM.png" alt="Statue of Liberty" /></a></p>
-
-  <p>Power of Twitter, yo.</p>
-
-  <h1>RottenTomatoes Similarities</h1>
-
-  <p>UPDATE: I found some movie data after all&#8230;</p>
-
-  <blockquote class="twitter-tweet"><p>My review for &#8216;How to Train Your Dragon&#8217; on Rotten Tomatoes: 4 1/2 stars &gt;<a href="http://t.co/YTOKWLEt" title="http://bit.ly/xtw3d3">bit.ly/xtw3d3</a></p>&mdash; Benjamin West (@BenTheWest) <a href="https://twitter.com/BenTheWest/status/171772890121895936" data-datetime="2012-02-21T01:47:03+00:00">February 21, 2012</a></blockquote>
-
-
-  <p>So let&#8217;s use RottenTomatoes tweets to recommend movies! Here&#8217;s the code for a class that searches for RottenTomatoes tweets:</p>
-
-  <code data-gist-id="3d6bb2d5915b263f674ba9ad057ef773" data-gist-file="RottenTomatoes.scala" data-gist-hide-footer="true"></code>
-  
-
-  <p>And here are the most similar movies discovered:</p>
-
-  <p><a href="http://i.imgur.com/QwWgZqP.png"><img src="http://i.imgur.com/QwWgZqP.png" alt="Top RottenTomatoes Movies" /></a></p>
-
-  <p>We see that</p>
-
-  <ul>
-  <li><em>Lord of the Rings</em>, <em>Harry Potter</em>, and <em>Star Wars</em> movies are similar to other <em>Lord of the Rings</em>, <em>Harry Potter</em>, and <em>Star Wars</em> movies</li>
-  <li>Big science fiction blockbusters (<em>Avatar</em>) are similar to big science fiction blockbusters (<em>Inception</em>)</li>
-  <li>People who like one Justin Timberlake movie (<em>Bad Teacher</em>) also like other Justin Timberlake Movies (<em>In Time</em>). Similarly with Michael Fassbender (<em>A Dangerous Method</em>, <em>Shame</em>)</li>
-  <li>Art house movies (<em>The Tree of Life</em>) stick together (<em>Tinker Tailor Soldier Spy</em>)</li>
-  </ul>
-
-
-  <p>Let&#8217;s also look at the movies with the most <em>negative</em> correlation:</p>
-
-  <p><a href="http://i.imgur.com/Ln7ZZrZ.png"><img src="http://i.imgur.com/Ln7ZZrZ.png" alt="Negative RottenTomatoes Movies" /></a></p>
-
-  <p>(The more you like loud and dirty popcorn movies (<em>Thor</em>) and vamp romance (<em>Twilight</em>), the less you like arthouse? SGTM.)</p>
-
-  <h1>Next Steps</h1>
-
-  <p>Hopefully I gave you a taste of the awesomeness of Scalding. To learn even more:</p>
-
-  <ul>
-  <li>Check out <a href="https://github.com/twitter/scalding">Scalding on Github</a>.</li>
-  <li>Read <a href="https://github.com/twitter/scalding/wiki/Getting-Started">this Getting Started Guide</a> on the Scalding wiki.</li>
-  <li>Run through <a href="https://github.com/twitter/scalding/tree/master/tutorial">this code-based introduction</a>, complete with Scalding jobs that you can run in local mode.</li>
-  <li>Browse <a href="https://github.com/twitter/scalding/wiki/API-Reference">the API reference</a>, which also contains many code snippets illustrating different Scalding functions (e.g., <code>map</code>, <code>filter</code>, <code>flatMap</code>, <code>groupBy</code>, <code>count</code>, <code>join</code>).</li>
-  <li>And all the code for this post is <a href="https://github.com/echen/scaldingale">here</a>.</li>
-  </ul>
-
-
-  <p>Watch out for more documentation soon, and you should most definitely <a href="https://twitter.com/#!/scalding">follow @Scalding</a> on Twitter for updates or to ask any questions.</p>
-
-  <h1>Mad Props</h1>
-
-  <p>And finally, a huge shoutout to <a href="https://twitter.com/argyris">Argyris Zymnis</a>, <a href="https://twitter.com/avibryant">Avi Bryant</a>, and <a href="https://twitter.com/posco">Oscar Boykin</a>, the mastermind hackers who have spent (and continue spending!) unimaginable hours making Scalding a joy to use.</p>
-
-  <p>@argyris, @avibryant, @posco: Thanks for it all. #awesomejobguys #loveit</p>
-  </div>  
-
-                    </article>
  
 <div class="paginator">
     <div class="navButton">Page 1 / 4</div>
@@ -3008,6 +2733,7 @@
 
           <div id="recent_posts">
               <h3>Recent Posts</h3>
+                <a style="font-size: 0.9em" href="./2020/11/30/surge-data-labeling-you-can-trust/">Surge: Data Labeling You Can Trust  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2017/05/30/exploring-lstms/">Exploring LSTMs  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
@@ -3022,7 +2748,6 @@
                 <a style="font-size: 0.9em" href="./2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
-                <a style="font-size: 0.9em" href="./2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
           </div>
         </div>
 

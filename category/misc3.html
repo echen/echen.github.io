@@ -33,6 +33,46 @@
             <aside id="featured">
                 <div class="body">
                     <article>
+                        <h1 class="entry-title"><a href="../2011/04/27/choosing-a-machine-learning-classifier/">Choosing a Machine Learning Classifier</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>How do you know what machine learning algorithm to choose for your classification problem? Of course, if you really care about accuracy, your best bet is to test out a couple different ones (making sure to try different parameters within each algorithm as well), and select the best one by cross-validation. But if you&#8217;re simply looking for a &#8220;good enough&#8221; algorithm for your problem, or a place to start, here are some general guidelines I&#8217;ve found to work well over the years.</p>
+
+  <h1>How large is your training set?</h1>
+
+  <p>If your training set is small, high bias/low variance classifiers (e.g., Naive Bayes) have an advantage over low bias/high variance classifiers (e.g., kNN), since the latter will overfit. But low bias/high variance classifiers start to win out as your training set grows (they have lower asymptotic error), since high bias classifiers aren&#8217;t powerful enough to provide accurate models.</p>
+
+  <p>You can also think of this as a generative model vs. discriminative model distinction.</p>
+
+  <h1>Advantages of some particular algorithms</h1>
+
+  <p><strong>Advantages of Naive Bayes:</strong> Super simple, you&#8217;re just doing a bunch of counts. If the NB conditional independence assumption actually holds, a Naive Bayes classifier will converge quicker than discriminative models like logistic regression, so you need less training data. And even if the NB assumption doesn&#8217;t hold, a NB classifier still often does a great job in practice. A good bet if  want something fast and easy that performs pretty well. Its main disadvantage is that it can&#8217;t learn interactions between features (e.g., it can&#8217;t learn that although you love movies with Brad Pitt and Tom Cruise, you hate movies where they&#8217;re together).</p>
+
+  <p><strong>Advantages of Logistic Regression:</strong> Lots of ways to regularize your model, and you don&#8217;t have to worry as much about your features being correlated, like you do in Naive Bayes. You also have a nice probabilistic interpretation, unlike decision trees or SVMs, and you can easily update your model to take in new data (using an online gradient descent method), again unlike decision trees or SVMs. Use it if you want a probabilistic framework (e.g., to easily adjust classification thresholds, to say when you&#8217;re unsure, or to get confidence intervals) or if you expect to receive more training data in the future that you want to be able to quickly incorporate into your model.</p>
+
+  <p><strong>Advantages of Decision Trees:</strong> Easy to interpret and explain (for some people &#8211; I&#8217;m not sure I fall into this camp). They easily handle feature interactions and they&#8217;re non-parametric, so you don&#8217;t have to worry about outliers or whether the data is linearly separable (e.g., decision trees easily take care of cases where you have class A at the low end of some feature x, class B in the mid-range of feature x, and A again at the high end). One disadvantage is that they don&#8217;t support online learning, so you have to rebuild your tree when new examples come on. Another disadvantage is that they easily overfit, but that&#8217;s where ensemble methods like random forests (or boosted trees) come in. Plus, random forests are often the winner for lots of problems in classification (usually slightly ahead of SVMs, I believe), they&#8217;re fast and scalable, and you don&#8217;t have to worry about tuning a bunch of parameters like you do with SVMs, so they seem to be quite popular these days.</p>
+
+  <p><strong>Advantages of SVMs:</strong> High accuracy, nice theoretical guarantees regarding overfitting, and with an appropriate kernel they can work well even if you&#8217;re data isn&#8217;t linearly separable in the base feature space. Especially popular in text classification problems where very high-dimensional spaces are the norm. Memory-intensive, hard to interpret, and kind of annoying to run and tune, though, so I think random forests are starting to steal the crown.</p>
+
+  <h1>But&#8230;</h1>
+
+  <p>Recall, though, that better data often beats better algorithms, and designing good features goes a long way. And if you have a huge dataset, then whichever classification algorithm you use might not matter so much in terms of classification performance (so choose your algorithm based on speed or ease of use instead).</p>
+
+  <p>And to reiterate what I said above, if you really care about accuracy, you should definitely try a bunch of different classifiers and select the best one by cross-validation. Or, to take a lesson from the Netflix Prize (and Middle Earth), just use an ensemble method to choose them all.</p>
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
                         <h1 class="entry-title"><a href="../2011/04/25/kickstarter-data-analysis-success-and-pricing/">Kickstarter Data Analysis: Success and Pricing</a></h1>
 <div class="post-info">
 
@@ -750,139 +790,6 @@
 
 
                     </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="../2011/03/14/prime-numbers-and-the-riemann-zeta-function/">Prime Numbers and the Riemann Zeta Function</a></h1>
-<div class="post-info">
-
-</div><!-- /.post-info -->
-  
-  <div class="entry-content"><p>Lots of people know that the <a href="http://en.wikipedia.org/wiki/Riemann_hypothesis">Riemann Hypothesis</a> has <em>something</em> to do with prime numbers, but most introductions fail to say what or why. I&#8217;ll try to give one angle of explanation.</p>
-
-
-
-
-  <h1>Layman&#8217;s Terms</h1>
-
-
-
-
-  <p>Suppose you have a bunch of friends, each with an instrument that plays at a frequency equal to the imaginary part of a zero of the Riemann zeta function. If the Riemann Hypothesis holds, you can create a song that sounds exactly at the prime-powered beats, by simply telling all your friends to play at the same volume.</p>
-
-
-
-
-  <h1>Mathematical Terms</h1>
-
-
-
-
-  <p>Let $ &#92;pi(x) $ denote the number of primes less than or equal to x. Recall <a href="http://en.wikipedia.org/wiki/Prime_number_theorem#The_prime-counting_function_in_terms_of_the_logarithmic_integral">Gauss&#8217;s approximation</a>: $ &#92;pi(x) &#92;approx &#92;int\_2\^x &#92;frac{1}{&#92;log t} &#92;,dt $ (aka, the &#8220;probability that a number n is prime&#8221; is approximately $ &#92;frac{1}{&#92;log n} $).</p>
-
-
-
-
-  <p>Riemann improved on Gauss&#8217;s approximation by discovering an <em>exact</em> formula $ P(x) = A(x) - E(x) $ for counting the primes, where</p>
-
-
-
-
-  <ul>
-  <li>$ P(x) = &#92;sum\_{p\^k &lt; x} &#92;frac{1}{k} $ performs a weighted count of the prime powers less than or equal to x. [Think of this as a generalization of the prime counting function.]</li>
-  <li>$ A(x) = &#92;int\_0\^x &#92;frac{1}{&#92;log t} &#92;,dt+ &#92;int\_x\^{&#92;infty} &#92;frac{1}{t(t\^2  -1) &#92;log t} &#92;,dt $ $ - &#92;log 2 $ is a kind of generalization of Gauss&#8217;s approximation.</li>
-  <li>$ E(x) = &#92;sum\_{z : &#92;zeta(z) = 0} &#92;int\_0\^{x\^z} &#92;frac{1}{&#92;log t} &#92;,dt $ is an error-correcting factor that depends on the zeroes of the Riemann zeta function.</li>
-  </ul>
-
-
-
-
-  <p>In other words, if we use a simple Gauss-like approximation to the distribution of the primes, the zeroes of the Riemann zeta function sweep up after our errors.</p>
-
-
-
-
-  <p>Let&#8217;s dig a little deeper. Instead of using Riemann&#8217;s formula, I&#8217;m going to use an equivalent version</p>
-
-
-
-
-  <p>$$ &#92;psi(x) = (x + &#92;sum\_{n = 1}\^{&#92;infty} &#92;frac{x\^{-2n}}{2n} - &#92;log 2&#92;pi) - &#92;sum\_{z : &#92;zeta(z) = 0} &#92;frac{x\^z}{z} $$</p>
-
-
-
-
-  <p>where  $ &#92;psi(x) = &#92;sum\_{p\^k &#92;le x} &#92;log p $. Envisioning this formula to be in the same $P(x) = A(x) - E(x)$ form as above, this time where</p>
-
-
-
-
-  <ul>
-  <li>$ P(x) = &#92;psi(x) = &#92;sum\_{p\^k &#92;le x} &#92;log p $ is another kind of count of the primes.</li>
-  <li>$ A(x) = x + &#92;sum\_{n = 1}\^{&#92;infty} &#92;frac{x\^{-2n}}{2n} - &#92;log 2&#92;pi $ is another kind of approximation to $P(x)$.</li>
-  <li>$ E(x) = &#92;sum\_{z : &#92;zeta(z) = 0} &#92;frac{x\^z}{z} $ is another error-correction factor that depends on the zeroes of the Riemann zeta function.</li>
-  </ul>
-
-
-
-
-  <p>we can again interpret it as an error-correcting formula for counting the primes.</p>
-
-
-
-
-  <p>Now since $ &#92;psi(x) $ is a step function that jumps at the prime powers, its derivative $ &#92;psi&#8217;(x) $ has spikes at the prime powers and is zero everywhere else. So consider</p>
-
-
-
-
-  <p>$$ &#92;psi&#8217;(x) = 1 - &#92;frac{1}{x(x\^2 - 1)} - &#92;sum\_z x\^{z-1} $$</p>
-
-
-
-
-  <p>It&#8217;s well-known that the zeroes of the Riemann zeta function are symmetric about the real axis, so the (non-trivial) zeroes come in conjugate pairs $ z, &#92;bar{z} $. But $ x\^{z-1} + x\^{&#92;bar{z} - 1} $ is just a wave whose amplitude depends on the real part of z and whose frequency depends on the imaginary part (i.e., if $ z = a + bi $, then $ x\^{z-1} + x\^{&#92;bar{z}-1} = 2x\^{a-1} cos (b &#92;log x) $), which means $ &#92;psi&#8217;(x) $ can be decomposed into a sum of zeta-zero waves. Note that because of the $2x\^{a-1}$ term in front, the amplitude of these waves depends only on the real part $a$ of the conjugate zeroes.</p>
-
-
-
-
-  <p>For example, here are plots of $ &#92;psi&#8217;(x) $ using 10, 50, and 200 pairs of zeroes:</p>
-
-
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/riemann-hypothesis/10.png"><img src="http://dl.dropbox.com/u/10506/blog/riemann-hypothesis/10.png" alt="10 Pairs" /></a></p>
-
-
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/riemann-hypothesis/50.png"><img src="http://dl.dropbox.com/u/10506/blog/riemann-hypothesis/50.png" alt="50 Pairs" /></a></p>
-
-
-
-
-  <p><a href="http://dl.dropbox.com/u/10506/blog/riemann-hypothesis/200.png"><img src="http://dl.dropbox.com/u/10506/blog/riemann-hypothesis/200.png" alt="50 Pairs" /></a></p>
-
-
-
-
-  <p>So when the Riemann Hypothesis says that all the non-trivial zeroes have real part 1/2, it&#8217;s hypothesizing that the non-trivial zeta-zero waves have equal amplitude, i.e., they make equal contributions to counting the primes.</p>
-
-
-
-
-  <p><strong>In Fourier-poetic terms</strong>, when Flying Spaghetti Monster composed the music of the primes, he built the notes out of the zeroes of the Riemann zeta function. If the Riemann Hypothesis holds, he made all the non-trivial notes equally loud.</p>
-
-  </div>
-
-                    </article>
  
 <div class="paginator">
             <div class="navButton"><a href="../category/misc2.html">Prev</a></div>
@@ -925,6 +832,7 @@
 
           <div id="recent_posts">
               <h3>Recent Posts</h3>
+                <a style="font-size: 0.9em" href="../2020/11/30/surge-data-labeling-you-can-trust/">Surge: Data Labeling You Can Trust  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2017/05/30/exploring-lstms/">Exploring LSTMs  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
@@ -939,7 +847,6 @@
                 <a style="font-size: 0.9em" href="../2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
-                <a style="font-size: 0.9em" href="../2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
           </div>
         </div>
 
