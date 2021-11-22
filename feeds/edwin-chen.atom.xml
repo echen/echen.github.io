@@ -13,13 +13,13 @@
 &lt;h1&gt;Intuition: Thinking Like an Alien&lt;/h1&gt;
 &lt;p&gt;Imagine you’re an alien whose spaceship crashes into Earth. You’re far from home, and you need to blend in until the rescue team arrives. You want to pick up some food, maybe watch Squid Game to learn about human culture, and so you need to learn how to speak like an earthling first.&lt;/p&gt;
 &lt;p&gt;How do you do this? You turn to your two robot assistants. They’re advanced probability machines, and you hope that they can also figure out human language:&lt;/p&gt;
-&lt;p&gt;— — — — — — — — — —
-&lt;strong&gt;You:&lt;/strong&gt; &lt;em&gt;“Hey, robots.”&lt;/em&gt;
-&lt;strong&gt;Robots:&lt;/strong&gt; &lt;em&gt;“Beep”&lt;/em&gt;
-&lt;strong&gt;You:&lt;/strong&gt; &lt;em&gt;“Okay, listen up. I want to buy a burger. Now, when I get to the counter, I want each of you to come up with a couple of sentences you think I could say, along with your best guess of the probability that a human would say it.&lt;/em&gt;
-&lt;strong&gt;Robots:&lt;/strong&gt; &lt;em&gt;“Beep?”&lt;/em&gt;
-&lt;strong&gt;You:&lt;/strong&gt; &lt;em&gt;“Yes, you have to.”&lt;/em&gt;
-— — — — — — — — — —&lt;/p&gt;
+&lt;p&gt;— — — — — — — — — —&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;You:&lt;/strong&gt; &lt;em&gt;“Hey, robots.”&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Robots:&lt;/strong&gt; &lt;em&gt;“Beep”&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;You:&lt;/strong&gt; &lt;em&gt;“Okay, listen up. I want to buy a burger. Now, when I get to the counter, I want each of you to come up with a couple of sentences you think I could say, along with your best guess of the probability that a human would say it.&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Robots:&lt;/strong&gt; &lt;em&gt;“Beep?”&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;You:&lt;/strong&gt; &lt;em&gt;“Yes, you have to.”&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;— — — — — — — — — —&lt;/p&gt;
 &lt;p&gt;You’re hoping your robots will:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;Assign a high probability to responses that lead to delicious food. (For example: “Two cheeseburgers and an order of fries”)&lt;/li&gt;
