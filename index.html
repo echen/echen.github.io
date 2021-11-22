@@ -33,6 +33,118 @@
             <aside id="featured">
                 <div class="body">
                     <article>
+                        <h1 class="entry-title"><a href="./2021/11/21/a-visual-laymans-introduction-to-language-models-in-nlp/">A Visual, Layman's Introduction to Language Models in NLP</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info --><p><em>(This is a <a href="https://www.surgehq.ai/blog/an-introduction-to-language-models-in-nlp-part-1-intuition">crosspost</a> from the official Surge AI <a href="https://www.surgehq.ai/blog">blog</a>, where we're building the greatest source of NLP content. If you need help with data labeling and NLP, <a href="https://www.surgehq.ai/contact">say hello</a>!)</em></p>
+<h1>Introduction</h1>
+<p>Language models are a core component of NLP systems, from machine translation to speech recognition. Intuitively, you can think of language models as answering: <em>“How English is this phrase?”</em></p>
+<p>Take, for example, these two sentences: <em>“the cat runs up the tree”</em> and <em>“cat up the runs tree the”</em>. A good language model should assign a higher probability to the former since it’s the more “English”-sounding one. This scoring can then be used in dozens of downstream applications.</p>
+<p>For example, speech recognition systems need to disambiguate between phonetically similar phrases like <em>“recognize speech”</em> and <em>“wreck a nice beach”</em>, and a language model can help pick the one that sounds the most natural in a given context. For instance, a speech recognition system transcribing a lecture on audio systems should likely prefer <em>“recognize speech”</em>, whereas a news flash about an extraterrestrial invasion of Miami should likely prefer <em>“wreck a nice beach”</em>.</p>
+<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b417456edd81c9874defc_CleanShot%202021-11-09%20at%2019.47.32%402x.png"><img alt="Wrecking a nice beach" src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b417456edd81c9874defc_CleanShot%202021-11-09%20at%2019.47.32%402x.png"></a></p>
+<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b414d60afbcf2d9e29770_CleanShot%202021-11-09%20at%2019.47.18%402x.png"><img alt="Recognizing speech" src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b414d60afbcf2d9e29770_CleanShot%202021-11-09%20at%2019.47.18%402x.png"></a></p>
+<p>Similarly, a French-English machine translation system could leverage a language model to rank translation candidates according to their fluency. If two translations for <em>“je t’aime”</em> are <em>“I you love”</em> and <em>“I love you”</em>, an English language model would hopefully pick the latter as the better translation.</p>
+<p>So how do language models work?</p>
+<h1>Intuition: Thinking Like an Alien</h1>
+<p>Imagine you’re an alien whose spaceship crashes into Earth. You’re far from home, and you need to blend in until the rescue team arrives. You want to pick up some food, maybe watch Squid Game to learn about human culture, and so you need to learn how to speak like an earthling first.</p>
+<p>How do you do this? You turn to your two robot assistants. They’re advanced probability machines, and you hope that they can also figure out human language:</p>
+<p>— — — — — — — — — —
+<strong>You:</strong> <em>“Hey, robots.”</em>
+<strong>Robots:</strong> <em>“Beep”</em>
+<strong>You:</strong> <em>“Okay, listen up. I want to buy a burger. Now, when I get to the counter, I want each of you to come up with a couple of sentences you think I could say, along with your best guess of the probability that a human would say it.</em>
+<strong>Robots:</strong> <em>“Beep?”</em>
+<strong>You:</strong> <em>“Yes, you have to.”</em>
+— — — — — — — — — —</p>
+<p>You’re hoping your robots will:</p>
+<ul>
+<li>Assign a high probability to responses that lead to delicious food. (For example: “Two cheeseburgers and an order of fries”)</li>
+<li>Assign a low probability to unintelligible responses that lead to fear, confusion, and a call to the Men in Black. (For example: “Fries Santa cheese dirt hello”)</li>
+</ul>
+<p>In other words, you want your robot assistants to act as <strong>language models</strong>: given any piece of language as input, they’ll score how “human” it sounds.</p>
+<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b43f61cbc9f00ba0aeb77_Frame%20230.png"><img alt="A language model scoring two responses" src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b43f61cbc9f00ba0aeb77_Frame%20230.png"></a></p>
+<p>Of course, since your robots haven’t learned English yet, they initially won’t be very good. “Two cheeseburgers and an order of fries” sounds just as human to them as “fries Santa cheese dirt hello,” or any other mishmash of noise.</p>
+<p>So, to improve your two robots, the three of you spend an hour observing customers at Shake Shack. Over that hour, five customers arrive. Their responses to the cashier’s prompt are:</p>
+<ul>
+<li><strong>Customer 1:</strong> “Two cheeseburgers”</li>
+<li><strong>Customer 2:</strong> “Two cheeseburgers”</li>
+<li><strong>Customer 3:</strong> “Two cheeseburgers”</li>
+<li><strong>Customer 4:</strong> “Fries”</li>
+<li><strong>Customer 5:</strong> “The daily special”</li>
+</ul>
+<p>What do your robots learn from these 5 pieces of data?</p>
+<p><strong>Robot A</strong> comes from your home planet, a world of elite scientists who’ve mastered the mathematics of spaceflight, and it takes a purely probabilistic approach. If you ask it to score every potential response to “What would you like to order today?”, it would say:</p>
+<ul>
+<li><strong>P(“two cheeseburgers”)</strong> = 3 / 5 (since “two cheeseburgers” was uttered in 3 out of the 5 interactions)</li>
+<li><strong>P(“fries”)</strong> = 1 / 5 (since “fries” was uttered in 1 out of the 5 interactions)</li>
+<li><strong>P(“the daily special”)</strong> = 1/5 (since “the daily special” was uttered in 1 out of the 5 interactions)</li>
+<li><strong>P(anything else)</strong> = 0</li>
+</ul>
+<p><strong>Robot B</strong>, in contrast, comes from a universe where the dimensions of space are warped, so it ignores the order of words. For example, it thinks “two cheeseburgers” and “cheeseburgers two” mean the same thing. (This is analogous to “bag-of-words” models like Naive Bayes.) So it’s as if it heard the following:</p>
+<ul>
+<li><strong>Customer 1:</strong> “two cheeseburgers”, “cheeseburgers two”‍</li>
+<li><strong>Customer 2:</strong> “two cheeseburgers”, “cheeseburgers two”‍</li>
+<li><strong>Customer 3:</strong> “two cheeseburgers”, “cheeseburgers two”‍</li>
+<li><strong>Customer 4:</strong> “fries”‍</li>
+<li><strong>Customer 5:</strong> “the daily special”, “the special daily”, “daily the special”, “daily special the”, “special the daily”, “special daily the”</li>
+</ul>
+<p>So if you asked it to score every potential response to “What would you like to order today?” it would assign these probabilities:</p>
+<ul>
+<li><strong>P(“two cheeseburgers”) = P(“cheeseburgers two”)</strong> = 3 / 13</li>
+<li><strong>P(“fries”)</strong> = 1 / 13</li>
+<li><strong>P(“the daily special”) = P(“the special daily”) = P(“special daily the”) = P(“special the daily”) = P(“daily special the”) =P(“daily the special”)</strong> = 1 /13</li>
+<li><strong>P(anything else)</strong> = 0</li>
+</ul>
+<h1>Evaluating Language Models</h1>
+<p>One question, then, is: <strong>which of your robots performs better?</strong> Remember that “two cheeseburgers” and “cheeseburgers two” sound equally valid to an uninformed alien!</p>
+<p>So how should you evaluate your two robots to see which is the better language model to use?</p>
+<h2>Human Evaluation</h2>
+<p>One approach is a <strong>human evaluation approach</strong>. Because your robots are trying to imitate human language, why not ask humans how good their imitations are? So you stand outside Shake Shack, and every time a customer approaches, you ask your robot to generate an output and the customer to evaluate it. If the customer thinks it’s a good, human-like response, they’ll assign it a score of +1; otherwise, they’ll score it 0.</p>
+<p>For example:</p>
+<ul>
+<li>At the approach of the first customer: Robot A and Robot B both say “two cheeseburgers”. The customer thinks this is a very human response, so scores both of these as 1 (human-like). <strong>A: 1.0, B: 1.0.</strong></li>
+<li>With the second customer: Robot A says “fries” (score: 1), while Robot B says “cheeseburgers two” (score: 0). <strong>A: 1.0, B: 0.0.</strong></li>
+<li>With the third customer: Robot A says “fries” (score: 1), while Robot B says “daily the special” (score: 0). <strong>A: 1.0, B: 0.‍0.</strong></li>
+</ul>
+<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b4552146ed445c61dceba_Frame%20233.png"><img alt="One way to measure the quality of a language model is by asking human judges." src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b4552146ed445c61dceba_Frame%20233.png"></a></p>
+<p>Thus, Robot A would have an average score of (1.0 + 1.0 + 1.0) / 3 = 1.0, while Robot B would have an average score of (1.0 + 0.0 + 0.0) / 3 = 0.333. When evaluated by humans, Robot A is superior!</p>
+<h2>Task-Specific Evaluation</h2>
+<p>Another approach would be to evaluate the outputs against a <strong>downstream, real-world task</strong>. In our alien situation, your goal is to get food from Shake Shack, so you could measure whether or not your robots help you achieve that goal.</p>
+<p>For example:</p>
+<ul>
+<li>Robot A goes up to the counter. When the cashier asks “What would you like to order today?”, it outputs “two cheeseburgers”. The cashier understands and gives him two cheeseburgers. Success! <strong>A: 1.0.</strong></li>
+<li>Robot A goes up to the counter again. This time, it says “fries”. The cashier understands and gives him a fresh bag of fries. Success again! <strong>A: 1.0.</strong></li>
+<li>Next, Robot B goes up to the counter and says “cheeseburgers two”. The cashier doesn’t understand, so gives him nothing. Failure! <strong>B: 0.0.</strong></li>
+<li>Robot B tries again with “the daily special”. The cashier understands this time, so gives him the Tuesday Taco. Success! <strong>B: 1.0.</strong>
+‍</li>
+</ul>
+<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b46e5a9fbcb5ac4030fa3_Frame%20235.png"><img alt="In this task-based evaluation, the better language model leads to actual food." src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b46e5a9fbcb5ac4030fa3_Frame%20235.png"></a></p>
+<p>So under this evaluation method, Robot A scores (1.0 + 1.0) / 2 = 1.0, while Robot B scores (0.0 + 1.0) / 2 = 0.5. Again, we find that Robot A’s language model is superior.</p>
+<h2>Intrinsic Evaluation and Perplexity</h2>
+<p>Human evaluations and task-based evaluations are often the most robust way to measure your robots’ performance. But sometimes you want a faster and dirtier way of comparing language models; maybe you don’t have the means to get humans to score your robots’ output, and you can’t risk blowing your cover as an alien with a bad response at Shake Shack.</p>
+<p>This is where <strong>intrinsic evaluations</strong> come into play. One type of intrinsic evaluation works by measuring how <strong><a href="https://en.wikipedia.org/wiki/Perplexity">perplexed</a></strong> your robots are when they encounter responses by Shake Shack customers.</p>
+<p>For example, imagine that as part of their training, Robot A and Robot B hear only a single sentence: “two cheeseburgers and a coke”. The next day, they hear someone say “a coke and two cheeseburgers”. Robot B isn’t surprised at all to hear this response — after all, it ignores the order of words, and so it thinks that “two cheeseburgers and a coke” and “a coke and two cheeseburgers” are equivalent. However, Robot A is very perplexed since to it, “two cheeseburgers and a coke” and “a coke and two cheeseburgers” are as different as “two cheeseburgers” and “cheeseburgers two”.</p>
+<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b476244917a614eb05bf5_CleanShot%202021-11-09%20at%2020.15.08%402x.png"><img alt="The better language model is less perplexed." src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b476244917a614eb05bf5_CleanShot%202021-11-09%20at%2020.15.08%402x.png"></a></p>
+<p>Lower perplexity means a better language model, so in this example, Robot B finally beats Robot A!</p>
+<p>This scenario also shows why language model evaluation is difficult: which language model appears better depends highly on your evaluation methods and your goals.</p>
+<h1>Summary</h1>
+<p>In summary, this post provided an overview of a couple key concepts surrounding language models:</p>
+<ul>
+<li>First, we defined a <strong>language model</strong> as an algorithm that scores how “human” a sentence is. (More formally, a language model maps pieces of texts to probabilities.)</li>
+<li>We described a way to <em>train</em> language models: by observing language and turning these observations into probabilities.</li>
+<li>We discussed a couple approaches to evaluating the quality of language models: <strong>human evaluation</strong> (did the robot responses sound natural to a human?), <strong>downstream tasks</strong> (did the robot responses lead to actual food?), and <strong>intrinsic evaluations</strong> (how perplexed were the robots by the human utterances?).</li>
+</ul>
+<p>In future posts, we’ll dive into the mathematics and science behind these concepts. If you enjoyed this post, follow us on Twitter at <a href="https://twitter.com/@HelloSurgeAI">@HelloSurgeAI</a>! And if you need a high-quality data labeling platform and workforce, used by top AI companies and research labs around the world, reach out to us at <a href="https://www.surgehq.ai">Surge AI</a>.</p>
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
                         <h1 class="entry-title"><a href="./2020/11/30/surge-ai-a-new-data-labeling-platform-and-workforce-for-nlp/">Surge AI: A New Data Labeling Platform and Workforce for NLP</a></h1>
 <div class="post-info">
 
@@ -4717,109 +4829,6 @@
   </div>  
 
                     </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="./2011/05/01/unsupervised-language-detection-algorithms/">Filtering for English Tweets: Unsupervised Language Detection on Twitter</a></h1>
-<div class="post-info">
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p>(See a demo <a href="http://babel-fett.heroku.com/">here</a>.)</p>
-
-  <p>While working on a Twitter sentiment analysis project, I ran into the problem of needing to filter out all non-English tweets. (Asking the Twitter API for English-only tweets doesn&#8217;t seem to work, as it nonetheless returns tweets in Spanish, Portuguese, Dutch, Russian, and a couple other languages.)</p>
-
-  <p>Since I didn&#8217;t have any labeled data, I thought it would be fun to build an <strong>unsupervised</strong> language classifier. In particular, using an EM algorithm to build a naive Bayes model of English vs. non-English n-gram probabilities turned out to work quite well, so here&#8217;s a description.</p>
-
-  <h1>EM Algorithm</h1>
-
-  <p>Let&#8217;s recall the naive Bayes algorithm: given a tweet (a set of <em>character</em> n-grams), we estimate its language to be the language $L$ that maximizes</p>
-
-  <p>$$P(language = L | ngrams) \propto P(ngrams | language = L) P(language = L)$$</p>
-
-  <p>Thus, we need to estimate $P(ngram | language = L)$ and $P(language = L)$.</p>
-
-  <p>This would be easy <strong>if we knew the language of each tweet</strong>, since we could estimate</p>
-
-  <ul>
-  <li>$P(xyz| language = English)$ as #(number of times &#8220;xyz&#8221; is a trigram in the English tweets) / #(total trigrams in the English tweets)</li>
-  <li>$P(language = English)$ as the proportion of English tweets.</li>
-  </ul>
-
-
-  <p>Or, it would also be easy <strong>if we knew the n-gram probabilities for each language</strong>, since we could use Bayes&#8217; theorem to compute the language <em>probabilities</em> for each tweet, and then take a weighted variant of the previous paragraph.</p>
-
-  <p><strong>The problem is that we know neither of these.</strong> So what the EM algorithm says is that that we can simply <strong>guess</strong>:</p>
-
-  <ul>
-  <li>Pretend we know the language of each tweet (by randomly assigning them at the beginning).</li>
-  <li>Using this guess, we can compute the n-gram probabilities for each language.</li>
-  <li>Using the n-gram probabilities for each language, we can recompute the language probabilities of each tweet.</li>
-  <li>Using these recomputed language probabilities, we can recompute the n-gram probabilities.</li>
-  <li>And so on, recomputing the language probabilities and n-gram probabilities over and over. While our guesses will be off in the beginning, the probabilities will eventually converge to (locally) minimize the likelihood. (In my tests, my language detector would sometimes correctly converge to an English detector, and sometimes it would converge to an English-and-Dutch detector.)</li>
-  </ul>
-
-
-  <h2>EM Analogy for the Layman</h2>
-
-  <p>Why does this work? Suppose you suddenly move to New York, and you want a way to differentiate between tourists and New Yorkers based on their activities. Initially, you don&#8217;t know who&#8217;s a tourist and who&#8217;s a New Yorker, and you don&#8217;t know which are touristy activities and which are not. So you randomly place people into two groups A and B. (You randomly assign all tweets to a language)</p>
-
-  <p>Now, given all the people in group A, you notice that a large number of them visit the Statue of Liberty; similarly, you notice that a large number of people in group B walk really quickly. (You notice that one set of words often has the n-gram &#8220;ing&#8221;, and that another set of words often has the n-gram &#8220;ias&#8221;; that is, you fix the language probabilities for each tweet, and recompute the n-gram probabilities for each language.)</p>
-
-  <p>So you start to put people visiting the Statue of Liberty in group A, and you start to put fast walkers in group B. (You fix the n-gram probabilities for each language, and recompute the language probabilities for each tweet.)</p>
-
-  <p>With your new A and B groups, you notice more differentiating factors: group A people tend to carry along cameras, and group B people tend to be more finance-savvy.</p>
-
-  <p>So you start to put camera-carrying folks in group A, and finance-savvy folks in group B.</p>
-
-  <p>And so on. Eventually, you settle on two groups of people and differentiating activities: people who walk slowly and visit the Statue of Liberty, and busy-looking people who walk fast and don&#8217;t visit. Assuming there are more native New Yorkers than tourists, you can then guess that the natives are the larger group.</p>
-
-  <h1>Results</h1>
-
-  <p>I wrote some Ruby code to implement the above algorithm, and trained it on half a million tweets, using English and &#8220;not English&#8221; as my two languages. The results looked surprisingly good from just eyeballing:</p>
-
-  <p><a href="https://img.skitch.com/20110303-qfrnb8gstgheh4xech4iutfskd.jpg"><img src="https://img.skitch.com/20110303-qfrnb8gstgheh4xech4iutfskd.jpg" alt="Example Results" /></a></p>
-
-  <p>But in order to get some hard metrics and to tune parameters (e.g., n-gram size), I needed a labeled dataset. So I pulled a set of English-language and Spanish-language documents from Project Gutenberg, and split them to form training and test sets (the training set consisted of 2000 lines of English and 1000 lines of Spanish, and  1000 lines of English and 1000 lines of Spanish for the test set).</p>
-
-  <p>Trained on bigrams, the detector resulted in:</p>
-
-  <ul>
-  <li>991 true positives (English lines correctly classified as English)</li>
-  <li>9 false negatives (English lines incorrectly classified as Spanish</li>
-  <li>11 false positives (Spanish lines incorrectly classified as English)</li>
-  <li>989 true negatives (Spanish lines correctly classified as English)</li>
-  </ul>
-
-
-  <p>for a precision of 0.989 and a recall of 0.991.</p>
-
-  <p>Trained on trigrams, the detector resulted in:</p>
-
-  <ul>
-  <li>992 true positives</li>
-  <li>8 false negatives</li>
-  <li>10 false positives</li>
-  <li>990 true negatives</li>
-  </ul>
-
-
-  <p>for a precision of 0.990 and a recall of 0.992.</p>
-
-  <p>Also, when I looked at the sentences the detector was making errors on, I saw that they almost always consisted of only one or two words (e.g., the incorrectly classified sentences were lines like &#8220;inmortal&#8221;, &#8220;autumn&#8221;, and &#8220;salir&#8221;). So the detector pretty much never made a mistake on a normal sentence!</p>
-
-  <h1>Code/Demo</h1>
-
-  <p>I put the code on <a href="https://github.com/echen/unsupervised-language-identification">my Github account</a>, and a quick <a href="http://babel-fett.heroku.com/">demo app</a>, trained on trigrams from tweets with lang=&#8221;en&#8221; according to the Twitter API, is <a href="http://babel-fett.heroku.com/">here</a>.</p>
-  </div>
-
-                    </article>
  
 <div class="paginator">
     <div class="navButton">Page 1 / 2</div>
@@ -4843,7 +4852,7 @@
             </p>
             <br />
             <p>
-              Need obsessively high-quality human-powered data fast? Reach out!</a> We help top AI companies like OpenAI, Amazon, and Airbnb create human-labeled datasets to train and measure their AI.
+              Need obsessively high-quality human-powered data fast? Reach out!</a> We help top AI companies like OpenAI, Amazon, and Airbnb create powreful human-labeled datasets to train and measure their AI.
 	          </p>
             <br />
             <p>
@@ -4863,6 +4872,7 @@
 
           <div id="recent_posts">
               <h3>Recent Posts</h3>
+                <a style="font-size: 0.9em" href="./2021/11/21/a-visual-laymans-introduction-to-language-models-in-nlp/">A Visual, Layman's Introduction to Language Models in NLP  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2020/11/30/surge-ai-a-new-data-labeling-platform-and-workforce-for-nlp/">Surge AI: A New Data Labeling Platform and Workforce for NLP  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2017/05/30/exploring-lstms/">Exploring LSTMs  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
@@ -4893,6 +4903,9 @@
                 <a style="font-size: 0.9em" href="./2011/03/14/laymans-introduction-to-random-forests/">Layman's Introduction to Random Forests  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2011/03/14/netflix-prize-summary-factorization-meets-the-neighborhood/">Netflix Prize Summary: Factorization Meets the Neighborhood  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2011/03/14/netflix-prize-summary-scalable-collaborative-filtering-with-jointly-derived-neighborhood-interpolation-weights/">Netflix Prize Summary: Scalable Collaborative Filtering with Jointly Derived Neighborhood Interpolation Weights  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2011/03/14/prime-numbers-and-the-riemann-zeta-function/">Prime Numbers and the Riemann Zeta Function  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2011/03/14/topological-combinatorics-and-the-evasiveness-conjecture/">Topological Combinatorics and the Evasiveness Conjecture  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2011/02/15/item-to-item-collaborative-filtering-with-amazons-recommendation-system/">Item-to-Item Collaborative Filtering with Amazon's Recommendation System  </a><br /><br />
           </div>
         </div>
 

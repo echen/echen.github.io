@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>A Visual, Layman's Introduction to Language Models in NLP</title>
+        <meta charset="utf-8" />
+	      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="../../../../theme/css/main.css" type="text/css" />
+        <link href="http://blog.echen.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Edwin Chen's Blog Atom Feed" />
+        <link href="http://blog.echen.me/feeds/all.rss.xml" type="application/rss+xml" rel="alternate" title="Edwin Chen's Blog RSS Feed" />
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
+
+        <!--[if IE]>
+                <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+        <!--[if lte IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="../../../../css/ie.css"/>
+                <script src="../../../../js/IE8.js" type="text/javascript"></script><![endif]-->
+
+        <!--[if lt IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="../../../../css/ie6.css"/><![endif]-->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js" type="text/javascript"></script>
+
+
+</head>
+
+<body id="index" class="home">
+
+<section id="content" >
+    <div class="body">
+      <article>
+        <header>
+          <h1 class="entry-title">
+            <a href="../../../../2021/11/21/a-visual-laymans-introduction-to-language-models-in-nlp/" rel="bookmark"
+               title="Permalink to A Visual, Layman's Introduction to Language Models in NLP">A Visual, Layman's Introduction to Language Models in NLP</a></h1>
+
+        </header>
+
+        <div class="entry-content">
+<div class="post-info">
+
+</div><!-- /.post-info -->          <p><em>(This is a <a href="https://www.surgehq.ai/blog/an-introduction-to-language-models-in-nlp-part-1-intuition">crosspost</a> from the official Surge AI <a href="https://www.surgehq.ai/blog">blog</a>, where we're building the greatest source of NLP content. If you need help with data labeling and NLP, <a href="https://www.surgehq.ai/contact">say hello</a>!)</em></p>
+<h1>Introduction</h1>
+<p>Language models are a core component of NLP systems, from machine translation to speech recognition. Intuitively, you can think of language models as answering: <em>“How English is this phrase?”</em></p>
+<p>Take, for example, these two sentences: <em>“the cat runs up the tree”</em> and <em>“cat up the runs tree the”</em>. A good language model should assign a higher probability to the former since it’s the more “English”-sounding one. This scoring can then be used in dozens of downstream applications.</p>
+<p>For example, speech recognition systems need to disambiguate between phonetically similar phrases like <em>“recognize speech”</em> and <em>“wreck a nice beach”</em>, and a language model can help pick the one that sounds the most natural in a given context. For instance, a speech recognition system transcribing a lecture on audio systems should likely prefer <em>“recognize speech”</em>, whereas a news flash about an extraterrestrial invasion of Miami should likely prefer <em>“wreck a nice beach”</em>.</p>
+<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b417456edd81c9874defc_CleanShot%202021-11-09%20at%2019.47.32%402x.png"><img alt="Wrecking a nice beach" src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b417456edd81c9874defc_CleanShot%202021-11-09%20at%2019.47.32%402x.png"></a></p>
+<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b414d60afbcf2d9e29770_CleanShot%202021-11-09%20at%2019.47.18%402x.png"><img alt="Recognizing speech" src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b414d60afbcf2d9e29770_CleanShot%202021-11-09%20at%2019.47.18%402x.png"></a></p>
+<p>Similarly, a French-English machine translation system could leverage a language model to rank translation candidates according to their fluency. If two translations for <em>“je t’aime”</em> are <em>“I you love”</em> and <em>“I love you”</em>, an English language model would hopefully pick the latter as the better translation.</p>
+<p>So how do language models work?</p>
+<h1>Intuition: Thinking Like an Alien</h1>
+<p>Imagine you’re an alien whose spaceship crashes into Earth. You’re far from home, and you need to blend in until the rescue team arrives. You want to pick up some food, maybe watch Squid Game to learn about human culture, and so you need to learn how to speak like an earthling first.</p>
+<p>How do you do this? You turn to your two robot assistants. They’re advanced probability machines, and you hope that they can also figure out human language:</p>
+<p>— — — — — — — — — —
+<strong>You:</strong> <em>“Hey, robots.”</em>
+<strong>Robots:</strong> <em>“Beep”</em>
+<strong>You:</strong> <em>“Okay, listen up. I want to buy a burger. Now, when I get to the counter, I want each of you to come up with a couple of sentences you think I could say, along with your best guess of the probability that a human would say it.</em>
+<strong>Robots:</strong> <em>“Beep?”</em>
+<strong>You:</strong> <em>“Yes, you have to.”</em>
+— — — — — — — — — —</p>
+<p>You’re hoping your robots will:</p>
+<ul>
+<li>Assign a high probability to responses that lead to delicious food. (For example: “Two cheeseburgers and an order of fries”)</li>
+<li>Assign a low probability to unintelligible responses that lead to fear, confusion, and a call to the Men in Black. (For example: “Fries Santa cheese dirt hello”)</li>
+</ul>
+<p>In other words, you want your robot assistants to act as <strong>language models</strong>: given any piece of language as input, they’ll score how “human” it sounds.</p>
+<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b43f61cbc9f00ba0aeb77_Frame%20230.png"><img alt="A language model scoring two responses" src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b43f61cbc9f00ba0aeb77_Frame%20230.png"></a></p>
+<p>Of course, since your robots haven’t learned English yet, they initially won’t be very good. “Two cheeseburgers and an order of fries” sounds just as human to them as “fries Santa cheese dirt hello,” or any other mishmash of noise.</p>
+<p>So, to improve your two robots, the three of you spend an hour observing customers at Shake Shack. Over that hour, five customers arrive. Their responses to the cashier’s prompt are:</p>
+<ul>
+<li><strong>Customer 1:</strong> “Two cheeseburgers”</li>
+<li><strong>Customer 2:</strong> “Two cheeseburgers”</li>
+<li><strong>Customer 3:</strong> “Two cheeseburgers”</li>
+<li><strong>Customer 4:</strong> “Fries”</li>
+<li><strong>Customer 5:</strong> “The daily special”</li>
+</ul>
+<p>What do your robots learn from these 5 pieces of data?</p>
+<p><strong>Robot A</strong> comes from your home planet, a world of elite scientists who’ve mastered the mathematics of spaceflight, and it takes a purely probabilistic approach. If you ask it to score every potential response to “What would you like to order today?”, it would say:</p>
+<ul>
+<li><strong>P(“two cheeseburgers”)</strong> = 3 / 5 (since “two cheeseburgers” was uttered in 3 out of the 5 interactions)</li>
+<li><strong>P(“fries”)</strong> = 1 / 5 (since “fries” was uttered in 1 out of the 5 interactions)</li>
+<li><strong>P(“the daily special”)</strong> = 1/5 (since “the daily special” was uttered in 1 out of the 5 interactions)</li>
+<li><strong>P(anything else)</strong> = 0</li>
+</ul>
+<p><strong>Robot B</strong>, in contrast, comes from a universe where the dimensions of space are warped, so it ignores the order of words. For example, it thinks “two cheeseburgers” and “cheeseburgers two” mean the same thing. (This is analogous to “bag-of-words” models like Naive Bayes.) So it’s as if it heard the following:</p>
+<ul>
+<li><strong>Customer 1:</strong> “two cheeseburgers”, “cheeseburgers two”‍</li>
+<li><strong>Customer 2:</strong> “two cheeseburgers”, “cheeseburgers two”‍</li>
+<li><strong>Customer 3:</strong> “two cheeseburgers”, “cheeseburgers two”‍</li>
+<li><strong>Customer 4:</strong> “fries”‍</li>
+<li><strong>Customer 5:</strong> “the daily special”, “the special daily”, “daily the special”, “daily special the”, “special the daily”, “special daily the”</li>
+</ul>
+<p>So if you asked it to score every potential response to “What would you like to order today?” it would assign these probabilities:</p>
+<ul>
+<li><strong>P(“two cheeseburgers”) = P(“cheeseburgers two”)</strong> = 3 / 13</li>
+<li><strong>P(“fries”)</strong> = 1 / 13</li>
+<li><strong>P(“the daily special”) = P(“the special daily”) = P(“special daily the”) = P(“special the daily”) = P(“daily special the”) =P(“daily the special”)</strong> = 1 /13</li>
+<li><strong>P(anything else)</strong> = 0</li>
+</ul>
+<h1>Evaluating Language Models</h1>
+<p>One question, then, is: <strong>which of your robots performs better?</strong> Remember that “two cheeseburgers” and “cheeseburgers two” sound equally valid to an uninformed alien!</p>
+<p>So how should you evaluate your two robots to see which is the better language model to use?</p>
+<h2>Human Evaluation</h2>
+<p>One approach is a <strong>human evaluation approach</strong>. Because your robots are trying to imitate human language, why not ask humans how good their imitations are? So you stand outside Shake Shack, and every time a customer approaches, you ask your robot to generate an output and the customer to evaluate it. If the customer thinks it’s a good, human-like response, they’ll assign it a score of +1; otherwise, they’ll score it 0.</p>
+<p>For example:</p>
+<ul>
+<li>At the approach of the first customer: Robot A and Robot B both say “two cheeseburgers”. The customer thinks this is a very human response, so scores both of these as 1 (human-like). <strong>A: 1.0, B: 1.0.</strong></li>
+<li>With the second customer: Robot A says “fries” (score: 1), while Robot B says “cheeseburgers two” (score: 0). <strong>A: 1.0, B: 0.0.</strong></li>
+<li>With the third customer: Robot A says “fries” (score: 1), while Robot B says “daily the special” (score: 0). <strong>A: 1.0, B: 0.‍0.</strong></li>
+</ul>
+<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b4552146ed445c61dceba_Frame%20233.png"><img alt="One way to measure the quality of a language model is by asking human judges." src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b4552146ed445c61dceba_Frame%20233.png"></a></p>
+<p>Thus, Robot A would have an average score of (1.0 + 1.0 + 1.0) / 3 = 1.0, while Robot B would have an average score of (1.0 + 0.0 + 0.0) / 3 = 0.333. When evaluated by humans, Robot A is superior!</p>
+<h2>Task-Specific Evaluation</h2>
+<p>Another approach would be to evaluate the outputs against a <strong>downstream, real-world task</strong>. In our alien situation, your goal is to get food from Shake Shack, so you could measure whether or not your robots help you achieve that goal.</p>
+<p>For example:</p>
+<ul>
+<li>Robot A goes up to the counter. When the cashier asks “What would you like to order today?”, it outputs “two cheeseburgers”. The cashier understands and gives him two cheeseburgers. Success! <strong>A: 1.0.</strong></li>
+<li>Robot A goes up to the counter again. This time, it says “fries”. The cashier understands and gives him a fresh bag of fries. Success again! <strong>A: 1.0.</strong></li>
+<li>Next, Robot B goes up to the counter and says “cheeseburgers two”. The cashier doesn’t understand, so gives him nothing. Failure! <strong>B: 0.0.</strong></li>
+<li>Robot B tries again with “the daily special”. The cashier understands this time, so gives him the Tuesday Taco. Success! <strong>B: 1.0.</strong>
+‍</li>
+</ul>
+<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b46e5a9fbcb5ac4030fa3_Frame%20235.png"><img alt="In this task-based evaluation, the better language model leads to actual food." src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b46e5a9fbcb5ac4030fa3_Frame%20235.png"></a></p>
+<p>So under this evaluation method, Robot A scores (1.0 + 1.0) / 2 = 1.0, while Robot B scores (0.0 + 1.0) / 2 = 0.5. Again, we find that Robot A’s language model is superior.</p>
+<h2>Intrinsic Evaluation and Perplexity</h2>
+<p>Human evaluations and task-based evaluations are often the most robust way to measure your robots’ performance. But sometimes you want a faster and dirtier way of comparing language models; maybe you don’t have the means to get humans to score your robots’ output, and you can’t risk blowing your cover as an alien with a bad response at Shake Shack.</p>
+<p>This is where <strong>intrinsic evaluations</strong> come into play. One type of intrinsic evaluation works by measuring how <strong><a href="https://en.wikipedia.org/wiki/Perplexity">perplexed</a></strong> your robots are when they encounter responses by Shake Shack customers.</p>
+<p>For example, imagine that as part of their training, Robot A and Robot B hear only a single sentence: “two cheeseburgers and a coke”. The next day, they hear someone say “a coke and two cheeseburgers”. Robot B isn’t surprised at all to hear this response — after all, it ignores the order of words, and so it thinks that “two cheeseburgers and a coke” and “a coke and two cheeseburgers” are equivalent. However, Robot A is very perplexed since to it, “two cheeseburgers and a coke” and “a coke and two cheeseburgers” are as different as “two cheeseburgers” and “cheeseburgers two”.</p>
+<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b476244917a614eb05bf5_CleanShot%202021-11-09%20at%2020.15.08%402x.png"><img alt="The better language model is less perplexed." src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b476244917a614eb05bf5_CleanShot%202021-11-09%20at%2020.15.08%402x.png"></a></p>
+<p>Lower perplexity means a better language model, so in this example, Robot B finally beats Robot A!</p>
+<p>This scenario also shows why language model evaluation is difficult: which language model appears better depends highly on your evaluation methods and your goals.</p>
+<h1>Summary</h1>
+<p>In summary, this post provided an overview of a couple key concepts surrounding language models:</p>
+<ul>
+<li>First, we defined a <strong>language model</strong> as an algorithm that scores how “human” a sentence is. (More formally, a language model maps pieces of texts to probabilities.)</li>
+<li>We described a way to <em>train</em> language models: by observing language and turning these observations into probabilities.</li>
+<li>We discussed a couple approaches to evaluating the quality of language models: <strong>human evaluation</strong> (did the robot responses sound natural to a human?), <strong>downstream tasks</strong> (did the robot responses lead to actual food?), and <strong>intrinsic evaluations</strong> (how perplexed were the robots by the human utterances?).</li>
+</ul>
+<p>In future posts, we’ll dive into the mathematics and science behind these concepts. If you enjoyed this post, follow us on Twitter at <a href="https://twitter.com/@HelloSurgeAI">@HelloSurgeAI</a>! And if you need a high-quality data labeling platform and workforce, used by top AI companies and research labs around the world, reach out to us at <a href="https://www.surgehq.ai">Surge AI</a>.</p>
+        </div><!-- /.entry-content -->
+
+      </article>
+    </div>
+</section>
+
+	      <div class="LaunchyardDetail">
+	        <p>
+	          <a style="text-align: left" class="title" href="../../../../">Edwin Chen</a>
+	          <br/>
+
+	        </p>
+
+	        <div id="about" style="text-align: left !important">
+	          <p>
+	            Founder at <a href="https://www.surgehq.ai">Surge AI</a>. We're a team of engineers and researchers from Google, Facebook, Harvard, and MIT building a modern data labeling platform and workforce for NLP.
+            </p>
+            <br />
+            <p>
+              Need obsessively high-quality human-powered data fast? Reach out!</a> We help top AI companies like OpenAI, Amazon, and Airbnb create powreful human-labeled datasets to train and measure their AI.
+	          </p>
+            <br />
+            <p>
+              Former AI & engineering lead at Google, Facebook, Twitter, Dropbox, and MSR. Pure math, theoretical CS, and linguistics at MIT.
+            </p>
+            <br />
+	          <div style="text-align: center">
+              <a href="https://www.surgehq.ai">Surge AI</a><br />
+              <a href="https://www.twitter.com/@HelloSurgeAI">Surge AI's Twitter</a><br />
+              <a href="https://twitter.com/echen">Twitter</a><br/>
+              <a href="https://www.linkedin.com/in/edwinzchen">LinkedIn</a><br/>                 
+              <a href="https://github.com/echen">Github</a><br/>           
+              <a href="https://quora.com/edwin-chen-1">Quora</a><br />
+              <a href="mailto:hello[&aelig;]echen.me">Email</a><br/>
+            </div>
+          </div>
+
+          <div id="recent_posts">
+              <h3>Recent Posts</h3>
+                <a style="font-size: 0.9em" href="../../../../2021/11/21/a-visual-laymans-introduction-to-language-models-in-nlp/">A Visual, Layman's Introduction to Language Models in NLP  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2020/11/30/surge-ai-a-new-data-labeling-platform-and-workforce-for-nlp/">Surge AI: A New Data Labeling Platform and Workforce for NLP  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2017/05/30/exploring-lstms/">Exploring LSTMs  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/08/22/introduction-to-latent-dirichlet-allocation/">Introduction to Latent Dirichlet Allocation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/07/18/introduction-to-restricted-boltzmann-machines/">Introduction to Restricted Boltzmann Machines  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/06/27/topic-modeling-the-sarah-palin-emails/">Topic Modeling the Sarah Palin Emails  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/05/01/unsupervised-language-detection-algorithms/">Filtering for English Tweets: Unsupervised Language Detection on Twitter  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/04/27/choosing-a-machine-learning-classifier/">Choosing a Machine Learning Classifier  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/04/25/kickstarter-data-analysis-success-and-pricing/">Kickstarter Data Analysis: Success and Pricing  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/04/21/a-mathematical-introduction-to-least-angle-regression/">A Mathematical Introduction to Least Angle Regression  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/04/16/introduction-to-cointegration-and-pairs-trading/">Introduction to Cointegration and Pairs Trading  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/counting-clusters/">Counting Clusters  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/hacker-news-analysis/">Hacker News Analysis  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/laymans-introduction-to-measure-theory/">Layman's Introduction to Measure Theory  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/laymans-introduction-to-random-forests/">Layman's Introduction to Random Forests  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/netflix-prize-summary-factorization-meets-the-neighborhood/">Netflix Prize Summary: Factorization Meets the Neighborhood  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/netflix-prize-summary-scalable-collaborative-filtering-with-jointly-derived-neighborhood-interpolation-weights/">Netflix Prize Summary: Scalable Collaborative Filtering with Jointly Derived Neighborhood Interpolation Weights  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/prime-numbers-and-the-riemann-zeta-function/">Prime Numbers and the Riemann Zeta Function  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/topological-combinatorics-and-the-evasiveness-conjecture/">Topological Combinatorics and the Evasiveness Conjecture  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/02/15/item-to-item-collaborative-filtering-with-amazons-recommendation-system/">Item-to-Item Collaborative Filtering with Amazon's Recommendation System  </a><br /><br />
+          </div>
+        </div>
+
+
+        <section id="extras" >
+
+
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" >
+                <address id="about" class="vcard ">
+                Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
+                great advantage of <a href="http://python.org" target="_blank">Python</a>.
+
+                </address><!-- /#about -->
+
+
+
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

@@ -33,6 +33,109 @@
             <aside id="featured">
                 <div class="body">
                     <article>
+                        <h1 class="entry-title"><a href="../2011/05/01/unsupervised-language-detection-algorithms/">Filtering for English Tweets: Unsupervised Language Detection on Twitter</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p>(See a demo <a href="http://babel-fett.heroku.com/">here</a>.)</p>
+
+  <p>While working on a Twitter sentiment analysis project, I ran into the problem of needing to filter out all non-English tweets. (Asking the Twitter API for English-only tweets doesn&#8217;t seem to work, as it nonetheless returns tweets in Spanish, Portuguese, Dutch, Russian, and a couple other languages.)</p>
+
+  <p>Since I didn&#8217;t have any labeled data, I thought it would be fun to build an <strong>unsupervised</strong> language classifier. In particular, using an EM algorithm to build a naive Bayes model of English vs. non-English n-gram probabilities turned out to work quite well, so here&#8217;s a description.</p>
+
+  <h1>EM Algorithm</h1>
+
+  <p>Let&#8217;s recall the naive Bayes algorithm: given a tweet (a set of <em>character</em> n-grams), we estimate its language to be the language $L$ that maximizes</p>
+
+  <p>$$P(language = L | ngrams) \propto P(ngrams | language = L) P(language = L)$$</p>
+
+  <p>Thus, we need to estimate $P(ngram | language = L)$ and $P(language = L)$.</p>
+
+  <p>This would be easy <strong>if we knew the language of each tweet</strong>, since we could estimate</p>
+
+  <ul>
+  <li>$P(xyz| language = English)$ as #(number of times &#8220;xyz&#8221; is a trigram in the English tweets) / #(total trigrams in the English tweets)</li>
+  <li>$P(language = English)$ as the proportion of English tweets.</li>
+  </ul>
+
+
+  <p>Or, it would also be easy <strong>if we knew the n-gram probabilities for each language</strong>, since we could use Bayes&#8217; theorem to compute the language <em>probabilities</em> for each tweet, and then take a weighted variant of the previous paragraph.</p>
+
+  <p><strong>The problem is that we know neither of these.</strong> So what the EM algorithm says is that that we can simply <strong>guess</strong>:</p>
+
+  <ul>
+  <li>Pretend we know the language of each tweet (by randomly assigning them at the beginning).</li>
+  <li>Using this guess, we can compute the n-gram probabilities for each language.</li>
+  <li>Using the n-gram probabilities for each language, we can recompute the language probabilities of each tweet.</li>
+  <li>Using these recomputed language probabilities, we can recompute the n-gram probabilities.</li>
+  <li>And so on, recomputing the language probabilities and n-gram probabilities over and over. While our guesses will be off in the beginning, the probabilities will eventually converge to (locally) minimize the likelihood. (In my tests, my language detector would sometimes correctly converge to an English detector, and sometimes it would converge to an English-and-Dutch detector.)</li>
+  </ul>
+
+
+  <h2>EM Analogy for the Layman</h2>
+
+  <p>Why does this work? Suppose you suddenly move to New York, and you want a way to differentiate between tourists and New Yorkers based on their activities. Initially, you don&#8217;t know who&#8217;s a tourist and who&#8217;s a New Yorker, and you don&#8217;t know which are touristy activities and which are not. So you randomly place people into two groups A and B. (You randomly assign all tweets to a language)</p>
+
+  <p>Now, given all the people in group A, you notice that a large number of them visit the Statue of Liberty; similarly, you notice that a large number of people in group B walk really quickly. (You notice that one set of words often has the n-gram &#8220;ing&#8221;, and that another set of words often has the n-gram &#8220;ias&#8221;; that is, you fix the language probabilities for each tweet, and recompute the n-gram probabilities for each language.)</p>
+
+  <p>So you start to put people visiting the Statue of Liberty in group A, and you start to put fast walkers in group B. (You fix the n-gram probabilities for each language, and recompute the language probabilities for each tweet.)</p>
+
+  <p>With your new A and B groups, you notice more differentiating factors: group A people tend to carry along cameras, and group B people tend to be more finance-savvy.</p>
+
+  <p>So you start to put camera-carrying folks in group A, and finance-savvy folks in group B.</p>
+
+  <p>And so on. Eventually, you settle on two groups of people and differentiating activities: people who walk slowly and visit the Statue of Liberty, and busy-looking people who walk fast and don&#8217;t visit. Assuming there are more native New Yorkers than tourists, you can then guess that the natives are the larger group.</p>
+
+  <h1>Results</h1>
+
+  <p>I wrote some Ruby code to implement the above algorithm, and trained it on half a million tweets, using English and &#8220;not English&#8221; as my two languages. The results looked surprisingly good from just eyeballing:</p>
+
+  <p><a href="https://img.skitch.com/20110303-qfrnb8gstgheh4xech4iutfskd.jpg"><img src="https://img.skitch.com/20110303-qfrnb8gstgheh4xech4iutfskd.jpg" alt="Example Results" /></a></p>
+
+  <p>But in order to get some hard metrics and to tune parameters (e.g., n-gram size), I needed a labeled dataset. So I pulled a set of English-language and Spanish-language documents from Project Gutenberg, and split them to form training and test sets (the training set consisted of 2000 lines of English and 1000 lines of Spanish, and  1000 lines of English and 1000 lines of Spanish for the test set).</p>
+
+  <p>Trained on bigrams, the detector resulted in:</p>
+
+  <ul>
+  <li>991 true positives (English lines correctly classified as English)</li>
+  <li>9 false negatives (English lines incorrectly classified as Spanish</li>
+  <li>11 false positives (Spanish lines incorrectly classified as English)</li>
+  <li>989 true negatives (Spanish lines correctly classified as English)</li>
+  </ul>
+
+
+  <p>for a precision of 0.989 and a recall of 0.991.</p>
+
+  <p>Trained on trigrams, the detector resulted in:</p>
+
+  <ul>
+  <li>992 true positives</li>
+  <li>8 false negatives</li>
+  <li>10 false positives</li>
+  <li>990 true negatives</li>
+  </ul>
+
+
+  <p>for a precision of 0.990 and a recall of 0.992.</p>
+
+  <p>Also, when I looked at the sentences the detector was making errors on, I saw that they almost always consisted of only one or two words (e.g., the incorrectly classified sentences were lines like &#8220;inmortal&#8221;, &#8220;autumn&#8221;, and &#8220;salir&#8221;). So the detector pretty much never made a mistake on a normal sentence!</p>
+
+  <h1>Code/Demo</h1>
+
+  <p>I put the code on <a href="https://github.com/echen/unsupervised-language-identification">my Github account</a>, and a quick <a href="http://babel-fett.heroku.com/">demo app</a>, trained on trigrams from tweets with lang=&#8221;en&#8221; according to the Twitter API, is <a href="http://babel-fett.heroku.com/">here</a>.</p>
+  </div>
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
                         <h1 class="entry-title"><a href="../2011/04/27/choosing-a-machine-learning-classifier/">Choosing a Machine Learning Classifier</a></h1>
 <div class="post-info">
 
@@ -1020,7 +1123,7 @@
             </p>
             <br />
             <p>
-              Need obsessively high-quality human-powered data fast? Reach out!</a> We help top AI companies like OpenAI, Amazon, and Airbnb create human-labeled datasets to train and measure their AI.
+              Need obsessively high-quality human-powered data fast? Reach out!</a> We help top AI companies like OpenAI, Amazon, and Airbnb create powreful human-labeled datasets to train and measure their AI.
 	          </p>
             <br />
             <p>
@@ -1040,6 +1143,7 @@
 
           <div id="recent_posts">
               <h3>Recent Posts</h3>
+                <a style="font-size: 0.9em" href="../2021/11/21/a-visual-laymans-introduction-to-language-models-in-nlp/">A Visual, Layman's Introduction to Language Models in NLP  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2020/11/30/surge-ai-a-new-data-labeling-platform-and-workforce-for-nlp/">Surge AI: A New Data Labeling Platform and Workforce for NLP  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2017/05/30/exploring-lstms/">Exploring LSTMs  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
@@ -1070,6 +1174,9 @@
                 <a style="font-size: 0.9em" href="../2011/03/14/laymans-introduction-to-random-forests/">Layman's Introduction to Random Forests  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2011/03/14/netflix-prize-summary-factorization-meets-the-neighborhood/">Netflix Prize Summary: Factorization Meets the Neighborhood  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2011/03/14/netflix-prize-summary-scalable-collaborative-filtering-with-jointly-derived-neighborhood-interpolation-weights/">Netflix Prize Summary: Scalable Collaborative Filtering with Jointly Derived Neighborhood Interpolation Weights  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2011/03/14/prime-numbers-and-the-riemann-zeta-function/">Prime Numbers and the Riemann Zeta Function  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2011/03/14/topological-combinatorics-and-the-evasiveness-conjecture/">Topological Combinatorics and the Evasiveness Conjecture  </a><br /><br />
+                <a style="font-size: 0.9em" href="../2011/02/15/item-to-item-collaborative-filtering-with-amazons-recommendation-system/">Item-to-Item Collaborative Filtering with Amazon's Recommendation System  </a><br /><br />
           </div>
         </div>
 
