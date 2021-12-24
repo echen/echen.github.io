@@ -33,6 +33,97 @@
             <aside id="featured">
                 <div class="body">
                     <article>
+                        <h1 class="entry-title"><a href="../2021/12/23/a-laymans-introduction-to-perplexity-in-nlp/">A Layman's Introduction to Perplexity in NLP</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info --><p><em>(This is a <a href="https://www.surgehq.ai/blog/how-good-is-your-chatbot-an-introduction-to-perplexity-in-nlp">crosspost</a> from the official Surge AI <a href="https://www.surgehq.ai/blog">blog</a>, where we're building the greatest source of NLP content. If you need help with data labeling and NLP, <a href="https://www.surgehq.ai/contact">say hello</a>!)</em></p>
+<h1>Introduction</h1>
+<p>New, state-of-the-art language models like DeepMind’s <a href="https://www.surgehq.ai/blog/how-good-is-your-chatbot-an-introduction-to-perplexity-in-nlp">Gopher</a>, Microsoft’s <a href="https://www.microsoft.com/en-us/research/blog/using-deepspeed-and-megatron-to-train-m[%E2%80%A6]-worlds-largest-and-most-powerful-generative-language-model/">Megatron</a>, and OpenAI’s GPT-3 are driving a wave of innovation in NLP. How do you measure the performance of these language models to see how good they are? In a <a href="https://www.surgehq.ai/blog/an-introduction-to-language-models-in-nlp-part-1-intuition">previous post</a>, we gave an overview of different language model evaluation metrics. This post dives more deeply into one of the most popular: a metric known as <strong>perplexity</strong>.</p>
+<h1>A chore</h1>
+<p>Imagine you’re trying to build a chatbot that helps home cooks autocomplete their grocery shopping lists based on popular flavor combinations from social media. Your goal is to let users type in what they have in their fridge, like “chicken, carrots,” then list the five or six ingredients that go best with those flavors. You’ve already scraped thousands of recipe sites for ingredient lists, and now you just need to choose the best NLP model to predict which words appear together most often. Easy, right?</p>
+<p>Well, not exactly. The gold standard for checking the performance of a model is <strong>extrinsic evaluation</strong>: measuring its final performance on a real-world task. In this case, that might mean letting your model generate a dataset of a thousand new recipes, then asking a few hundred data labelers to rate how tasty they sound.</p>
+<p>Unfortunately, you don’t have one dataset, you have one dataset for every variation of every parameter of every model you want to test. Even simple comparisons of the same basic model can lead to a combinatorial explosion: 3 different optimization functions with 5 different learning rates and 4 different batch sizes equals 120 different datasets, all with hundreds of thousands of individual data points. How can you quickly narrow down which models are the most promising to fully evaluate?</p>
+<p>Enter <strong>intrinsic evaluation</strong>: finding some property of a model that estimates the model’s quality independent of the specific tasks its used to perform. Specifically, enter <strong>perplexity</strong>, a metric that quantifies how uncertain a model is about the predictions it makes. Low perplexity only guarantees a model is confident, not accurate, but it often correlates well with the model’s final real-world performance, and it can be quickly calculated using just the probability distribution the model learns from the training dataset. </p>
+<p>In this week’s post, we’ll look at how perplexity is calculated, what it means intuitively for a model’s performance, and the pitfalls of using perplexity for comparisons across different datasets and models.</p>
+<h1>Calculating perplexity</h1>
+<p>To understand how perplexity is calculated, let’s start with a very simple version of the recipe training dataset that only has four short ingredient lists:</p>
+<ol>
+<li>chicken, butter, pears</li>
+<li>chicken, butter, chili</li>
+<li>lemon, pears, shrimp</li>
+<li>chili, shrimp, lemon</li>
+</ol>
+<p>In machine learning terms, these sentences are a language with a vocabulary size of 6 (because there are a total of 6 unique words). A language model is just a function trained on a specific language that predicts the probability of a certain word appearing given the words that appeared around it. </p>
+<p>One of the simplest language models is a unigram model, which looks at words one at a time assuming they’re statistically independent. In other words, it returns the relative frequency that each word appears in the training data. Here’s a unigram model for the dataset above, which is especially simple because every word appears the same number of times:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b111f496eeb49dd0f37f3d_1.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b111f496eeb49dd0f37f3d_1.png"></a></p>
+<p>It’s pretty obvious this isn’t a very good model. No matter which ingredients you say you have, it will just pick any new ingredient at random with equal probability, so you might as well be rolling a fair die to choose. Let’s quantify exactly how bad this is.</p>
+<p>We’re going to start by calculating how surprised our model is when it sees a single specific word like “chicken.” Intuitively, the more probable an event is, the less surprising it is. If you’re certain something is impossible - if its probability is 0 - then you would be infinitely surprised if it happened.  Similarly, if something was guaranteed to happen with probability 1, your surprise when it happened would be 0. </p>
+<p>Conveniently, there’s already a simple function that maps 0 → ∞ and 1 → 0: log(1/x). If we know the probability of a given event, we can express our surprise when it happens as:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b111f496eeb49dd0f37f3d_1.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b111f496eeb49dd0f37f3d_1.png"></a></p>
+<p>As you may remember from algebra class, we can rewrite this as:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1131eb6bda9672076d7ff_3.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1131eb6bda9672076d7ff_3.png"></a></p>
+<p>In information theory, this term - the negative log of the probability of an event occurring - is called the <strong>surprisal</strong>.</p>
+<p>Our unigram model says that the probability of the word “chicken” appearing in a new sentence from this language is 0.16, so the surprisal of that event outcome is -log(0.16) = 2.64.</p>
+<p>‍
+If surprisal lets us quantify how unlikely a single outcome of a possible event is, <strong>entropy</strong> does the same thing for the event as a whole. It’s the expected value of the surprisal across every possible outcome - the sum of the surprisal of every outcome multiplied by the probability it happens:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1136977d0bf7193978314_4.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1136977d0bf7193978314_4.png"></a></p>
+<p>In our dataset, all six possible event outcomes have the same probability (⅙) and surprisal (2.64), so the entropy is just:  ⅙ * 2.64 + ⅙ * 2.64 + ⅙ * 2.64 + ⅙ * 2.64 + ⅙ * 2.64 + ⅙ * 2.64 = 6 * (⅙ * 2.64) = 2.64.</p>
+<p>Once we’ve gotten this far, calculating the <strong>perplexity</strong> is easy - it’s just the exponential of the entropy:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b113a4de7a8983b9279463_5.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b113a4de7a8983b9279463_5.png"></a></p>
+<p>The entropy for the dataset above is 2.64, so the perplexity is 2^2.64 = 6.</p>
+<p>You may notice something odd about this answer: it’s the vocabulary size of our language! To put it another way, it’s the number of possible words you could choose at each position in a sentence in this language, also known as the <strong>branching factor</strong>.</p>
+<p>This may not surprise you if you’re already familiar with the intuitive definition for entropy: the number of bits needed to most efficiently represent which event from a probability distribution actually happened. If the entropy N is the number of bits you have, 2ⁿ is the number of choices those bits can represent. This means we can say our model’s perplexity of 6 means it’s “as confused” as if it had to randomly choose between six different words - which is exactly what’s happening.</p>
+<p>Now imagine that we keep using the same dumb unigram model, but our dataset isn’t quite as uniform:</p>
+<ol>
+<li>chicken, butter, pears</li>
+<li>chicken, butter, lemon</li>
+<li>chicken, lemon, pears</li>
+<li>chili, shrimp, lemon</li>
+</ol>
+<p>Here’s the probability distribution our model returns after training on this dataset (the brighter a cell’s color, the more probable the event):</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11484a0f3e67d3479b0eb_6.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11484a0f3e67d3479b0eb_6.png"></a></p>
+<p>Intuitively, this means it just got easier to predict what any given word in a sentence will be - now we know it’s more likely to be “chicken” than “chili.” Let’s see how that affects each word’s surprisal:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1149d082d800daa893774_7.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1149d082d800daa893774_7.png"></a></p>
+<p>The new value for our model’s entropy is:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b114e209f1a244ff809eba_8.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b114e209f1a244ff809eba_8.png"></a></p>
+<p>And so the new perplexity is 2^2.38 = 5.2. Now our new and better model is only as confused as if it was randomly choosing between 5.2 words, even though the language’s vocabulary size didn’t change!</p>
+<p>As one outcome becomes disproportionately more likely, the model becomes less uncertain, so perplexity decreases, telling us this model is likely to be higher-quality than our first attempt.</p>
+<h1>Interpreting perplexity</h1>
+<p>The word likely is important, because unlike a simple metric like prediction accuracy, lower perplexity isn’t guaranteed to translate into better model performance, for at least two reasons. </p>
+<p>First, as we saw in the calculation section, a model’s worst-case perplexity is fixed by the language’s vocabulary size. This means you can greatly lower your model’s perplexity just by, for example, switching from a word-level model (which might easily have a vocabulary size of 50,000+ words) to a character-level model (with a vocabulary size of around 26), regardless of whether the character-level model is really more accurate. Other variables like size of your training dataset or your model’s context length can also have a disproportionate effect on a model’s perplexity.</p>
+<p>Second and more importantly, perplexity, like all internal evaluation, doesn’t provide any form of sanity-checking. To give an obvious example, models trained on the two datasets below would have identical perplexities, but you’d get wildly different answers if you asked real humans to evaluate the tastiness of their recommended recipes!</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11539f5d99b31ed648376_9.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11539f5d99b31ed648376_9.png"></a></p>
+<h1>Perplexity in the real world</h1>
+<p>You can see similar, if more subtle, problems when you use perplexity to evaluate models trained on real world datasets like the <a href="https://paperswithcode.com/dataset/billion-word-benchmark">One Billion Word Benchmark</a>. This corpus was put together from thousands of online news articles published in 2011, all broken down into their component sentences. It’s designed as a standardardized test dataset that allows researchers to directly compare different models trained on different data, and perplexity is a popular benchmark choice.</p>
+<p>Unfortunately, as work by <a href="https://arxiv.org/pdf/2110.12609.pdf">Helen Ngo, et al.</a> shows, a model’s perplexity can be easily influenced by factors that have nothing to do with model quality. When her team trained identical models on three different news datasets from 2013, 2016, and 2020, the more modern models had substantially higher perplexities:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11582f5d99b9ffe64ce6e_dWuu9FrfJB1CdkAY_KQIXNXYpiTH__iSBKVIpLe0mo30AMrx4-Q-uLQbbHub50B-WacfnyBNMAIxKX-dwUo3U55qhk8qvkhrxKhhWOj9eR1wlD3Fux20sIy3NdqxFCybuQBLajOs.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11582f5d99b9ffe64ce6e_dWuu9FrfJB1CdkAY_KQIXNXYpiTH__iSBKVIpLe0mo30AMrx4-Q-uLQbbHub50B-WacfnyBNMAIxKX-dwUo3U55qhk8qvkhrxKhhWOj9eR1wlD3Fux20sIy3NdqxFCybuQBLajOs.png"></a></p>
+<p>The problem is that news publications cycle through viral buzzwords quickly - just think about how often the Harlem Shake  was mentioned 2013 compared to now. Since perplexity effectively measures how accurately a model can mimic the style of the dataset it’s being tested against, models trained on news from the same period as the benchmark dataset have an unfair advantage thanks to vocabulary similarity.</p>
+<p>Even worse, since the One Billion Word Benchmark breaks full articles into individual sentences, curators have a hard time detecting instances of decontextualized hate speech. (For example, “The little monkeys were playing” is perfectly inoffensive in an article set at the zoo, and utterly horrifying in an article set at a racially diverse elementary school.) Since perplexity rewards models for mimicking the test dataset, it can end up favoring the models most likely to imitate subtly toxic content.</p>
+<h1>Perplexity in a nutshell</h1>
+<p><strong>Pros:</strong></p>
+<ul>
+<li>Fast to calculate, allowing researchers to weed out models that are unlikely to perform well in expensive/time-consuming real-world testing</li>
+<li>Useful to have estimate of the model’s uncertainty/information density</li>
+</ul>
+<p><strong>Cons:</strong></p>
+<ul>
+<li>Not good for final evaluation, since it just measures the model’s confidence, not its accuracy</li>
+<li>Hard to make apples-to-apples comparisons across datasets with different context lengths, vocabulary sizes, word- vs. character-based models, etc.</li>
+<li>Can end up rewarding models that mimic toxic or outdated datasets</li>
+</ul>
+<p>Finally, it’s worth noting that perplexity is only one choice for evaluating language models. There are many alternatives, some closely related to perplexity (cross-entropy and bits-per-character), and others that are completely distinct (accuracy/precision/F1 score, mean reciprocal rank, mean average precision, etc.).</p>
+<p><em>Surge AI is a data labeling workforce and platform that provides world-class data to top AI companies and researchers. We're built from the ground up to tackle the extraordinary challenges of natural language understanding — with an elite data labeling workforce, stunning quality, rich labeling tools, and modern APIs. Want to improve your model with context-sensitive data and domain-expert labelers? Sign up <a href="https://app.surgehq.ai/signup">for free</a> or schedule a <a href="https://calendly.com/surge-ai/introduction">demo</a> with our team today!</em></p>
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
                         <h1 class="entry-title"><a href="../2021/12/23/an-introduction-to-inter-annotator-agreement-and-cohens-kappa-statistic/">An Introduction to Inter-Annotator Agreement and Cohen's Kappa Statistic</a></h1>
 <div class="post-info">
 
@@ -4696,149 +4787,6 @@ Now we can use the following formulas to find P₁ and P₂:</p>
   </div>  
 
                     </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="../2011/07/18/introduction-to-restricted-boltzmann-machines/">Introduction to Restricted Boltzmann Machines</a></h1>
-<div class="post-info">
-
-</div><!-- /.post-info --><p>Suppose you ask a bunch of users to rate a set of movies on a 0-100 scale. In classical factor analysis, you could then try to explain each movie and user in terms of a set of latent <strong>factors</strong>. For example, movies like Star Wars and Lord of the Rings might have strong associations with a latent science fiction and fantasy factor, and users who like Wall-E and Toy Story might have strong associations with a latent Pixar factor.</p>
-<p>Restricted Boltzmann Machines essentially perform a <em>binary</em> version of factor analysis. (This is one way of thinking about RBMs; there are, of course, others, and lots of different ways to use RBMs, but I’ll adopt this approach for this post.) Instead of users rating a set of movies on a continuous scale, they simply tell you whether they like a movie or not, and the RBM will try to discover latent factors that can explain the activation of these movie choices.</p>
-<p>More technically, a Restricted Boltzmann Machine is a <strong>stochastic neural network</strong> (neural network meaning we have neuron-like units whose binary activations depend on the neighbors they’re connected to; stochastic meaning these activations have a probabilistic element) consisting of:</p>
-<ul>
-<li>One layer of <strong>visible units</strong> (users’ movie preferences whose states we know and set);</li>
-<li>One layer of <strong>hidden units</strong> (the latent factors we try to learn); and</li>
-<li>A bias unit (whose state is always on, and is a way of adjusting for the different inherent popularities of each movie).</li>
-</ul>
-<p>Furthermore, each visible unit is connected to all the hidden units (this connection is undirected, so each hidden unit is also connected to all the visible units), and the bias unit is connected to all the visible units and all the hidden units. To make learning easier, we restrict the network so that no visible unit is connected to any other visible unit and no hidden unit is connected to any other hidden unit.</p>
-<p>For example, suppose we have a set of six movies (Harry Potter, Avatar, LOTR 3, Gladiator, Titanic, and Glitter) and we ask users to tell us which ones they want to watch. If we want to learn two latent units underlying movie preferences – for example, two natural groups in our set of six movies appear to be SF/fantasy (containing Harry Potter, Avatar, and LOTR 3) and Oscar winners (containing LOTR 3, Gladiator, and Titanic), so we might hope that our latent units will correspond to these categories – then our RBM would look like the following:</p>
-<p><img alt="RBM Example" src="http://i.imgur.com/sadnLks.png"></p>
-<p>(Note the resemblance to a factor analysis graphical model.)</p>
-<h1>State Activation</h1>
-<p>Restricted Boltzmann Machines, and neural networks in general, work by updating the states of some neurons given the states of others, so let’s talk about how the states of individual units change. Assuming we know the connection weights in our RBM (we’ll explain how to learn these below), to update the state of unit <span class="math">\(i\)</span>:</p>
-<ul>
-<li>Compute the <strong>activation energy</strong> <span class="math">\(a_i = \sum_j w_{ij} x_j\)</span> of unit <span class="math">\(i\)</span>, where the sum runs over all units <span class="math">\(j\)</span> that unit <span class="math">\(i\)</span> is connected to, <span class="math">\(w_{ij}\)</span> is the weight of the connection between <span class="math">\(i\)</span> and <span class="math">\(j\)</span>, and <span class="math">\(x_j\)</span> is the 0 or 1 state of unit <span class="math">\(j\)</span>. In other words, all of unit <span class="math">\(i\)</span>’s neighbors send it a message, and we compute the sum of all these messages.</li>
-<li>Let <span class="math">\(p_i = \sigma(a_i)\)</span>, where <span class="math">\(\sigma(x) = 1/(1 + exp(-x))\)</span> is the logistic function. Note that <span class="math">\(p_i\)</span> is close to 1 for large positive activation energies, and <span class="math">\(p_i\)</span> is close to 0 for negative activation energies.</li>
-<li>We then turn unit <span class="math">\(i\)</span> on with probability <span class="math">\(p_i\)</span>, and turn it off with probability <span class="math">\(1 - p_i\)</span>.</li>
-<li>(In layman’s terms, units that are positively connected to each other try to get each other to share the same state (i.e., be both on or off), while units that are negatively connected to each other are enemies that prefer to be in different states.)</li>
-</ul>
-<p>For example, let’s suppose our two hidden units really do correspond to SF/fantasy and Oscar winners.</p>
-<ul>
-<li>If Alice has told us her six binary preferences on our set of movies, we could then ask our RBM which of the hidden units her preferences activate (i.e., ask the RBM to explain her preferences in terms of latent factors). So the six movies send messages to the hidden units, telling them to update themselves. (Note that even if Alice has declared she wants to watch Harry Potter, Avatar, and LOTR 3, this doesn’t guarantee that the SF/fantasy hidden unit will turn on, but only that it will turn on with high probability. This makes a bit of sense: in the real world, Alice wanting to watch all three of those movies makes us highly suspect she likes SF/fantasy in general, but there’s a small chance she wants to watch them for other reasons. Thus, the RBM allows us to generate models of people in the messy, real world.)</li>
-<li>Conversely, if we know that one person likes SF/fantasy (so that the SF/fantasy unit is on), we can then ask the RBM which of the movie units that hidden unit turns on (i.e., ask the RBM to generate a set of movie recommendations). So the hidden units send messages to the movie units, telling them to update their states. (Again, note that the SF/fantasy unit being on doesn’t guarantee that we’ll always recommend all three of Harry Potter, Avatar, and LOTR 3 because, hey, not everyone who likes science fiction liked Avatar.)</li>
-</ul>
-<h1>Learning Weights</h1>
-<p>So how do we learn the connection weights in our network? Suppose we have a bunch of training examples, where each training example is a binary vector with six elements corresponding to a user’s movie preferences. Then for each epoch, do the following:</p>
-<ul>
-<li>Take a training example (a set of six movie preferences). Set the states of the visible units to these preferences.</li>
-<li>Next, update the states of the hidden units using the logistic activation rule described above: for the <span class="math">\(j\)</span>th hidden unit, compute its activation energy <span class="math">\(a_j = \sum_i w_{ij} x_i\)</span>, and set <span class="math">\(x_j\)</span> to 1 with probability <span class="math">\(\sigma(a_j)\)</span> and to 0 with probability <span class="math">\(1 - \sigma(a_j)\)</span>. Then for each edge <span class="math">\(e_{ij}\)</span>, compute <span class="math">\(Positive(e_{ij}) = x_i * x_j\)</span> (i.e., for each pair of units, measure whether they’re both on).</li>
-<li>Now <strong>reconstruct</strong> the visible units in a similar manner: for each visible unit, compute its activation energy <span class="math">\(a_i\)</span>, and update its state. (Note that this reconstruction may not match the original preferences.) Then update the hidden units again, and compute <span class="math">\(Negative(e_{ij}) = x_i * x_j\)</span> for each edge.</li>
-<li>Update the weight of each edge <span class="math">\(e_{ij}\)</span> by setting <span class="math">\(w_{ij} = w_{ij} + L * (Positive(e_{ij}) - Negative(e_{ij}))\)</span>, where <span class="math">\(L\)</span> is a learning rate.</li>
-<li>Repeat over all training examples.</li>
-</ul>
-<p>Continue until the network converges (i.e., the error between the training examples and their reconstructions falls below some threshold) or we reach some maximum number of epochs.</p>
-<p>Why does this update rule make sense? Note that</p>
-<ul>
-<li>In the first phase, <span class="math">\(Positive(e_{ij})\)</span> measures the association between the <span class="math">\(i\)</span>th and <span class="math">\(j\)</span>th unit that we want the network to learn from our training examples;</li>
-<li>In the “reconstruction” phase, where the RBM generates the states of visible units based on its hypotheses about the hidden units alone, <span class="math">\(Negative(e_{ij})\)</span> measures the association that the network itself generates (or “daydreams” about) when no units are fixed to training data.</li>
-</ul>
-<p>So by adding <span class="math">\(Positive(e_{ij}) - Negative(e_{ij})\)</span> to each edge weight, we’re helping the network’s daydreams better match the reality of our training examples.</p>
-<p>(You may hear this update rule called <strong>contrastive divergence</strong>, which is basically a fancy term for “approximate gradient descent”.)</p>
-<h1>Examples</h1>
-<p>I wrote a <a href="https://github.com/echen/restricted-boltzmann-machines">simple RBM implementation</a> in Python (the code is heavily commented, so take a look if you’re still a little fuzzy on how everything works), so let’s use it to walk through some examples.</p>
-<p>First, I trained the RBM using some fake data.</p>
-<ul>
-<li>Alice: (Harry Potter = 1, Avatar = 1, LOTR 3 = 1, Gladiator = 0, Titanic = 0, Glitter = 0). Big SF/fantasy fan.</li>
-<li>Bob: (Harry Potter = 1, Avatar = 0, LOTR 3 = 1, Gladiator = 0, Titanic = 0, Glitter = 0). SF/fantasy fan, but doesn’t like Avatar.</li>
-<li>Carol: (Harry Potter = 1, Avatar = 1, LOTR 3 = 1, Gladiator = 0, Titanic = 0, Glitter = 0). Big SF/fantasy fan.</li>
-<li>David: (Harry Potter = 0, Avatar = 0, LOTR 3 = 1, Gladiator = 1, Titanic = 1, Glitter = 0). Big Oscar winners fan.</li>
-<li>Eric: (Harry Potter = 0, Avatar = 0, LOTR 3 = 1, Gladiator = 1, Titanic = 1, Glitter = 0). Oscar winners fan, except for Titanic.</li>
-<li>Fred: (Harry Potter = 0, Avatar = 0, LOTR 3 = 1, Gladiator = 1, Titanic = 1, Glitter = 0). Big Oscar winners fan.</li>
-</ul>
-<p>The network learned the following weights:</p>
-<p><img alt="Weights" src="http://i.imgur.com/mbsjJmX.png"></p>
-<p>Note that the first hidden unit seems to correspond to the Oscar winners, and the second hidden unit seems to correspond to the SF/fantasy movies, just as we were hoping.</p>
-<p>What happens if we give the RBM a new user, George, who has (Harry Potter = 0, Avatar = 0, LOTR 3 = 0, Gladiator = 1, Titanic = 1, Glitter = 0) as his preferences? It turns the Oscar winners unit on (but not the SF/fantasy unit), correctly guessing that George probably likes movies that are Oscar winners.</p>
-<p>What happens if we activate only the SF/fantasy unit, and run the RBM a bunch of different times? In my trials, it turned on Harry Potter, Avatar, and LOTR 3 three times; it turned on Avatar and LOTR 3, but not Harry Potter, once; and it turned on Harry Potter and LOTR 3, but not Avatar, twice. Note that, based on our training examples, these generated preferences do indeed match what we might expect real SF/fantasy fans want to watch.</p>
-<h1>Modifications</h1>
-<p>I tried to keep the connection-learning algorithm I described above pretty simple, so here are some modifications that often appear in practice:</p>
-<ul>
-<li>Above, <span class="math">\(Negative(e_{ij})\)</span> was determined by taking the product of the <span class="math">\(i\)</span>th and <span class="math">\(j\)</span>th units after reconstructing the visible units once and then updating the hidden units again. We could also take the product after some larger number of reconstructions (i.e., repeat updating the visible units, then the hidden units, then the visible units again, and so on); this is slower, but describes the network’s daydreams more accurately.</li>
-<li>Instead of using <span class="math">\(Positive(e_{ij})=x_i * x_j\)</span>, where <span class="math">\(x_i\)</span> and <span class="math">\(x_j\)</span> are binary 0 or 1 states, we could also let <span class="math">\(x_i\)</span> and/or <span class="math">\(x_j\)</span> be activation probabilities. Similarly for <span class="math">\(Negative(e_{ij})\)</span>.</li>
-<li>We could penalize larger edge weights, in order to get a sparser or more regularized model.</li>
-<li>When updating edge weights, we could use a momentum factor: we would add to each edge a weighted sum of the current step as described above (i.e., <span class="math">\(L * (Positive(e_{ij}) - Negative(e_{ij})\)</span>) and the step previously taken.</li>
-<li>Instead of using only one training example in each epoch, we could use batches of examples in each epoch, and only update the network’s weights after passing through all the examples in the batch. This can speed up the learning by taking advantage of fast matrix-multiplication algorithms.</li>
-</ul>
-<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-    var align = "center",
-        indent = "0em",
-        linebreak = "false";
-
-    if (false) {
-        align = (screen.width < 768) ? "left" : align;
-        indent = (screen.width < 768) ? "0em" : indent;
-        linebreak = (screen.width < 768) ? 'true' : linebreak;
-    }
-
-    var mathjaxscript = document.createElement('script');
-    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-    mathjaxscript.type = 'text/javascript';
-    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
-
-    var configscript = document.createElement('script');
-    configscript.type = 'text/x-mathjax-config';
-    configscript[(window.opera ? "innerHTML" : "text")] =
-        "MathJax.Hub.Config({" +
-        "    config: ['MMLorHTML.js']," +
-        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
-        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-        "    displayAlign: '"+ align +"'," +
-        "    displayIndent: '"+ indent +"'," +
-        "    showMathMenu: true," +
-        "    messageStyle: 'normal'," +
-        "    tex2jax: { " +
-        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
-        "        displayMath: [ ['$$','$$'] ]," +
-        "        processEscapes: true," +
-        "        preview: 'TeX'," +
-        "    }, " +
-        "    'HTML-CSS': { " +
-        "        availableFonts: ['STIX', 'TeX']," +
-        "        preferredFont: 'STIX'," +
-        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
-        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
-        "    }, " +
-        "}); " +
-        "if ('default' !== 'default') {" +
-            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
-                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
-                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
-                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
-                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
-                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
-            "});" +
-            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
-                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
-                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
-                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
-                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
-                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
-            "});" +
-        "}";
-
-    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
-    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-}
-</script>
-                    </article>
  
 <div class="paginator">
     <div class="navButton">Page 1 / 2</div>
@@ -4885,6 +4833,7 @@ Now we can use the following formulas to find P₁ and P₂:</p>
 
           <div id="recent_posts">
               <h3>Recent Posts</h3>
+                <a style="font-size: 0.9em" href="../2021/12/23/a-laymans-introduction-to-perplexity-in-nlp/">A Layman's Introduction to Perplexity in NLP  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2021/12/23/an-introduction-to-inter-annotator-agreement-and-cohens-kappa-statistic/">An Introduction to Inter-Annotator Agreement and Cohen's Kappa Statistic  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2021/11/21/a-visual-laymans-introduction-to-language-models-in-nlp/">A Visual, Layman's Introduction to Language Models in NLP  </a><br /><br />
                 <a style="font-size: 0.9em" href="../2020/11/30/surge-ai-a-new-data-labeling-platform-and-workforce-for-nlp/">Surge AI: A New Data Labeling Platform and Workforce for NLP  </a><br /><br />

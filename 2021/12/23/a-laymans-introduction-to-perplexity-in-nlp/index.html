@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>A Layman's Introduction to Perplexity in NLP</title>
+        <meta charset="utf-8" />
+	      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="../../../../theme/css/main.css" type="text/css" />
+        <link href="http://blog.echen.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Edwin Chen's Blog Atom Feed" />
+        <link href="http://blog.echen.me/feeds/all.rss.xml" type="application/rss+xml" rel="alternate" title="Edwin Chen's Blog RSS Feed" />
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
+
+        <!--[if IE]>
+                <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+        <!--[if lte IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="../../../../css/ie.css"/>
+                <script src="../../../../js/IE8.js" type="text/javascript"></script><![endif]-->
+
+        <!--[if lt IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="../../../../css/ie6.css"/><![endif]-->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js" type="text/javascript"></script>
+
+
+</head>
+
+<body id="index" class="home">
+
+<section id="content" >
+    <div class="body">
+      <article>
+        <header>
+          <h1 class="entry-title">
+            <a href="../../../../2021/12/23/a-laymans-introduction-to-perplexity-in-nlp/" rel="bookmark"
+               title="Permalink to A Layman's Introduction to Perplexity in NLP">A Layman's Introduction to Perplexity in NLP</a></h1>
+
+        </header>
+
+        <div class="entry-content">
+<div class="post-info">
+
+</div><!-- /.post-info -->          <p><em>(This is a <a href="https://www.surgehq.ai/blog/how-good-is-your-chatbot-an-introduction-to-perplexity-in-nlp">crosspost</a> from the official Surge AI <a href="https://www.surgehq.ai/blog">blog</a>, where we're building the greatest source of NLP content. If you need help with data labeling and NLP, <a href="https://www.surgehq.ai/contact">say hello</a>!)</em></p>
+<h1>Introduction</h1>
+<p>New, state-of-the-art language models like DeepMind’s <a href="https://www.surgehq.ai/blog/how-good-is-your-chatbot-an-introduction-to-perplexity-in-nlp">Gopher</a>, Microsoft’s <a href="https://www.microsoft.com/en-us/research/blog/using-deepspeed-and-megatron-to-train-m[%E2%80%A6]-worlds-largest-and-most-powerful-generative-language-model/">Megatron</a>, and OpenAI’s GPT-3 are driving a wave of innovation in NLP. How do you measure the performance of these language models to see how good they are? In a <a href="https://www.surgehq.ai/blog/an-introduction-to-language-models-in-nlp-part-1-intuition">previous post</a>, we gave an overview of different language model evaluation metrics. This post dives more deeply into one of the most popular: a metric known as <strong>perplexity</strong>.</p>
+<h1>A chore</h1>
+<p>Imagine you’re trying to build a chatbot that helps home cooks autocomplete their grocery shopping lists based on popular flavor combinations from social media. Your goal is to let users type in what they have in their fridge, like “chicken, carrots,” then list the five or six ingredients that go best with those flavors. You’ve already scraped thousands of recipe sites for ingredient lists, and now you just need to choose the best NLP model to predict which words appear together most often. Easy, right?</p>
+<p>Well, not exactly. The gold standard for checking the performance of a model is <strong>extrinsic evaluation</strong>: measuring its final performance on a real-world task. In this case, that might mean letting your model generate a dataset of a thousand new recipes, then asking a few hundred data labelers to rate how tasty they sound.</p>
+<p>Unfortunately, you don’t have one dataset, you have one dataset for every variation of every parameter of every model you want to test. Even simple comparisons of the same basic model can lead to a combinatorial explosion: 3 different optimization functions with 5 different learning rates and 4 different batch sizes equals 120 different datasets, all with hundreds of thousands of individual data points. How can you quickly narrow down which models are the most promising to fully evaluate?</p>
+<p>Enter <strong>intrinsic evaluation</strong>: finding some property of a model that estimates the model’s quality independent of the specific tasks its used to perform. Specifically, enter <strong>perplexity</strong>, a metric that quantifies how uncertain a model is about the predictions it makes. Low perplexity only guarantees a model is confident, not accurate, but it often correlates well with the model’s final real-world performance, and it can be quickly calculated using just the probability distribution the model learns from the training dataset. </p>
+<p>In this week’s post, we’ll look at how perplexity is calculated, what it means intuitively for a model’s performance, and the pitfalls of using perplexity for comparisons across different datasets and models.</p>
+<h1>Calculating perplexity</h1>
+<p>To understand how perplexity is calculated, let’s start with a very simple version of the recipe training dataset that only has four short ingredient lists:</p>
+<ol>
+<li>chicken, butter, pears</li>
+<li>chicken, butter, chili</li>
+<li>lemon, pears, shrimp</li>
+<li>chili, shrimp, lemon</li>
+</ol>
+<p>In machine learning terms, these sentences are a language with a vocabulary size of 6 (because there are a total of 6 unique words). A language model is just a function trained on a specific language that predicts the probability of a certain word appearing given the words that appeared around it. </p>
+<p>One of the simplest language models is a unigram model, which looks at words one at a time assuming they’re statistically independent. In other words, it returns the relative frequency that each word appears in the training data. Here’s a unigram model for the dataset above, which is especially simple because every word appears the same number of times:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b111f496eeb49dd0f37f3d_1.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b111f496eeb49dd0f37f3d_1.png"></a></p>
+<p>It’s pretty obvious this isn’t a very good model. No matter which ingredients you say you have, it will just pick any new ingredient at random with equal probability, so you might as well be rolling a fair die to choose. Let’s quantify exactly how bad this is.</p>
+<p>We’re going to start by calculating how surprised our model is when it sees a single specific word like “chicken.” Intuitively, the more probable an event is, the less surprising it is. If you’re certain something is impossible - if its probability is 0 - then you would be infinitely surprised if it happened.  Similarly, if something was guaranteed to happen with probability 1, your surprise when it happened would be 0. </p>
+<p>Conveniently, there’s already a simple function that maps 0 → ∞ and 1 → 0: log(1/x). If we know the probability of a given event, we can express our surprise when it happens as:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b111f496eeb49dd0f37f3d_1.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b111f496eeb49dd0f37f3d_1.png"></a></p>
+<p>As you may remember from algebra class, we can rewrite this as:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1131eb6bda9672076d7ff_3.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1131eb6bda9672076d7ff_3.png"></a></p>
+<p>In information theory, this term - the negative log of the probability of an event occurring - is called the <strong>surprisal</strong>.</p>
+<p>Our unigram model says that the probability of the word “chicken” appearing in a new sentence from this language is 0.16, so the surprisal of that event outcome is -log(0.16) = 2.64.</p>
+<p>‍
+If surprisal lets us quantify how unlikely a single outcome of a possible event is, <strong>entropy</strong> does the same thing for the event as a whole. It’s the expected value of the surprisal across every possible outcome - the sum of the surprisal of every outcome multiplied by the probability it happens:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1136977d0bf7193978314_4.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1136977d0bf7193978314_4.png"></a></p>
+<p>In our dataset, all six possible event outcomes have the same probability (⅙) and surprisal (2.64), so the entropy is just:  ⅙ * 2.64 + ⅙ * 2.64 + ⅙ * 2.64 + ⅙ * 2.64 + ⅙ * 2.64 + ⅙ * 2.64 = 6 * (⅙ * 2.64) = 2.64.</p>
+<p>Once we’ve gotten this far, calculating the <strong>perplexity</strong> is easy - it’s just the exponential of the entropy:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b113a4de7a8983b9279463_5.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b113a4de7a8983b9279463_5.png"></a></p>
+<p>The entropy for the dataset above is 2.64, so the perplexity is 2^2.64 = 6.</p>
+<p>You may notice something odd about this answer: it’s the vocabulary size of our language! To put it another way, it’s the number of possible words you could choose at each position in a sentence in this language, also known as the <strong>branching factor</strong>.</p>
+<p>This may not surprise you if you’re already familiar with the intuitive definition for entropy: the number of bits needed to most efficiently represent which event from a probability distribution actually happened. If the entropy N is the number of bits you have, 2ⁿ is the number of choices those bits can represent. This means we can say our model’s perplexity of 6 means it’s “as confused” as if it had to randomly choose between six different words - which is exactly what’s happening.</p>
+<p>Now imagine that we keep using the same dumb unigram model, but our dataset isn’t quite as uniform:</p>
+<ol>
+<li>chicken, butter, pears</li>
+<li>chicken, butter, lemon</li>
+<li>chicken, lemon, pears</li>
+<li>chili, shrimp, lemon</li>
+</ol>
+<p>Here’s the probability distribution our model returns after training on this dataset (the brighter a cell’s color, the more probable the event):</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11484a0f3e67d3479b0eb_6.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11484a0f3e67d3479b0eb_6.png"></a></p>
+<p>Intuitively, this means it just got easier to predict what any given word in a sentence will be - now we know it’s more likely to be “chicken” than “chili.” Let’s see how that affects each word’s surprisal:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1149d082d800daa893774_7.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1149d082d800daa893774_7.png"></a></p>
+<p>The new value for our model’s entropy is:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b114e209f1a244ff809eba_8.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b114e209f1a244ff809eba_8.png"></a></p>
+<p>And so the new perplexity is 2^2.38 = 5.2. Now our new and better model is only as confused as if it was randomly choosing between 5.2 words, even though the language’s vocabulary size didn’t change!</p>
+<p>As one outcome becomes disproportionately more likely, the model becomes less uncertain, so perplexity decreases, telling us this model is likely to be higher-quality than our first attempt.</p>
+<h1>Interpreting perplexity</h1>
+<p>The word likely is important, because unlike a simple metric like prediction accuracy, lower perplexity isn’t guaranteed to translate into better model performance, for at least two reasons. </p>
+<p>First, as we saw in the calculation section, a model’s worst-case perplexity is fixed by the language’s vocabulary size. This means you can greatly lower your model’s perplexity just by, for example, switching from a word-level model (which might easily have a vocabulary size of 50,000+ words) to a character-level model (with a vocabulary size of around 26), regardless of whether the character-level model is really more accurate. Other variables like size of your training dataset or your model’s context length can also have a disproportionate effect on a model’s perplexity.</p>
+<p>Second and more importantly, perplexity, like all internal evaluation, doesn’t provide any form of sanity-checking. To give an obvious example, models trained on the two datasets below would have identical perplexities, but you’d get wildly different answers if you asked real humans to evaluate the tastiness of their recommended recipes!</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11539f5d99b31ed648376_9.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11539f5d99b31ed648376_9.png"></a></p>
+<h1>Perplexity in the real world</h1>
+<p>You can see similar, if more subtle, problems when you use perplexity to evaluate models trained on real world datasets like the <a href="https://paperswithcode.com/dataset/billion-word-benchmark">One Billion Word Benchmark</a>. This corpus was put together from thousands of online news articles published in 2011, all broken down into their component sentences. It’s designed as a standardardized test dataset that allows researchers to directly compare different models trained on different data, and perplexity is a popular benchmark choice.</p>
+<p>Unfortunately, as work by <a href="https://arxiv.org/pdf/2110.12609.pdf">Helen Ngo, et al.</a> shows, a model’s perplexity can be easily influenced by factors that have nothing to do with model quality. When her team trained identical models on three different news datasets from 2013, 2016, and 2020, the more modern models had substantially higher perplexities:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11582f5d99b9ffe64ce6e_dWuu9FrfJB1CdkAY_KQIXNXYpiTH__iSBKVIpLe0mo30AMrx4-Q-uLQbbHub50B-WacfnyBNMAIxKX-dwUo3U55qhk8qvkhrxKhhWOj9eR1wlD3Fux20sIy3NdqxFCybuQBLajOs.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11582f5d99b9ffe64ce6e_dWuu9FrfJB1CdkAY_KQIXNXYpiTH__iSBKVIpLe0mo30AMrx4-Q-uLQbbHub50B-WacfnyBNMAIxKX-dwUo3U55qhk8qvkhrxKhhWOj9eR1wlD3Fux20sIy3NdqxFCybuQBLajOs.png"></a></p>
+<p>The problem is that news publications cycle through viral buzzwords quickly - just think about how often the Harlem Shake  was mentioned 2013 compared to now. Since perplexity effectively measures how accurately a model can mimic the style of the dataset it’s being tested against, models trained on news from the same period as the benchmark dataset have an unfair advantage thanks to vocabulary similarity.</p>
+<p>Even worse, since the One Billion Word Benchmark breaks full articles into individual sentences, curators have a hard time detecting instances of decontextualized hate speech. (For example, “The little monkeys were playing” is perfectly inoffensive in an article set at the zoo, and utterly horrifying in an article set at a racially diverse elementary school.) Since perplexity rewards models for mimicking the test dataset, it can end up favoring the models most likely to imitate subtly toxic content.</p>
+<h1>Perplexity in a nutshell</h1>
+<p><strong>Pros:</strong></p>
+<ul>
+<li>Fast to calculate, allowing researchers to weed out models that are unlikely to perform well in expensive/time-consuming real-world testing</li>
+<li>Useful to have estimate of the model’s uncertainty/information density</li>
+</ul>
+<p><strong>Cons:</strong></p>
+<ul>
+<li>Not good for final evaluation, since it just measures the model’s confidence, not its accuracy</li>
+<li>Hard to make apples-to-apples comparisons across datasets with different context lengths, vocabulary sizes, word- vs. character-based models, etc.</li>
+<li>Can end up rewarding models that mimic toxic or outdated datasets</li>
+</ul>
+<p>Finally, it’s worth noting that perplexity is only one choice for evaluating language models. There are many alternatives, some closely related to perplexity (cross-entropy and bits-per-character), and others that are completely distinct (accuracy/precision/F1 score, mean reciprocal rank, mean average precision, etc.).</p>
+<p><em>Surge AI is a data labeling workforce and platform that provides world-class data to top AI companies and researchers. We're built from the ground up to tackle the extraordinary challenges of natural language understanding — with an elite data labeling workforce, stunning quality, rich labeling tools, and modern APIs. Want to improve your model with context-sensitive data and domain-expert labelers? Sign up <a href="https://app.surgehq.ai/signup">for free</a> or schedule a <a href="https://calendly.com/surge-ai/introduction">demo</a> with our team today!</em></p>
+        </div><!-- /.entry-content -->
+
+      </article>
+    </div>
+</section>
+
+	      <div class="LaunchyardDetail">
+	        <p>
+	          <a style="text-align: left" class="title" href="../../../../">Edwin Chen</a>
+	          <br/>
+
+	        </p>
+
+	        <div id="about" style="text-align: left !important">
+	          <p>
+	            Founder at <a href="https://www.surgehq.ai">Surge AI</a>, the world's most powerful data labeling platform and workforce for NLP.
+            </p>
+            <br />
+            <p>
+              Need obsessively high-quality human-powered data? Reach out!</a> We help top AI companies like OpenAI, Amazon, and Airbnb create powerful human-labeled datasets.
+	          </p>
+            <br />
+            <p>
+              Former AI & engineering lead at Google, Facebook, Twitter, Dropbox, and MSR. Pure math, theoretical CS, and linguistics at MIT.
+            </p>
+            <br />
+	          <div style="text-align: center">
+              <a href="https://www.surgehq.ai">Surge AI</a><br />
+              <a href="https://www.twitter.com/@HelloSurgeAI">Surge AI Twitter</a><br />
+              <a href="https://surge-ai.medium.com">Surge AI Blog</a><br />
+              <a href="https://github.com/surge-ai">Surge AI Github</a><br />
+              <a href="https://www.linkedin.com/company/surge-ai">Surge AI LinkedIn</a><br />
+              <a href="https://twitter.com/echen">Twitter</a><br/>
+              <a href="https://www.linkedin.com/in/edwinzchen">LinkedIn</a><br/>                 
+              <a href="https://github.com/echen">Github</a><br/>           
+              <a href="https://quora.com/edwin-chen-1">Quora</a><br />
+              <a href="mailto:hello[&aelig;]echen.me">Email</a><br/>
+            </div>
+          </div>
+
+          <div id="recent_posts">
+              <h3>Recent Posts</h3>
+                <a style="font-size: 0.9em" href="../../../../2021/12/23/a-laymans-introduction-to-perplexity-in-nlp/">A Layman's Introduction to Perplexity in NLP  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2021/12/23/an-introduction-to-inter-annotator-agreement-and-cohens-kappa-statistic/">An Introduction to Inter-Annotator Agreement and Cohen's Kappa Statistic  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2021/11/21/a-visual-laymans-introduction-to-language-models-in-nlp/">A Visual, Layman's Introduction to Language Models in NLP  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2020/11/30/surge-ai-a-new-data-labeling-platform-and-workforce-for-nlp/">Surge AI: A New Data Labeling Platform and Workforce for NLP  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2017/05/30/exploring-lstms/">Exploring LSTMs  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/08/22/introduction-to-latent-dirichlet-allocation/">Introduction to Latent Dirichlet Allocation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/07/18/introduction-to-restricted-boltzmann-machines/">Introduction to Restricted Boltzmann Machines  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/06/27/topic-modeling-the-sarah-palin-emails/">Topic Modeling the Sarah Palin Emails  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/05/01/unsupervised-language-detection-algorithms/">Filtering for English Tweets: Unsupervised Language Detection on Twitter  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/04/27/choosing-a-machine-learning-classifier/">Choosing a Machine Learning Classifier  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/04/25/kickstarter-data-analysis-success-and-pricing/">Kickstarter Data Analysis: Success and Pricing  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/04/21/a-mathematical-introduction-to-least-angle-regression/">A Mathematical Introduction to Least Angle Regression  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/04/16/introduction-to-cointegration-and-pairs-trading/">Introduction to Cointegration and Pairs Trading  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/counting-clusters/">Counting Clusters  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/hacker-news-analysis/">Hacker News Analysis  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/laymans-introduction-to-measure-theory/">Layman's Introduction to Measure Theory  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/laymans-introduction-to-random-forests/">Layman's Introduction to Random Forests  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/netflix-prize-summary-factorization-meets-the-neighborhood/">Netflix Prize Summary: Factorization Meets the Neighborhood  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/netflix-prize-summary-scalable-collaborative-filtering-with-jointly-derived-neighborhood-interpolation-weights/">Netflix Prize Summary: Scalable Collaborative Filtering with Jointly Derived Neighborhood Interpolation Weights  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/prime-numbers-and-the-riemann-zeta-function/">Prime Numbers and the Riemann Zeta Function  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/topological-combinatorics-and-the-evasiveness-conjecture/">Topological Combinatorics and the Evasiveness Conjecture  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/02/15/item-to-item-collaborative-filtering-with-amazons-recommendation-system/">Item-to-Item Collaborative Filtering with Amazon's Recommendation System  </a><br /><br />
+          </div>
+        </div>
+
+
+        <section id="extras" >
+
+
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" >
+                <address id="about" class="vcard ">
+                Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
+                great advantage of <a href="http://python.org" target="_blank">Python</a>.
+
+                </address><!-- /#about -->
+
+
+
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>
