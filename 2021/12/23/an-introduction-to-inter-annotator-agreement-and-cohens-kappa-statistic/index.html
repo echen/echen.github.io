@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>An Introduction to Inter-Annotator Agreement and Cohen's Kappa Statistic</title>
+        <meta charset="utf-8" />
+	      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="../../../../theme/css/main.css" type="text/css" />
+        <link href="http://blog.echen.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Edwin Chen's Blog Atom Feed" />
+        <link href="http://blog.echen.me/feeds/all.rss.xml" type="application/rss+xml" rel="alternate" title="Edwin Chen's Blog RSS Feed" />
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
+
+        <!--[if IE]>
+                <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+        <!--[if lte IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="../../../../css/ie.css"/>
+                <script src="../../../../js/IE8.js" type="text/javascript"></script><![endif]-->
+
+        <!--[if lt IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="../../../../css/ie6.css"/><![endif]-->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js" type="text/javascript"></script>
+
+
+</head>
+
+<body id="index" class="home">
+
+<section id="content" >
+    <div class="body">
+      <article>
+        <header>
+          <h1 class="entry-title">
+            <a href="../../../../2021/12/23/an-introduction-to-inter-annotator-agreement-and-cohens-kappa-statistic/" rel="bookmark"
+               title="Permalink to An Introduction to Inter-Annotator Agreement and Cohen's Kappa Statistic">An Introduction to Inter-Annotator Agreement and Cohen's Kappa Statistic</a></h1>
+
+        </header>
+
+        <div class="entry-content">
+<div class="post-info">
+
+</div><!-- /.post-info -->          <p><em>(This is a <a href="https://www.surgehq.ai/blog/inter-rater-reliability-metrics-understanding-cohens-kappa">crosspost</a> from the official Surge AI <a href="https://www.surgehq.ai/blog">blog</a>, where we're building the greatest source of NLP content. If you need help with data labeling and NLP, <a href="https://www.surgehq.ai/contact">say hello</a>!)</em></p>
+<h1>Introduction</h1>
+<p>Imagine you're a Harvard professor teaching English 101. You’re tired of grading homework and want to get back to your research, so you decide to build an NLP model that can score your students' essays as a Pass or Fail for you.</p>
+<p>In order to build a training dataset, you use a workforce of data labelers to read and grade your essays. Of course, you want to ensure that every rater applies the grading rubric consistently: if two raters read the same 10 essays, for example, you want to ensure that each essay receives a similar grade from both of them. Otherwise, your training data may be too noisy and subjective to be of much use! So how can you measure rater consistency?</p>
+<p>One candidate is <strong>Cohen’s kappa statistic</strong>, which measures how often two raters agree with each other after accounting for the likelihood they’d agree by chance. In this post, we’ll explain how Cohen's kappa uncovers disagreements between raters that are obscured by simpler metrics like percentage agreement.</p>
+<h1>A mystery</h1>
+<p>As starving aspiring novelists, Alix and Bob were both happy to moonlight as data labelers grading student essays. Wanting to be fair to the students, they tracked how often they agreed whether to pass or fail a particular student, and found their judgements matched 90% of the time. A week in, though, Bob was shocked to discover that he was getting twice as many complaints from flunked students as Alix. How could there be such a huge difference if their decisions were so similar?</p>
+<p>The problem with simple measures of <a href="https://www.surgehq.ai/blog/the-pitfalls-of-inter-rater-reliability-in-data-labeling-and-machine-learning">inter-rater reliability</a>, like the percentage of samples both raters label identically, is that they don’t account for the likelihood that two people would agree by random chance. To understand how this works, let’s consider the confusion matrix for the 100 essays Alix and Bob graded in their first week:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56ae8adc0d698c5973ecd_CleanShot%202021-11-29%20at%2014.23.36%402x.png"><img alt="Confusion Matrix" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56ae8adc0d698c5973ecd_CleanShot%202021-11-29%20at%2014.23.36%402x.png"></a></p>
+<p>This is clearly a talented bunch of students, because 86% earned passes from both raters. The raters also rarely disagreed about which essays were good: if Alix passed a student, Bob did too 86 / 94 = 91% of the time. Things are different when we look at the 14% of the students who failed. If Bob failed a student, Alice failed the same student only 4 / 12 =  33% of the time, and overall Bob failed twice as many students as Alix (12 vs. 6). </p>
+<p>Because the student essay data is imbalanced, with far more students passing than failing, we have two problems:</p>
+<ul>
+<li>Even though all the raters seem superficially similar, some of them are actually twice as strict as others, which isn’t fair to the students.</li>
+<li>We can’t tell whether some of our raters are slacking off by just passing every essay, knowing the high overall pass rate will mean their judgments don’t look too different from the diligent raters.</li>
+</ul>
+<p>We can fix both these issues by using Cohen’s kappa to measure inter-rater reliability. This metric subtracts the probability that two raters would agree if they were guessing randomly from the probability they actually agreed. </p>
+<h1>Calculating Cohen’s kappa</h1>
+<p>The formula for Cohen’s kappa is:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56ef47ba6273404f4ffc9_CleanShot%202021-11-29%20at%2016.22.28%402x%20replace.png"><img alt="Formula" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56ef47ba6273404f4ffc9_CleanShot%202021-11-29%20at%2016.22.28%402x%20replace.png"></a></p>
+<p>Po is the accuracy, or the proportion of time the two raters assigned the same label. It’s calculated as (TP+TN)/N:</p>
+<p>TP is the number of true positives, i.e. the number of students Alix and Bob both passed.
+TN is the number of true negatives, i.e. the number of students Alix and Bob both failed.
+N is the total number of samples, i.e. the number of essays both people graded.
+Plugging in the values from the example above, we get Po = (86 + 4)/100= 0.9.</p>
+<p>Pe is the probability that both raters would choose the same label if they both just guessed randomly. It’s the sum of two terms: P₁ is the probability both raters randomly choose the first label (pass), and P₂ is the probability they both choose the second label (fail). These probabilities can be calculated using the count of true positive and true negative described above plus two additional terms:</p>
+<p>FN is the number of false negatives. In this case, it’s not clear which, if any, rater is objectively correct, so we can arbitrarily define this as the number of students Alix passed and Bob failed.
+FP is the number of false positives, i.e. the number of students Bob passed and Alix failed.
+Now we can use the following formulas to find P₁ and P₂:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56b86dbf1ef1c1e122c00_CleanShot%202021-11-29%20at%2014.27.07%402x.png"><img alt="Formula 2" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56b86dbf1ef1c1e122c00_CleanShot%202021-11-29%20at%2014.27.07%402x.png"></a></p>
+<p>For the example above, Pe = .827 + .007 = .834. We can plug this result into the formula for Cohen’s kappa to get:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56b9e1b580d898f5ac174_CleanShot%202021-11-29%20at%2014.27.59%402x.png"><img alt="Formula 3" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56b9e1b580d898f5ac174_CleanShot%202021-11-29%20at%2014.27.59%402x.png"></a></p>
+<p>So what does this value mean?</p>
+<h1>Interpreting Cohen’s kappa</h1>
+<p>Cohen’s kappa ranges from 1, representing perfect agreement between raters, to -1, meaning the raters choose different labels for every sample. A value of 0 means the raters agreed exactly as often as if they were both randomly guessing. </p>
+<p>In this case, it’s pretty clear that while Alix and Bob are agreeing more often than random chance, their grading philosophies aren’t very similar. However, there’s still substantial debate about what kappa-value cutoffs to use for subjective labels like “strong” agreement. As the table below shows, Jacob Cohen’s original descriptive categories would classify Alix and Bob as “moderately” in agreement, but they’re only “weakly” in agreement according to Mary McHugh’s stricter thresholds intended for use in healthcare research:</p>
+<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56bd3d539a168603b13aa_CleanShot%202021-11-29%20at%2014.28.16%402x.png"><img alt="Meaning" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56bd3d539a168603b13aa_CleanShot%202021-11-29%20at%2014.28.16%402x.png"></a></p>
+<p>It’s important to remember that there’s a difference between consistent raters and high-quality raters. Alix and Bob could easily achieve a Cohen’s kappa of 1 if they were both so lazy they decided to just auto-pass every single essay. A high Cohen’s kappa might also reflect shared inappropriate biases - imagine if Alix and Bob both resented being forced to read Shakespeare in high school and automatically failed anyone who mentioned him.</p>
+<p>Similarly, negative values for Cohen’s kappa don’t automatically mean that one of the raters is low-quality. They might just have different values or interpretations of the labeling criteria. In this essay grading example, for instance, Alix might value thoroughness while Bob prefers students who are concise. In that case, Alix would preferentially fail the short essays Bob thought were the best written, and vice versa with the long essays. Pairs of raters with negative Cohen’s kappas can actually be valuable in tasks where representing a wide variety of viewpoints is important. Even for tasks that require consistency, low Cohen’s kappa values may reflect ambiguous instructions or inherently subjective questions (what makes an essay good anyway?) rather than rater error.</p>
+<h1>Cohen’s kappa in a nutshell</h1>
+<p><strong>Pros</strong></p>
+<ul>
+<li>Good for measuring agreement about datasets that are imbalanced or otherwise allow a high accuracy rate with random guessing.  </li>
+<li>Can be easily adapted to measure agreement about more than two labels. (For example, if Alix and Bob gave every essay an A-F grade instead of just pass/fail.)</li>
+<li>Negative scores can be used to identify raters with diverse viewpoints.</li>
+</ul>
+<p><strong>Cons</strong></p>
+<ul>
+<li>Can only compare two raters, not three or more. (Unlike next week's spotlight metric, Fleiss’ kappa!)</li>
+<li>Not intuitively clear what a given value means, unlike a simpler metric like percentage agreement.</li>
+<li>Debate over meaningful thresholds for “weak” vs. “moderate” vs. “strong” agreement.</li>
+<li>Read more about the pitfalls of inter-reliability metrics in our <a href="https://www.surgehq.ai/blog/inter-rater-reliability-metrics-understanding-cohens-kappa">previous post</a> in this series!</li>
+</ul>
+<p>In future posts, we'll dive more into other inter-rater reliability metrics and their advantages compared to Cohen's kappa.</p>
+<p><em>Surge AI is a data labeling workforce and platform that provides world-class data to top AI companies and researchers. We're built from the ground up to tackle the extraordinary challenges of natural language understanding — with an elite data labeling workforce, stunning quality, rich labeling tools, and modern APIs. Want to improve your model with context-sensitive data and domain-expert labelers? Schedule a <a href="https://calendly.com/surge-ai/introduction">demo</a> with our team today!</em></p>
+        </div><!-- /.entry-content -->
+
+      </article>
+    </div>
+</section>
+
+	      <div class="LaunchyardDetail">
+	        <p>
+	          <a style="text-align: left" class="title" href="../../../../">Edwin Chen</a>
+	          <br/>
+
+	        </p>
+
+	        <div id="about" style="text-align: left !important">
+	          <p>
+	            Founder at <a href="https://www.surgehq.ai">Surge AI</a>, the world's most powerful data labeling platform and workforce for NLP.
+            </p>
+            <br />
+            <p>
+              Need obsessively high-quality human-powered data? Reach out!</a> We help top AI companies like OpenAI, Amazon, and Airbnb create powerful human-labeled datasets.
+	          </p>
+            <br />
+            <p>
+              Former AI & engineering lead at Google, Facebook, Twitter, Dropbox, and MSR. Pure math, theoretical CS, and linguistics at MIT.
+            </p>
+            <br />
+	          <div style="text-align: center">
+              <a href="https://www.surgehq.ai">Surge AI</a><br />
+              <a href="https://www.twitter.com/@HelloSurgeAI">Surge AI Twitter</a><br />
+              <a href="https://surge-ai.medium.com">Surge AI Blog</a><br />
+              <a href="https://github.com/surge-ai">Surge AI Github</a><br />
+              <a href="https://www.linkedin.com/company/surge-ai">Surge AI LinkedIn</a><br />
+              <a href="https://twitter.com/echen">Twitter</a><br/>
+              <a href="https://www.linkedin.com/in/edwinzchen">LinkedIn</a><br/>                 
+              <a href="https://github.com/echen">Github</a><br/>           
+              <a href="https://quora.com/edwin-chen-1">Quora</a><br />
+              <a href="mailto:hello[&aelig;]echen.me">Email</a><br/>
+            </div>
+          </div>
+
+          <div id="recent_posts">
+              <h3>Recent Posts</h3>
+                <a style="font-size: 0.9em" href="../../../../2021/12/23/an-introduction-to-inter-annotator-agreement-and-cohens-kappa-statistic/">An Introduction to Inter-Annotator Agreement and Cohen's Kappa Statistic  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2021/11/21/a-visual-laymans-introduction-to-language-models-in-nlp/">A Visual, Layman's Introduction to Language Models in NLP  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2020/11/30/surge-ai-a-new-data-labeling-platform-and-workforce-for-nlp/">Surge AI: A New Data Labeling Platform and Workforce for NLP  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2017/05/30/exploring-lstms/">Exploring LSTMs  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2014/08/15/propensity-modeling-causal-inference-and-discovering-drivers-of-growth/">Propensity Modeling, Causal Inference, and Discovering Drivers of Growth  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2014/08/14/product-insights-for-airbnb/">Product Insights for Airbnb  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2013/01/08/improving-twitter-search-with-real-time-human-computation">Improving Twitter Search with Real-Time Human Computation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/07/31/edge-prediction-in-a-social-graph-my-solution-to-facebooks-user-recommendation-contest-on-kaggle/">Edge Prediction in a Social Graph: My Solution to Facebook's User Recommendation Contest on Kaggle  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/07/06/soda-vs-pop-with-twitter/">Soda vs. Pop with Twitter  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/03/20/infinite-mixture-models-with-nonparametric-bayes-and-the-dirichlet-process/">Infinite Mixture Models with Nonparametric Bayes and the Dirichlet Process  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/03/05/instant-interactive-visualization-with-d3-and-ggplot2/">Instant Interactive Visualization with d3 + ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/02/09/movie-recommendations-and-more-via-mapreduce-and-scalding/">Movie Recommendations and More via MapReduce and Scalding  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/01/17/quick-introduction-to-ggplot2/">Quick Introduction to ggplot2  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/10/24/winning-the-netflix-prize-a-summary/">Winning the Netflix Prize: A Summary  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/09/29/stuff-harvard-people-like/">Stuff Harvard People Like  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/08/22/introduction-to-latent-dirichlet-allocation/">Introduction to Latent Dirichlet Allocation  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/07/18/introduction-to-restricted-boltzmann-machines/">Introduction to Restricted Boltzmann Machines  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/06/27/topic-modeling-the-sarah-palin-emails/">Topic Modeling the Sarah Palin Emails  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/05/01/unsupervised-language-detection-algorithms/">Filtering for English Tweets: Unsupervised Language Detection on Twitter  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/04/27/choosing-a-machine-learning-classifier/">Choosing a Machine Learning Classifier  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/04/25/kickstarter-data-analysis-success-and-pricing/">Kickstarter Data Analysis: Success and Pricing  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/04/21/a-mathematical-introduction-to-least-angle-regression/">A Mathematical Introduction to Least Angle Regression  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/04/16/introduction-to-cointegration-and-pairs-trading/">Introduction to Cointegration and Pairs Trading  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/counting-clusters/">Counting Clusters  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/hacker-news-analysis/">Hacker News Analysis  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/laymans-introduction-to-measure-theory/">Layman's Introduction to Measure Theory  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/laymans-introduction-to-random-forests/">Layman's Introduction to Random Forests  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/netflix-prize-summary-factorization-meets-the-neighborhood/">Netflix Prize Summary: Factorization Meets the Neighborhood  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/netflix-prize-summary-scalable-collaborative-filtering-with-jointly-derived-neighborhood-interpolation-weights/">Netflix Prize Summary: Scalable Collaborative Filtering with Jointly Derived Neighborhood Interpolation Weights  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/prime-numbers-and-the-riemann-zeta-function/">Prime Numbers and the Riemann Zeta Function  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/03/14/topological-combinatorics-and-the-evasiveness-conjecture/">Topological Combinatorics and the Evasiveness Conjecture  </a><br /><br />
+                <a style="font-size: 0.9em" href="../../../../2011/02/15/item-to-item-collaborative-filtering-with-amazons-recommendation-system/">Item-to-Item Collaborative Filtering with Amazon's Recommendation System  </a><br /><br />
+          </div>
+        </div>
+
+
+        <section id="extras" >
+
+
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" >
+                <address id="about" class="vcard ">
+                Proudly powered by <a href="http://getpelican.com/" target="_blank">Pelican</a>, which takes
+                great advantage of <a href="http://python.org" target="_blank">Python</a>.
+
+                </address><!-- /#about -->
+
+
+
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>
