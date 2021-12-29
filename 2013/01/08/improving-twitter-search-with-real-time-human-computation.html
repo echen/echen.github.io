@@ -109,7 +109,7 @@
   <p>(2) Next, as soon as we discover a new popular search query, we send it to our human evaluation systems, where judges are asked a variety of questions about the query.</p>
 
 
-  <p>Behind the scenes: when the Storm topology detects that a query has reached sufficient popularity, it connects to a Thrift API that dispatches the query to Amazon&#8217;s Mechanical Turk service, and then polls Mechanical Turk for a response.</p>
+  <p>Behind the scenes: when the Storm topology detects that a query has reached sufficient popularity, it connects to a Thrift API that dispatches the query to my team's human computation platform, and then polls for a response.</p>
 
 
   <p>For example: as soon as we notice &#8220;Big Bird&#8221; spiking, we may ask human judges to categorize the query, or provide other information (e.g., whether there are likely to be interesting pictures of the query, or whether the query is about a person or an event) that helps us serve relevant tweets and ads.</p>
@@ -147,7 +147,7 @@
 
   <p>At Twitter, we use human computation for a variety of tasks. (See also <a href="https://github.com/twitter/clockworkraven">Clockwork Raven</a>, an open-source crowdsourcing platform we built that makes launching tasks easier.) For example, we often run experiments to measure ad relevance and search quality, we use it to gather data to train and evaluate our machine learning models, and in this section we&#8217;ll describe how we use it to boost our understanding of popular search queries.</p>
 
-  <p>So suppose that our Storm topology has detected that the query &#8220;Big Bird&#8221; is suddenly spiking. Since the query may remain popular for only a few hours, we send it off to live humans, who can help us quickly understand what it means; this dispatch is performed via a Thrift service that allows us to design our tasks in a <a href="http://engineering.twitter.com/2012/08/crowdsourced-data-analysis-with.html">web frontend</a>, and later programmatically submit them to crowdsourcing platforms like Mechanical Turk using any of the different languages we use across Twitter.</p>
+  <p>So suppose that our Storm topology has detected that the query &#8220;Big Bird&#8221; is suddenly spiking. Since the query may remain popular for only a few hours, we send it off to live humans, who can help us quickly understand what it means; this dispatch is performed via a Thrift service that allows us to design our tasks in a <a href="http://engineering.twitter.com/2012/08/crowdsourced-data-analysis-with.html">web frontend</a>, and later programmatically submit them to our human computation platform using any of the different languages we use across Twitter.</p>
 
   <p>On our crowdsourcing platforms, judges are asked several questions about the query that help us serve better ads. Without going into the exact questions, here are flavors of a few possibilities:</p>
 
@@ -157,11 +157,11 @@
   </ul>
 
 
-  <h3>Turkers in the machine</h3>
+  <h3>Labelers in the machine</h3>
 
   <p>Since humans are core to this system, let&#8217;s describe how our workforce was designed to give us fast, reliable results.</p>
 
-  <p>For completing all our tasks, we use a small <em>custom</em> pool of judges to ensure high quality. Other typical possibilities in the crowdsourcing world are to use a static set of in-house judges, to use the standard worker filters that Amazon provides, or to go through an outside company like <a href="http://crowdflower.com/">Crowdflower</a>. We&#8217;ve experimented with these other solutions, and while they have their own benefits, we found that a custom pool fit our needs best for a few reasons:</p>
+  <p>For completing all our tasks, we use a <em>custom</em> pool of judges to ensure high quality. Other typical possibilities in the crowdsourcing world are to use a static set of in-house judges, to use the standard worker filters that Amazon provides, or to go through an outside company like <a href="http://crowdflower.com/">Crowdflower</a>. We&#8217;ve experimented with these other solutions, and while they have their own benefits, we found that a custom pool fit our needs best for a few reasons:</p>
 
   <ul>
   <li>In-house judges can provide high-quality work as well, but they usually work standard hours (for example, 9 to 5 if they work onsite, or a relatively fixed and limited set of hours if they work from home), it can be difficult to communicate with them and schedule them for work, and it&#8217;s hard to scale the hiring of more judges.</li>
@@ -174,7 +174,7 @@
   <ul>
   <li>Our custom pool of judges work virtually all day. For many of them, this is a full-time job, and they&#8217;re geographically distributed, so our tasks complete quickly at all hours; we can easily ask for thousands of judgments before lunch, and have them finished by the time we get back, which makes iterating on our experiments much easier.</li>
   <li>We have several forums, mailing lists, and even live chatrooms set up, all of which makes it easy for judges to ask us questions and to respond to feedback. Our judges will even give <em>us</em> suggestions on how to improve our tasks; for example, when we run categorization tasks, they&#8217;ll often report helpful categories that we should add.</li>
-  <li>Since we only launch tasks on demand, and Amazon provides a ready source of workers if we ever need more, our judges are never idly twiddling their thumbs waiting for tasks or completing busywork, and our jobs are rarely backlogged.</li>
+  <li>Since we only launch tasks on demand, our judges are never idly twiddling their thumbs waiting for tasks or completing busywork, and our jobs are rarely backlogged.</li>
   <li>Because our judges are culled from the best of the crowdsourcing world, they&#8217;re experts at the kinds of tasks we send, and can often provide higher quality at a faster rate than what even in-house judges provide. For example, they&#8217;ll often use the forums and chatrooms to collaborate amongst themselves to give us the best judgments, and they&#8217;re already familiar with the Firefox and Chrome scripts that help them be the most efficient at their work.</li>
   </ul>
 
@@ -187,10 +187,6 @@
   <li>Because our workers aren&#8217;t limited to a fixed schedule or location, they can work anywhere, anytime &#8211; which is a requirement for this system, since global event spikes on Twitter are not beholden to a 9-to-5.</li>
   <li>And with the multiple easy avenues of communication we have set up, it&#8217;s easy for us to answer questions that might arise when we add new questions or modify existing ones.</li>
   </ul>
-
-  <h2>Thanks</h2>
-
-  <p>Thanks to everyone on the Revenue and Storm teams, as well as our Turkers, for helping us launch this project.</p>
   </div>  
 
         </div><!-- /.entry-content -->
