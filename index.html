@@ -33,7 +33,30 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="./2022/02/11/embedding-explorer/">Embedding Explorer</a></h1>
+                        <h1 class="entry-title"><a href="./2022/02/12/how-could-facebook-align-its-ml-systems-to-human-values-a-data-driven-approach/">How Could Facebook Align its ML Systems to Human Values? A Data-Driven Approach</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info --><p><em>(This is a <a href="https://www.surgehq.ai/blog/what-if-social-media-optimized-for-human-values">crosspost</a> from the official Surge AI <a href="https://www.surgehq.ai/blog/what-if-social-media-optimized-for-human-values">blog</a>.</em></p>
+<p>For background on this blog post...</p>
+<p>I used to work at Facebook, YouTube, and Twitter. One of the problems I big worked on: what was the right objective function to align our AI systems towards?</p>
+<p>Optimizing for watch time at YouTube, for example, led to longer videos for the sake of longer videos, and clicks on videos with racy thumbnails.</p>
+<p>Optimizing engagement at Facebook led to low-quality clickbait, and Hooter's appearing as the top search result when you searched for restaurants in Houston.</p>
+<p>Optimizing for favorites and replies at Twitter led to toxic content at the top of the feed.</p>
+<p>So while watch time, engagement, and replies would always go up – were these really the products we wanted to build? What happened to Facebook's original mission of connecting users with their friends and family? What did "favorites" have to do with being <em>the</em> platform for public conversation at Twitter? A ton of engineering and data science time is spent measuring active users, but why were there no dashboards measuring progress to broader product goals?</p>
+<p>So could we figure out a metric that was better tuned to human values and preferences – but also fast, rigorous, and easily measurable? After all, we still need our A/B tests, ML objectives, and OKRs to align the company around.</p>
+<p>This question is particularly important today, with all the troubles that social media platforms face, so I wrote up an approach I've often worked on, based on Facebook data. Read it <a href="https://www.surgehq.ai/blog/what-if-social-media-optimized-for-human-values">on the Surge AI blog</a>!</p>
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2022/02/11/a-visual-tool-for-exploring-word-embeddings/">A Visual Tool for Exploring Word Embeddings</a></h1>
 <div class="post-info">
 
 </div><!-- /.post-info --><p>I built a visualization to explore embeddings a few years ago, but never posted it more broadly. So here it is! <a href="http://blog.echen.me/embedding-explorer/">http://blog.echen.me/embedding-explorer/</a></p>
@@ -4525,140 +4548,6 @@ Now we can use the following formulas to find P₁ and P₂:</p>
   </div>  
 
                     </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="./2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post</a></h1>
-<div class="post-info">
-
-</div><!-- /.post-info -->
-  <div class="entry-content"><p><strong>tl;dr</strong> See <a href="http://www.youtube.com/watch?v=cZ4Ntg4jQHw">this movie visualization</a> for a case study on how a post propagates through Quora.</p>
-
-  <p>How does information spread through a network? Much of Quora&#8217;s appeal, after all, lies in its social graph &#8211; and when you&#8217;ve got a network of users, all broadcasting their activities to their neighbors, information can cascade in multiple ways. How do these social designs affect which users see what?</p>
-
-  <p>Think, for example, of what happens when your kid learns a new slang word at school. He doesn&#8217;t confine his use of the word to McKinley Elementary&#8217;s particular boundaries, between the times of 9-3pm &#8211; he introduces it to his friends from other schools at soccer practice as well. A couple months later, he even says it at home for the first time; you like the word so much, you then start using it at work. Eventually, Justin Bieber uses the word in a song, at which point the word&#8217;s popularity really starts to explode.</p>
-
-  <p>So how does information propagate through a social network? What types of people does an answer on Quora reach, and how does it reach them? (Do users discover new answers individually, or are hubs of connectors more key?) How does the activity of a post on Quora rise and fall? (Submissions on other sites have limited lifetimes, fading into obscurity soon after an initial spike; how does that change when users are connected and every upvote can revive a post for someone else&#8217;s eyes?)</p>
-
-  <p>(I looked at Quora since I had some data from there already available, but I hope the lessons should be fairly applicable in general, to other social networks like Facebook, Twitter, and LinkedIn as well.)</p>
-
-  <p>To give an initial answer to some of these questions, I dug into one of my more popular posts, on <a href="http://www.quora.com/Random-Forests/How-do-random-forests-work-in-laymans-terms">a layman&#8217;s introduction to random forests</a>.</p>
-
-  <h1>Users, Topics</h1>
-
-  <p>Before looking deeper into the voting dynamics of the post, let&#8217;s first get some background on what kinds of users the answer reached.</p>
-
-  <p>Here&#8217;s a graph of the topics that question upvoters follow. (Each node is a topic, and every time upvoter X follows both topics A and B, I add an edge between A and B.)</p>
-
-  <p><a href="http://i.imgur.com/SYaWo7V.png"><img src="http://i.imgur.com/SYaWo7V.png" alt="Upvoters' Topics - Unlabeled" /></a></p>
-
-  <p><a href="http://i.imgur.com/A4Z1KF7.png"><img src="http://i.imgur.com/A4Z1KF7.png" alt="Upvoters' Topics - Labeled" /></a></p>
-
-  <p>We can see from the graph that upvoters tend to be interested in three kinds of topics:</p>
-
-  <ul>
-  <li><strong>Machine learning and other technical matters</strong> (the green cluster): Classification, Data Mining, Big Data, Information Retrieval, Analytics, Probability, Support Vector Machines, R, Data Science, &#8230;</li>
-  <li><strong>Startups/Silicon Valley</strong> (the red cluster): Facebook, Lean Startups, Investing, Seed Funding, Angel Investing, Technology Trends, Product Managment, Silicon Valley Mergers and Acquisitions, Asana, Social Games, Quora, Mark Zuckerberg, User Experience, Founders and Entrepreneurs, &#8230;</li>
-  <li><strong>General Intellectual Topics</strong> (the purple cluster): TED, Science, Book Recommendations, Philosophy, Politics, Self-Improvement, Travel, Life Hacks, &#8230;</li>
-  </ul>
-
-
-  <p>Also, here&#8217;s the network of the upvoters themselves (there&#8217;s an edge between users A and B if A follows B):</p>
-
-  <p><a href="http://i.imgur.com/JuqybXw.png"><img src="http://i.imgur.com/JuqybXw.png" alt="Upvote Network - Unlabeled" /></a></p>
-
-  <p><a href="http://i.imgur.com/0E2ekqO.png"><img src="http://i.imgur.com/0E2ekqO.png" alt="Upvote Network - Labeled" /></a></p>
-
-  <p>We can see three main clusters of users:</p>
-
-  <ul>
-  <li>A large group in <strong>green</strong> centered around a lot of power users and Quora employees.</li>
-  <li>A machine learning group of folks in <strong>orange</strong> centered around people like Oliver Grisel, Christian Langreiter, and Joseph Turian.</li>
-  <li>A group of people following me, in <strong>purple</strong>.</li>
-  <li>Plus some smaller clusters in blue and yellow. (There were also a bunch of isolated users, connected to no one, that I filtered out of the picture.)</li>
-  </ul>
-
-
-  <p>Digging into how these topic and user graphs are related:</p>
-
-  <ul>
-  <li>The orange cluster of users is more heavily into machine learning: 79% of users in that cluster follow more green topics (machine learning and technical topics) than red and purple topics (startups and general intellectual matters).</li>
-  <li>The green cluster of users is reversed: 77% of users follow more of the red and purple clusters of topics (on startups and general intellectual matters) than machine learning and technical topics.</li>
-  </ul>
-
-
-  <p>More interestingly, though, we can ask: how do the connections between upvoters relate to the way the post spread?</p>
-
-  <h1>Social Voting Dynamics</h1>
-
-  <p>So let&#8217;s take a look. Here&#8217;s a visualization I made of upvotes on my answer across time (click <a href="http://www.youtube.com/watch?v=cZ4Ntg4jQHw">here</a> for a larger view).</p>
-
-  <iframe width="640" height="510" src="http://www.youtube.com/embed/cZ4Ntg4jQHw " frameborder="0" allowfullscreen></iframe>
-
-
-  <p></p>
-
-  <p>To represent the social dynamics of these upvotes, I drew an edge from user A to user B if user A transmitted the post to user B through an upvote. (Specifically, I drew an edge from Alice to Bob if Bob follows Alice and Bob&#8217;s upvote appeared within five days of Alice&#8217;s upvote; this is meant to simulate the idea that Alice was the key intermediary between my post and Bob.)</p>
-
-  <p>Also,</p>
-
-  <ul>
-  <li>Green nodes are users with at least one upvote edge.</li>
-  <li>Blue nodes are users who follow at least one of the topics the post is categorized under (i.e., users who probably discovered the answer by themselves).</li>
-  <li>Red nodes are users with no connections and who do not follow any of the post&#8217;s topics (i.e, users whose path to the post remain mysterious).</li>
-  <li>Users increase in size when they produce more connections.</li>
-  </ul>
-
-
-  <p>Here&#8217;s a play-by-play of the video:</p>
-
-  <ul>
-  <li>On Feb 14 (the day I wrote the answer), there&#8217;s a flurry of activity.</li>
-  <li>A couple of days later, Tracy Chou gives an upvote, leading to another spike in activity.</li>
-  <li>Then all&#8217;s quiet until&#8230; bam! Alex Kamil leads to a surge of upvotes, and his upvote finds Ludi Rehak, who starts a small surge of her own. They&#8217;re quickly followed by Christian Langreiter, who starts a small revolution among a bunch of machine learning folks a couple days later.</li>
-  <li>Then all is pretty calm again, until a couple months later when&#8230; bam! Aditya Sengupta brings in a smashing of his own followers, and his upvote makes its way to Marc Bodnick, who sets off a veritable storm of activity.</li>
-  </ul>
-
-
-  <p>(Already we can see some relationships between the graph of user connections and the way the post propagated. Many of the users from the orange cluster, for example, come from Alex Kamil and Christian Langreiter&#8217;s upvotes, and many of the users from the green cluster come from Aditya Sengupta and Marc Bodnick&#8217;s upvotes. What&#8217;s interesting, though, is, why didn&#8217;t the cluster of green users appear all at once, like the orange cluster did? People like Kah Seng Tay, Tracy Chou, Venkatesh Rao, and Chad Little upvoted the answer pretty early on, but it wasn&#8217;t until Aditya Sengupta&#8217;s upvote a couple months later that people like Marc Bodnick, Edmond Lau, and many of the other green users (who do indeed follow that first set of folks) discovered the answer. Did the post simply get lost in users&#8217; feeds the first time around? Was the post perhaps ignored until it received enough upvotes to be considered worth reading? Are some users&#8217; upvotes just trusted more than others&#8217;?)</p>
-
-  <p>For another view of the upvote dynamics, here&#8217;s a static visualization, where we can again easily see the clusters of activity:</p>
-
-  <p><a href="http://i.imgur.com/jmOacPR.png"><img src="http://i.imgur.com/jmOacPR.png" alt="Upvote Temporal Clusters" /></a></p>
-
-  <h1>Fin</h1>
-
-  <p>There are still many questions it would be interesting to look at; for example,</p>
-
-  <ul>
-  <li>What differentiates users who sparked spikes of activity from users who didn&#8217;t? I don&#8217;t believe it&#8217;s simply number of followers, as many well-connected upvoters did <em>not</em> lead to cascades of shares. Does authority matter?</li>
-  <li>How far can a post reach? Clearly, the post reached people more than one degree of separation away from me (where one degree of separation is a follower); what does the distribution of degrees look like? Is there any relationship between degree of separation and time of upvote?</li>
-  <li>What can we say about the people who started following me after reading my answer? Are they fewer degrees of separation away? Are they more interested in machine learning? Have they upvoted any of my answers before? (Perhaps there&#8217;s a certain &#8220;threshold&#8221; of interestingness people need to overflow before they&#8217;re considered acceptable followees.)</li>
-  </ul>
-
-
-  <p>But to summarize a bit what we&#8217;ve seen so far, here are some statistics on the role the social graph played in spreading the post:</p>
-
-  <ul>
-  <li>There are 5 clusters of activity after the initial post, sparked both by power users and less-connected folks. In an interesting cascade of information, some of these sparks led to further spikes in activity as well (as when Aditya Sengupta&#8217;s upvote found its way to Marc Bodnick, who set off even more activity).</li>
-  <li>35% of users made their way to my answer because of someone else&#8217;s upvote.</li>
-  <li>Through these connections, the post reached a fair variety of users: 32% of upvoters don&#8217;t even follow any of the post&#8217;s topics.</li>
-  <li>77% of upvotes came from users over two weeks <em>after</em> my answer appeared.</li>
-  <li>If we look only at the upvoters who follow at least one of the post&#8217;s topics, 33% didn&#8217;t see my answer until someone else showed it to them. In other words, a full one-third of people who presumably would have been interested in my post anyways only found it because of their social network.</li>
-  </ul>
-
-
-  <p>So it looks like the social graph played quite a large part in the post&#8217;s propagation, and I&#8217;ll end with a big shoutout to Stormy Shippy, who provided an awesome set of scripts I used to collect a lot of this data.</p>
-  </div>  
-
-                    </article>
  
 <div class="paginator">
     <div class="navButton">Page 1 / 2</div>
@@ -4706,7 +4595,8 @@ Now we can use the following formulas to find P₁ and P₂:</p>
 
           <div id="recent_posts">
               <h3>Recent Posts</h3>
-                <a style="font-size: 0.9em" href="./2022/02/11/embedding-explorer/">Embedding Explorer  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2022/02/12/how-could-facebook-align-its-ml-systems-to-human-values-a-data-driven-approach/">How Could Facebook Align its ML Systems to Human Values? A Data-Driven Approach  </a><br /><br />
+                <a style="font-size: 0.9em" href="./2022/02/11/a-visual-tool-for-exploring-word-embeddings/">A Visual Tool for Exploring Word Embeddings  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2021/12/23/a-laymans-introduction-to-perplexity-in-nlp/">A Layman's Introduction to Perplexity in NLP  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2021/12/23/an-introduction-to-inter-annotator-agreement-and-cohens-kappa-statistic/">An Introduction to Inter-Annotator Agreement and Cohen's Kappa Statistic  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2021/11/21/a-visual-laymans-introduction-to-language-models-in-nlp/">A Visual, Layman's Introduction to Language Models in NLP  </a><br /><br />
