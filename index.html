@@ -33,6 +33,35 @@
             <aside id="featured">
                 <div class="body">
                     <article>
+                        <h1 class="entry-title"><a href="./2022/02/11/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields</a></h1>
+<div class="post-info">
+Translations: 
+        <a href="./2012/01/03/introduction-to-conditional-random-fields/">en</a>
+
+</div><!-- /.post-info --><p>I built a visualization to explore embeddings a few years ago, but never posted it more broadly. So here it is! <a href="http://blog.echen.me/embedding-explorer/">http://blog.echen.me/embedding-explorer/</a></p>
+<iframe src="http://blog.echen.me/embedding-explorer/" style="width: 100%; height: 500px"></iframe>
+
+<p>These are <a href="https://nlp.stanford.edu/projects/glove/">GloVe embeddings</a> projected into 2D, colorized via k-means in the original space.</p>
+<p>You can see, for example, that the cluster in red on the right is a cluster of geographical terms.</p>
+<p><img alt="Geography Cluster" src="https://i.imgur.com/NtFaopz.png"></p>
+<p>We can click on one of these points ("iceland") to see its nearest neighbors in the high-dimensional space (mostly other countries!) as well as other points that belong to the same cluster (Cluster 18 is this red cluster).</p>
+<p><img alt="Iceland" src="https://i.imgur.com/4fggBQz.png"></p>
+<p>We can also inspect each individual embedding dimension, to understand what it's picking up. Embedding Dimension 1, for example, seems to capture sportiness.</p>
+<p><img alt="Embedding Dimension 1" src="https://i.imgur.com/YRhHkka.png"></p>
+<p>We can also slide through the points based on their embedding dimension to get a better sense:</p>
+<p><img alt="Embedding Dimension 1 Slide" src="https://imgur.com/a/ir4YvOB"></p>
+<p>Anyways, play around with the explorer <a href="http://blog.echen.me/embedding-explorer">here</a>, and feedback is always welcome!</p>
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
                         <h1 class="entry-title"><a href="./2021/12/23/a-laymans-introduction-to-perplexity-in-nlp/">A Layman's Introduction to Perplexity in NLP</a></h1>
 <div class="post-info">
 
@@ -293,35 +322,6 @@ Now we can use the following formulas to find P₁ and P₂:</p>
 <li>We discussed a couple approaches to evaluating the quality of language models: <strong>human evaluation</strong> (did the robot responses sound natural to a human?), <strong>downstream tasks</strong> (did the robot responses lead to actual food?), and <strong>intrinsic evaluations</strong> (how perplexed were the robots by the human utterances?).</li>
 </ul>
 <p>In future posts, we’ll dive into the mathematics and science behind these concepts. If you enjoyed this post, follow us on Twitter at <a href="https://twitter.com/@HelloSurgeAI">@HelloSurgeAI</a>! And if you need a high-quality data labeling platform and workforce, used by top AI companies and research labs around the world, reach out to us at <a href="https://www.surgehq.ai">Surge AI</a>.</p>
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="./2021/02/11/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields</a></h1>
-<div class="post-info">
-Translations: 
-        <a href="./2012/01/03/introduction-to-conditional-random-fields/">en</a>
-
-</div><!-- /.post-info --><p>I built a visualization to explore embeddings a few years ago, but never posted it more broadly. So here it is! <a href="http://blog.echen.me/embedding-explorer/">http://blog.echen.me/embedding-explorer/</a></p>
-<iframe src="http://blog.echen.me/embedding-explorer/" style="width: 100%; height: 500px"></iframe>
-
-<p>These are <a href="https://nlp.stanford.edu/projects/glove/">GloVe embeddings</a> projected into 2D, colorized via k-means in the original space.</p>
-<p>You can see, for example, that the cluster in red on the right is a cluster of geographical terms.</p>
-<p><img alt="Geography Cluster" src="https://i.imgur.com/NtFaopz.png"></p>
-<p>We can click on one of these points ("iceland") to see its nearest neighbors in the high-dimensional space (mostly other countries!) as well as other points that belong to the same cluster (Cluster 18 is this red cluster).</p>
-<p><img alt="Iceland" src="https://i.imgur.com/4fggBQz.png"></p>
-<p>We can also inspect each individual embedding dimension, to understand what it's picking up. Embedding Dimension 1, for example, seems to capture sportiness.</p>
-<p><img alt="Embedding Dimension 1" src="https://i.imgur.com/YRhHkka.png"></p>
-<p>We can also slide through the points based on their embedding dimension to get a better sense:</p>
-<p><img alt="Embedding Dimension 1 Slide" src="https://imgur.com/a/ir4YvOB"></p>
-<p>Anyways, play around with the explorer <a href="http://blog.echen.me/embedding-explorer">here</a>, and feedback is always welcome!</p>
                     </article>
                 </div>
             </aside><!-- /#featured -->
@@ -3706,7 +3706,7 @@ Translations:
                         <h1 class="entry-title"><a href="./2012/01/03/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields</a></h1>
 <div class="post-info">
 Translations: 
-        <a href="./2021/02/11/introduction-to-conditional-random-fields/">en</a>
+        <a href="./2022/02/11/introduction-to-conditional-random-fields/">en</a>
 
 </div><!-- /.post-info --><p>Imagine you have a sequence of snapshots from a day in Justin Bieber’s life, and you want to label each image with the activity it represents (eating, sleeping, driving, etc.). How can you do this?</p>
 <p>One way is to ignore the sequential nature of the snapshots, and build a <em>per-image</em> classifier. For example, given a month’s worth of labeled snapshots, you might learn that dark images taken at 6am tend to be about sleeping, images with lots of bright colors tend to be about dancing, images of cars are about driving, and so on.</p>
@@ -4710,10 +4710,10 @@ Translations:
 
           <div id="recent_posts">
               <h3>Recent Posts</h3>
+                <a style="font-size: 0.9em" href="./2022/02/11/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2021/12/23/a-laymans-introduction-to-perplexity-in-nlp/">A Layman's Introduction to Perplexity in NLP  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2021/12/23/an-introduction-to-inter-annotator-agreement-and-cohens-kappa-statistic/">An Introduction to Inter-Annotator Agreement and Cohen's Kappa Statistic  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2021/11/21/a-visual-laymans-introduction-to-language-models-in-nlp/">A Visual, Layman's Introduction to Language Models in NLP  </a><br /><br />
-                <a style="font-size: 0.9em" href="./2021/02/11/introduction-to-conditional-random-fields/">Introduction to Conditional Random Fields  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2020/11/30/surge-ai-a-new-data-labeling-platform-and-workforce-for-nlp/">Surge AI: A New Data Labeling Platform and Workforce for NLP  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2017/05/30/exploring-lstms/">Exploring LSTMs  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
