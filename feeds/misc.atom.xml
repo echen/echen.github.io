@@ -3,18 +3,20 @@
 &lt;iframe src="http://blog.echen.me/embedding-explorer/" style="width: 100%; height: 500px"&gt;&lt;/iframe&gt;
 
 &lt;p&gt;These are &lt;a href="https://nlp.stanford.edu/projects/glove/"&gt;GloVe embeddings&lt;/a&gt; projected into 2D, colorized via k-means in the original space.&lt;/p&gt;
-&lt;p&gt;You can see, for example, that the cluster in red …&lt;/p&gt;</summary><content type="html">&lt;p&gt;I built a visualization to explore embeddings a few years ago, but never posted it more broadly. So here it is! &lt;a href="http://blog.echen.me/embedding-explorer/"&gt;http://blog.echen.me/embedding-explorer/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;You can see, for example, that the cluster in pink …&lt;/p&gt;</summary><content type="html">&lt;p&gt;I built a visualization to explore embeddings a few years ago, but never posted it more broadly. So here it is! &lt;a href="http://blog.echen.me/embedding-explorer/"&gt;http://blog.echen.me/embedding-explorer/&lt;/a&gt;&lt;/p&gt;
 &lt;iframe src="http://blog.echen.me/embedding-explorer/" style="width: 100%; height: 500px"&gt;&lt;/iframe&gt;
 
 &lt;p&gt;These are &lt;a href="https://nlp.stanford.edu/projects/glove/"&gt;GloVe embeddings&lt;/a&gt; projected into 2D, colorized via k-means in the original space.&lt;/p&gt;
-&lt;p&gt;You can see, for example, that the cluster in red on the right is a cluster of geographical terms.&lt;/p&gt;
+&lt;p&gt;You can see, for example, that the cluster in pink at the bottom right is a cluster of names.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Names Cluster" src="https://i.imgur.com/bEItyva.png"&gt;&lt;/p&gt;
+&lt;p&gt;And the cluster in red on the right is a cluster of geographical terms.&lt;/p&gt;
 &lt;p&gt;&lt;img alt="Geography Cluster" src="https://i.imgur.com/NtFaopz.png"&gt;&lt;/p&gt;
 &lt;p&gt;We can click on one of these points ("iceland") to see its nearest neighbors in the high-dimensional space (mostly other countries!) as well as other points that belong to the same cluster (Cluster 18 is this red cluster).&lt;/p&gt;
 &lt;p&gt;&lt;img alt="Iceland" src="https://i.imgur.com/4fggBQz.png"&gt;&lt;/p&gt;
 &lt;p&gt;We can also inspect each individual embedding dimension, to understand what it's picking up. Embedding Dimension 1, for example, seems to capture sportiness.&lt;/p&gt;
 &lt;p&gt;&lt;img alt="Embedding Dimension 1" src="https://i.imgur.com/YRhHkka.png"&gt;&lt;/p&gt;
 &lt;p&gt;We can also slide through the points based on their embedding dimension to get a better sense:&lt;/p&gt;
-&lt;p&gt;&lt;img alt="Embedding Dimension 1 Slide" src="https://imgur.com/a/ir4YvOB"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Embedding Dimension 1 Slide" src="https://i.imgur.com/Qq0ua2w.png"&gt;&lt;/p&gt;
 &lt;p&gt;Anyways, play around with the explorer &lt;a href="http://blog.echen.me/embedding-explorer"&gt;here&lt;/a&gt;, and feedback is always welcome!&lt;/p&gt;</content><category term="misc"></category></entry><entry><title>A Layman's Introduction to Perplexity in NLP</title><link href="http://blog.echen.me/2021/12/23/a-laymans-introduction-to-perplexity-in-nlp/" rel="alternate"></link><published>2021-12-23T00:00:00+01:00</published><updated>2021-12-23T00:00:00+01:00</updated><author><name>Edwin Chen</name></author><id>tag:blog.echen.me,2021-12-23:/2021/12/23/a-laymans-introduction-to-perplexity-in-nlp/</id><summary type="html">&lt;p&gt;&lt;em&gt;(This is a &lt;a href="https://www.surgehq.ai/blog/how-good-is-your-chatbot-an-introduction-to-perplexity-in-nlp"&gt;crosspost&lt;/a&gt; from the official Surge AI &lt;a href="https://www.surgehq.ai/blog"&gt;blog&lt;/a&gt;, where we're building the greatest source of NLP content. If you need help with data labeling and NLP, &lt;a href="https://www.surgehq.ai/contact"&gt;say hello&lt;/a&gt;!)&lt;/em&gt;&lt;/p&gt;
 &lt;h1&gt;Introduction&lt;/h1&gt;
 &lt;p&gt;New, state-of-the-art language models like DeepMind’s &lt;a href="https://www.surgehq.ai/blog/how-good-is-your-chatbot-an-introduction-to-perplexity-in-nlp"&gt;Gopher&lt;/a&gt;, Microsoft’s &lt;a href="https://www.microsoft.com/en-us/research/blog/using-deepspeed-and-megatron-to-train-m[%E2%80%A6]-worlds-largest-and-most-powerful-generative-language-model/"&gt;Megatron&lt;/a&gt;, and OpenAI’s GPT-3 are driving a wave …&lt;/p&gt;</summary><content type="html">&lt;p&gt;&lt;em&gt;(This is a &lt;a href="https://www.surgehq.ai/blog/how-good-is-your-chatbot-an-introduction-to-perplexity-in-nlp"&gt;crosspost&lt;/a&gt; from the official Surge AI &lt;a href="https://www.surgehq.ai/blog"&gt;blog&lt;/a&gt;, where we're building the greatest source of NLP content. If you need help with data labeling and NLP, &lt;a href="https://www.surgehq.ai/contact"&gt;say hello&lt;/a&gt;!)&lt;/em&gt;&lt;/p&gt;
