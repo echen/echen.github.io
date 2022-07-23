@@ -83,277 +83,6 @@
             <aside id="featured">
                 <div class="body">
                     <article>
-                        <h1 class="entry-title"><a href="./2021/12/23/a-laymans-introduction-to-perplexity-in-nlp/">A Layman's Introduction to Perplexity in NLP</a></h1>
-<div class="post-info">
-
-</div><!-- /.post-info --><p><em>(This is a <a href="https://www.surgehq.ai/blog/how-good-is-your-chatbot-an-introduction-to-perplexity-in-nlp">crosspost</a> from the official Surge AI <a href="https://www.surgehq.ai/blog">blog</a>, where we're building the greatest source of NLP content. If you need help with data labeling and NLP, <a href="https://www.surgehq.ai/contact">say hello</a>!)</em></p>
-<h1>Introduction</h1>
-<p>New, state-of-the-art language models like DeepMind’s <a href="https://www.surgehq.ai/blog/how-good-is-your-chatbot-an-introduction-to-perplexity-in-nlp">Gopher</a>, Microsoft’s <a href="https://www.microsoft.com/en-us/research/blog/using-deepspeed-and-megatron-to-train-m[%E2%80%A6]-worlds-largest-and-most-powerful-generative-language-model/">Megatron</a>, and OpenAI’s GPT-3 are driving a wave of innovation in NLP. How do you measure the performance of these language models to see how good they are? In a <a href="https://www.surgehq.ai/blog/an-introduction-to-language-models-in-nlp-part-1-intuition">previous post</a>, we gave an overview of different language model evaluation metrics. This post dives more deeply into one of the most popular: a metric known as <strong>perplexity</strong>.</p>
-<h1>A chore</h1>
-<p>Imagine you’re trying to build a chatbot that helps home cooks autocomplete their grocery shopping lists based on popular flavor combinations from social media. Your goal is to let users type in what they have in their fridge, like “chicken, carrots,” then list the five or six ingredients that go best with those flavors. You’ve already scraped thousands of recipe sites for ingredient lists, and now you just need to choose the best NLP model to predict which words appear together most often. Easy, right?</p>
-<p>Well, not exactly. The gold standard for checking the performance of a model is <strong>extrinsic evaluation</strong>: measuring its final performance on a real-world task. In this case, that might mean letting your model generate a dataset of a thousand new recipes, then asking a few hundred data labelers to rate how tasty they sound.</p>
-<p>Unfortunately, you don’t have one dataset, you have one dataset for every variation of every parameter of every model you want to test. Even simple comparisons of the same basic model can lead to a combinatorial explosion: 3 different optimization functions with 5 different learning rates and 4 different batch sizes equals 120 different datasets, all with hundreds of thousands of individual data points. How can you quickly narrow down which models are the most promising to fully evaluate?</p>
-<p>Enter <strong>intrinsic evaluation</strong>: finding some property of a model that estimates the model’s quality independent of the specific tasks its used to perform. Specifically, enter <strong>perplexity</strong>, a metric that quantifies how uncertain a model is about the predictions it makes. Low perplexity only guarantees a model is confident, not accurate, but it often correlates well with the model’s final real-world performance, and it can be quickly calculated using just the probability distribution the model learns from the training dataset. </p>
-<p>In this week’s post, we’ll look at how perplexity is calculated, what it means intuitively for a model’s performance, and the pitfalls of using perplexity for comparisons across different datasets and models.</p>
-<h1>Calculating perplexity</h1>
-<p>To understand how perplexity is calculated, let’s start with a very simple version of the recipe training dataset that only has four short ingredient lists:</p>
-<ol>
-<li>chicken, butter, pears</li>
-<li>chicken, butter, chili</li>
-<li>lemon, pears, shrimp</li>
-<li>chili, shrimp, lemon</li>
-</ol>
-<p>In machine learning terms, these sentences are a language with a vocabulary size of 6 (because there are a total of 6 unique words). A language model is just a function trained on a specific language that predicts the probability of a certain word appearing given the words that appeared around it. </p>
-<p>One of the simplest language models is a unigram model, which looks at words one at a time assuming they’re statistically independent. In other words, it returns the relative frequency that each word appears in the training data. Here’s a unigram model for the dataset above, which is especially simple because every word appears the same number of times:</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b111f496eeb49dd0f37f3d_1.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b111f496eeb49dd0f37f3d_1.png"></a></p>
-<p>It’s pretty obvious this isn’t a very good model. No matter which ingredients you say you have, it will just pick any new ingredient at random with equal probability, so you might as well be rolling a fair die to choose. Let’s quantify exactly how bad this is.</p>
-<p>We’re going to start by calculating how surprised our model is when it sees a single specific word like “chicken.” Intuitively, the more probable an event is, the less surprising it is. If you’re certain something is impossible - if its probability is 0 - then you would be infinitely surprised if it happened.  Similarly, if something was guaranteed to happen with probability 1, your surprise when it happened would be 0. </p>
-<p>Conveniently, there’s already a simple function that maps 0 → ∞ and 1 → 0: log(1/x). If we know the probability of a given event, we can express our surprise when it happens as:</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b111f496eeb49dd0f37f3d_1.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b111f496eeb49dd0f37f3d_1.png"></a></p>
-<p>As you may remember from algebra class, we can rewrite this as:</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1131eb6bda9672076d7ff_3.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1131eb6bda9672076d7ff_3.png"></a></p>
-<p>In information theory, this term - the negative log of the probability of an event occurring - is called the <strong>surprisal</strong>.</p>
-<p>Our unigram model says that the probability of the word “chicken” appearing in a new sentence from this language is 0.16, so the surprisal of that event outcome is -log(0.16) = 2.64.</p>
-<p>‍
-If surprisal lets us quantify how unlikely a single outcome of a possible event is, <strong>entropy</strong> does the same thing for the event as a whole. It’s the expected value of the surprisal across every possible outcome - the sum of the surprisal of every outcome multiplied by the probability it happens:</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1136977d0bf7193978314_4.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1136977d0bf7193978314_4.png"></a></p>
-<p>In our dataset, all six possible event outcomes have the same probability (⅙) and surprisal (2.64), so the entropy is just:  ⅙ * 2.64 + ⅙ * 2.64 + ⅙ * 2.64 + ⅙ * 2.64 + ⅙ * 2.64 + ⅙ * 2.64 = 6 * (⅙ * 2.64) = 2.64.</p>
-<p>Once we’ve gotten this far, calculating the <strong>perplexity</strong> is easy - it’s just the exponential of the entropy:</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b113a4de7a8983b9279463_5.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b113a4de7a8983b9279463_5.png"></a></p>
-<p>The entropy for the dataset above is 2.64, so the perplexity is 2^2.64 = 6.</p>
-<p>You may notice something odd about this answer: it’s the vocabulary size of our language! To put it another way, it’s the number of possible words you could choose at each position in a sentence in this language, also known as the <strong>branching factor</strong>.</p>
-<p>This may not surprise you if you’re already familiar with the intuitive definition for entropy: the number of bits needed to most efficiently represent which event from a probability distribution actually happened. If the entropy N is the number of bits you have, 2ⁿ is the number of choices those bits can represent. This means we can say our model’s perplexity of 6 means it’s “as confused” as if it had to randomly choose between six different words - which is exactly what’s happening.</p>
-<p>Now imagine that we keep using the same dumb unigram model, but our dataset isn’t quite as uniform:</p>
-<ol>
-<li>chicken, butter, pears</li>
-<li>chicken, butter, lemon</li>
-<li>chicken, lemon, pears</li>
-<li>chili, shrimp, lemon</li>
-</ol>
-<p>Here’s the probability distribution our model returns after training on this dataset (the brighter a cell’s color, the more probable the event):</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11484a0f3e67d3479b0eb_6.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11484a0f3e67d3479b0eb_6.png"></a></p>
-<p>Intuitively, this means it just got easier to predict what any given word in a sentence will be - now we know it’s more likely to be “chicken” than “chili.” Let’s see how that affects each word’s surprisal:</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1149d082d800daa893774_7.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b1149d082d800daa893774_7.png"></a></p>
-<p>The new value for our model’s entropy is:</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b114e209f1a244ff809eba_8.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b114e209f1a244ff809eba_8.png"></a></p>
-<p>And so the new perplexity is 2^2.38 = 5.2. Now our new and better model is only as confused as if it was randomly choosing between 5.2 words, even though the language’s vocabulary size didn’t change!</p>
-<p>As one outcome becomes disproportionately more likely, the model becomes less uncertain, so perplexity decreases, telling us this model is likely to be higher-quality than our first attempt.</p>
-<h1>Interpreting perplexity</h1>
-<p>The word likely is important, because unlike a simple metric like prediction accuracy, lower perplexity isn’t guaranteed to translate into better model performance, for at least two reasons. </p>
-<p>First, as we saw in the calculation section, a model’s worst-case perplexity is fixed by the language’s vocabulary size. This means you can greatly lower your model’s perplexity just by, for example, switching from a word-level model (which might easily have a vocabulary size of 50,000+ words) to a character-level model (with a vocabulary size of around 26), regardless of whether the character-level model is really more accurate. Other variables like size of your training dataset or your model’s context length can also have a disproportionate effect on a model’s perplexity.</p>
-<p>Second and more importantly, perplexity, like all internal evaluation, doesn’t provide any form of sanity-checking. To give an obvious example, models trained on the two datasets below would have identical perplexities, but you’d get wildly different answers if you asked real humans to evaluate the tastiness of their recommended recipes!</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11539f5d99b31ed648376_9.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11539f5d99b31ed648376_9.png"></a></p>
-<h1>Perplexity in the real world</h1>
-<p>You can see similar, if more subtle, problems when you use perplexity to evaluate models trained on real world datasets like the <a href="https://paperswithcode.com/dataset/billion-word-benchmark">One Billion Word Benchmark</a>. This corpus was put together from thousands of online news articles published in 2011, all broken down into their component sentences. It’s designed as a standardardized test dataset that allows researchers to directly compare different models trained on different data, and perplexity is a popular benchmark choice.</p>
-<p>Unfortunately, as work by <a href="https://arxiv.org/pdf/2110.12609.pdf">Helen Ngo, et al.</a> shows, a model’s perplexity can be easily influenced by factors that have nothing to do with model quality. When her team trained identical models on three different news datasets from 2013, 2016, and 2020, the more modern models had substantially higher perplexities:</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11582f5d99b9ffe64ce6e_dWuu9FrfJB1CdkAY_KQIXNXYpiTH__iSBKVIpLe0mo30AMrx4-Q-uLQbbHub50B-WacfnyBNMAIxKX-dwUo3U55qhk8qvkhrxKhhWOj9eR1wlD3Fux20sIy3NdqxFCybuQBLajOs.png"><img alt="Image" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61b11582f5d99b9ffe64ce6e_dWuu9FrfJB1CdkAY_KQIXNXYpiTH__iSBKVIpLe0mo30AMrx4-Q-uLQbbHub50B-WacfnyBNMAIxKX-dwUo3U55qhk8qvkhrxKhhWOj9eR1wlD3Fux20sIy3NdqxFCybuQBLajOs.png"></a></p>
-<p>The problem is that news publications cycle through viral buzzwords quickly - just think about how often the Harlem Shake  was mentioned 2013 compared to now. Since perplexity effectively measures how accurately a model can mimic the style of the dataset it’s being tested against, models trained on news from the same period as the benchmark dataset have an unfair advantage thanks to vocabulary similarity.</p>
-<p>Even worse, since the One Billion Word Benchmark breaks full articles into individual sentences, curators have a hard time detecting instances of decontextualized hate speech. (For example, “The little monkeys were playing” is perfectly inoffensive in an article set at the zoo, and utterly horrifying in an article set at a racially diverse elementary school.) Since perplexity rewards models for mimicking the test dataset, it can end up favoring the models most likely to imitate subtly toxic content.</p>
-<h1>Perplexity in a nutshell</h1>
-<p><strong>Pros:</strong></p>
-<ul>
-<li>Fast to calculate, allowing researchers to weed out models that are unlikely to perform well in expensive/time-consuming real-world testing</li>
-<li>Useful to have estimate of the model’s uncertainty/information density</li>
-</ul>
-<p><strong>Cons:</strong></p>
-<ul>
-<li>Not good for final evaluation, since it just measures the model’s confidence, not its accuracy</li>
-<li>Hard to make apples-to-apples comparisons across datasets with different context lengths, vocabulary sizes, word- vs. character-based models, etc.</li>
-<li>Can end up rewarding models that mimic toxic or outdated datasets</li>
-</ul>
-<p>Finally, it’s worth noting that perplexity is only one choice for evaluating language models. There are many alternatives, some closely related to perplexity (cross-entropy and bits-per-character), and others that are completely distinct (accuracy/precision/F1 score, mean reciprocal rank, mean average precision, etc.).</p>
-<p><em>Surge AI is a data labeling workforce and platform that provides world-class data to top AI companies and researchers. We're built from the ground up to tackle the extraordinary challenges of natural language understanding — with an elite data labeling workforce, stunning quality, rich labeling tools, and modern APIs. Want to improve your model with context-sensitive data and domain-expert labelers? Sign up <a href="https://app.surgehq.ai/signup">for free</a> or schedule a <a href="https://calendly.com/surge-ai/introduction">demo</a> with our team today!</em></p>
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="./2021/12/23/an-introduction-to-inter-annotator-agreement-and-cohens-kappa-statistic/">An Introduction to Inter-Annotator Agreement and Cohen's Kappa Statistic</a></h1>
-<div class="post-info">
-
-</div><!-- /.post-info --><p><em>(This is a <a href="https://www.surgehq.ai/blog/inter-rater-reliability-metrics-understanding-cohens-kappa">crosspost</a> from the official Surge AI <a href="https://www.surgehq.ai/blog">blog</a>, where we're building the greatest source of NLP content. If you need help with data labeling and NLP, <a href="https://www.surgehq.ai/contact">say hello</a>!)</em></p>
-<h1>Introduction</h1>
-<p>Imagine you're a Harvard professor teaching English 101. You’re tired of grading homework and want to get back to your research, so you decide to build an NLP model that can score your students' essays as a Pass or Fail for you.</p>
-<p>In order to build a training dataset, you use a workforce of data labelers to read and grade your essays. Of course, you want to ensure that every rater applies the grading rubric consistently: if two raters read the same 10 essays, for example, you want to ensure that each essay receives a similar grade from both of them. Otherwise, your training data may be too noisy and subjective to be of much use! So how can you measure rater consistency?</p>
-<p>One candidate is <strong>Cohen’s kappa statistic</strong>, which measures how often two raters agree with each other after accounting for the likelihood they’d agree by chance. In this post, we’ll explain how Cohen's kappa uncovers disagreements between raters that are obscured by simpler metrics like percentage agreement.</p>
-<h1>A mystery</h1>
-<p>As starving aspiring novelists, Alix and Bob were both happy to moonlight as data labelers grading student essays. Wanting to be fair to the students, they tracked how often they agreed whether to pass or fail a particular student, and found their judgements matched 90% of the time. A week in, though, Bob was shocked to discover that he was getting twice as many complaints from flunked students as Alix. How could there be such a huge difference if their decisions were so similar?</p>
-<p>The problem with simple measures of <a href="https://www.surgehq.ai/blog/the-pitfalls-of-inter-rater-reliability-in-data-labeling-and-machine-learning">inter-rater reliability</a>, like the percentage of samples both raters label identically, is that they don’t account for the likelihood that two people would agree by random chance. To understand how this works, let’s consider the confusion matrix for the 100 essays Alix and Bob graded in their first week:</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56ae8adc0d698c5973ecd_CleanShot%202021-11-29%20at%2014.23.36%402x.png"><img alt="Confusion Matrix" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56ae8adc0d698c5973ecd_CleanShot%202021-11-29%20at%2014.23.36%402x.png"></a></p>
-<p>This is clearly a talented bunch of students, because 86% earned passes from both raters. The raters also rarely disagreed about which essays were good: if Alix passed a student, Bob did too 86 / 94 = 91% of the time. Things are different when we look at the 14% of the students who failed. If Bob failed a student, Alice failed the same student only 4 / 12 =  33% of the time, and overall Bob failed twice as many students as Alix (12 vs. 6). </p>
-<p>Because the student essay data is imbalanced, with far more students passing than failing, we have two problems:</p>
-<ul>
-<li>Even though all the raters seem superficially similar, some of them are actually twice as strict as others, which isn’t fair to the students.</li>
-<li>We can’t tell whether some of our raters are slacking off by just passing every essay, knowing the high overall pass rate will mean their judgments don’t look too different from the diligent raters.</li>
-</ul>
-<p>We can fix both these issues by using Cohen’s kappa to measure inter-rater reliability. This metric subtracts the probability that two raters would agree if they were guessing randomly from the probability they actually agreed. </p>
-<h1>Calculating Cohen’s kappa</h1>
-<p>The formula for Cohen’s kappa is:</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56ef47ba6273404f4ffc9_CleanShot%202021-11-29%20at%2016.22.28%402x%20replace.png"><img alt="Formula" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56ef47ba6273404f4ffc9_CleanShot%202021-11-29%20at%2016.22.28%402x%20replace.png"></a></p>
-<p>Po is the accuracy, or the proportion of time the two raters assigned the same label. It’s calculated as (TP+TN)/N:</p>
-<p>TP is the number of true positives, i.e. the number of students Alix and Bob both passed.
-TN is the number of true negatives, i.e. the number of students Alix and Bob both failed.
-N is the total number of samples, i.e. the number of essays both people graded.
-Plugging in the values from the example above, we get Po = (86 + 4)/100= 0.9.</p>
-<p>Pe is the probability that both raters would choose the same label if they both just guessed randomly. It’s the sum of two terms: P₁ is the probability both raters randomly choose the first label (pass), and P₂ is the probability they both choose the second label (fail). These probabilities can be calculated using the count of true positive and true negative described above plus two additional terms:</p>
-<p>FN is the number of false negatives. In this case, it’s not clear which, if any, rater is objectively correct, so we can arbitrarily define this as the number of students Alix passed and Bob failed.
-FP is the number of false positives, i.e. the number of students Bob passed and Alix failed.
-Now we can use the following formulas to find P₁ and P₂:</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56b86dbf1ef1c1e122c00_CleanShot%202021-11-29%20at%2014.27.07%402x.png"><img alt="Formula 2" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56b86dbf1ef1c1e122c00_CleanShot%202021-11-29%20at%2014.27.07%402x.png"></a></p>
-<p>For the example above, Pe = .827 + .007 = .834. We can plug this result into the formula for Cohen’s kappa to get:</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56b9e1b580d898f5ac174_CleanShot%202021-11-29%20at%2014.27.59%402x.png"><img alt="Formula 3" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56b9e1b580d898f5ac174_CleanShot%202021-11-29%20at%2014.27.59%402x.png"></a></p>
-<p>So what does this value mean?</p>
-<h1>Interpreting Cohen’s kappa</h1>
-<p>Cohen’s kappa ranges from 1, representing perfect agreement between raters, to -1, meaning the raters choose different labels for every sample. A value of 0 means the raters agreed exactly as often as if they were both randomly guessing. </p>
-<p>In this case, it’s pretty clear that while Alix and Bob are agreeing more often than random chance, their grading philosophies aren’t very similar. However, there’s still substantial debate about what kappa-value cutoffs to use for subjective labels like “strong” agreement. As the table below shows, Jacob Cohen’s original descriptive categories would classify Alix and Bob as “moderately” in agreement, but they’re only “weakly” in agreement according to Mary McHugh’s stricter thresholds intended for use in healthcare research:</p>
-<p><a href="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56bd3d539a168603b13aa_CleanShot%202021-11-29%20at%2014.28.16%402x.png"><img alt="Meaning" src="https://assets.website-files.com/610770ea9c21ff57ccb6a6a9/61a56bd3d539a168603b13aa_CleanShot%202021-11-29%20at%2014.28.16%402x.png"></a></p>
-<p>It’s important to remember that there’s a difference between consistent raters and high-quality raters. Alix and Bob could easily achieve a Cohen’s kappa of 1 if they were both so lazy they decided to just auto-pass every single essay. A high Cohen’s kappa might also reflect shared inappropriate biases - imagine if Alix and Bob both resented being forced to read Shakespeare in high school and automatically failed anyone who mentioned him.</p>
-<p>Similarly, negative values for Cohen’s kappa don’t automatically mean that one of the raters is low-quality. They might just have different values or interpretations of the labeling criteria. In this essay grading example, for instance, Alix might value thoroughness while Bob prefers students who are concise. In that case, Alix would preferentially fail the short essays Bob thought were the best written, and vice versa with the long essays. Pairs of raters with negative Cohen’s kappas can actually be valuable in tasks where representing a wide variety of viewpoints is important. Even for tasks that require consistency, low Cohen’s kappa values may reflect ambiguous instructions or inherently subjective questions (what makes an essay good anyway?) rather than rater error.</p>
-<h1>Cohen’s kappa in a nutshell</h1>
-<p><strong>Pros</strong></p>
-<ul>
-<li>Good for measuring agreement about datasets that are imbalanced or otherwise allow a high accuracy rate with random guessing.  </li>
-<li>Can be easily adapted to measure agreement about more than two labels. (For example, if Alix and Bob gave every essay an A-F grade instead of just pass/fail.)</li>
-<li>Negative scores can be used to identify raters with diverse viewpoints.</li>
-</ul>
-<p><strong>Cons</strong></p>
-<ul>
-<li>Can only compare two raters, not three or more. (Unlike next week's spotlight metric, Fleiss’ kappa!)</li>
-<li>Not intuitively clear what a given value means, unlike a simpler metric like percentage agreement.</li>
-<li>Debate over meaningful thresholds for “weak” vs. “moderate” vs. “strong” agreement.</li>
-<li>Read more about the pitfalls of inter-reliability metrics in our <a href="https://www.surgehq.ai/blog/inter-rater-reliability-metrics-understanding-cohens-kappa">previous post</a> in this series!</li>
-</ul>
-<p>In future posts, we'll dive more into other inter-rater reliability metrics and their advantages compared to Cohen's kappa.</p>
-<p><em>Surge AI is a data labeling workforce and platform that provides world-class data to top AI companies and researchers. We're built from the ground up to tackle the extraordinary challenges of natural language understanding — with an elite data labeling workforce, stunning quality, rich labeling tools, and modern APIs. Want to improve your model with context-sensitive data and domain-expert labelers? Schedule a <a href="https://calendly.com/surge-ai/introduction">demo</a> with our team today!</em></p>
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
-                        <h1 class="entry-title"><a href="./2021/11/21/a-visual-laymans-introduction-to-language-models-in-nlp/">A Visual, Layman's Introduction to Language Models in NLP</a></h1>
-<div class="post-info">
-
-</div><!-- /.post-info --><p><em>(This is a <a href="https://www.surgehq.ai/blog/an-introduction-to-language-models-in-nlp-part-1-intuition">crosspost</a> from the official Surge AI <a href="https://www.surgehq.ai/blog">blog</a>, where we're building the greatest source of NLP content. If you need help with data labeling and NLP, <a href="https://www.surgehq.ai/contact">say hello</a>!)</em></p>
-<h1>Introduction</h1>
-<p>Language models are a core component of NLP systems, from machine translation to speech recognition. Intuitively, you can think of language models as answering: <em>“How English is this phrase?”</em></p>
-<p>Take, for example, these two sentences: <em>“the cat runs up the tree”</em> and <em>“cat up the runs tree the”</em>. A good language model should assign a higher probability to the former since it’s the more “English”-sounding one. This scoring can then be used in dozens of downstream applications.</p>
-<p>For example, speech recognition systems need to disambiguate between phonetically similar phrases like <em>“recognize speech”</em> and <em>“wreck a nice beach”</em>, and a language model can help pick the one that sounds the most natural in a given context. For instance, a speech recognition system transcribing a lecture on audio systems should likely prefer <em>“recognize speech”</em>, whereas a news flash about an extraterrestrial invasion of Miami should likely prefer <em>“wreck a nice beach”</em>.</p>
-<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b417456edd81c9874defc_CleanShot%202021-11-09%20at%2019.47.32%402x.png"><img alt="Wrecking a nice beach" src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b417456edd81c9874defc_CleanShot%202021-11-09%20at%2019.47.32%402x.png"></a></p>
-<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b414d60afbcf2d9e29770_CleanShot%202021-11-09%20at%2019.47.18%402x.png"><img alt="Recognizing speech" src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b414d60afbcf2d9e29770_CleanShot%202021-11-09%20at%2019.47.18%402x.png"></a></p>
-<p>Similarly, a French-English machine translation system could leverage a language model to rank translation candidates according to their fluency. If two translations for <em>“je t’aime”</em> are <em>“I you love”</em> and <em>“I love you”</em>, an English language model would hopefully pick the latter as the better translation.</p>
-<p>So how do language models work?</p>
-<h1>Intuition: Thinking Like an Alien</h1>
-<p>Imagine you’re an alien whose spaceship crashes into Earth. You’re far from home, and you need to blend in until the rescue team arrives. You want to pick up some food, maybe watch Squid Game to learn about human culture, and so you need to learn how to speak like an earthling first.</p>
-<p>How do you do this? You turn to your two robot assistants. They’re advanced probability machines, and you hope that they can also figure out human language:</p>
-<p>— — — — — — — — — —</p>
-<p><strong>You:</strong> <em>“Hey, robots.”</em></p>
-<p><strong>Robots:</strong> <em>“Beep”</em></p>
-<p><strong>You:</strong> <em>“Okay, listen up. I want to buy a burger. Now, when I get to the counter, I want each of you to come up with a couple of sentences you think I could say, along with your best guess of the probability that a human would say it.</em></p>
-<p><strong>Robots:</strong> <em>“Beep?”</em></p>
-<p><strong>You:</strong> <em>“Yes, you have to.”</em></p>
-<p>— — — — — — — — — —</p>
-<p>You’re hoping your robots will:</p>
-<ul>
-<li>Assign a high probability to responses that lead to delicious food. (For example: “Two cheeseburgers and an order of fries”)</li>
-<li>Assign a low probability to unintelligible responses that lead to fear, confusion, and a call to the Men in Black. (For example: “Fries Santa cheese dirt hello”)</li>
-</ul>
-<p>In other words, you want your robot assistants to act as <strong>language models</strong>: given any piece of language as input, they’ll score how “human” it sounds.</p>
-<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b43f61cbc9f00ba0aeb77_Frame%20230.png"><img alt="A language model scoring two responses" src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b43f61cbc9f00ba0aeb77_Frame%20230.png"></a></p>
-<p>Of course, since your robots haven’t learned English yet, they initially won’t be very good. “Two cheeseburgers and an order of fries” sounds just as human to them as “fries Santa cheese dirt hello,” or any other mishmash of noise.</p>
-<p>So, to improve your two robots, the three of you spend an hour observing customers at Shake Shack. Over that hour, five customers arrive. Their responses to the cashier’s prompt are:</p>
-<ul>
-<li><strong>Customer 1:</strong> “Two cheeseburgers”</li>
-<li><strong>Customer 2:</strong> “Two cheeseburgers”</li>
-<li><strong>Customer 3:</strong> “Two cheeseburgers”</li>
-<li><strong>Customer 4:</strong> “Fries”</li>
-<li><strong>Customer 5:</strong> “The daily special”</li>
-</ul>
-<p>What do your robots learn from these 5 pieces of data?</p>
-<p><strong>Robot A</strong> comes from your home planet, a world of elite scientists who’ve mastered the mathematics of spaceflight, and it takes a purely probabilistic approach. If you ask it to score every potential response to “What would you like to order today?”, it would say:</p>
-<ul>
-<li><strong>P(“two cheeseburgers”)</strong> = 3 / 5 (since “two cheeseburgers” was uttered in 3 out of the 5 interactions)</li>
-<li><strong>P(“fries”)</strong> = 1 / 5 (since “fries” was uttered in 1 out of the 5 interactions)</li>
-<li><strong>P(“the daily special”)</strong> = 1/5 (since “the daily special” was uttered in 1 out of the 5 interactions)</li>
-<li><strong>P(anything else)</strong> = 0</li>
-</ul>
-<p><strong>Robot B</strong>, in contrast, comes from a universe where the dimensions of space are warped, so it ignores the order of words. For example, it thinks “two cheeseburgers” and “cheeseburgers two” mean the same thing. (This is analogous to “bag-of-words” models like Naive Bayes.) So it’s as if it heard the following:</p>
-<ul>
-<li><strong>Customer 1:</strong> “two cheeseburgers”, “cheeseburgers two”‍</li>
-<li><strong>Customer 2:</strong> “two cheeseburgers”, “cheeseburgers two”‍</li>
-<li><strong>Customer 3:</strong> “two cheeseburgers”, “cheeseburgers two”‍</li>
-<li><strong>Customer 4:</strong> “fries”‍</li>
-<li><strong>Customer 5:</strong> “the daily special”, “the special daily”, “daily the special”, “daily special the”, “special the daily”, “special daily the”</li>
-</ul>
-<p>So if you asked it to score every potential response to “What would you like to order today?” it would assign these probabilities:</p>
-<ul>
-<li><strong>P(“two cheeseburgers”) = P(“cheeseburgers two”)</strong> = 3 / 13</li>
-<li><strong>P(“fries”)</strong> = 1 / 13</li>
-<li><strong>P(“the daily special”) = P(“the special daily”) = P(“special daily the”) = P(“special the daily”) = P(“daily special the”) =P(“daily the special”)</strong> = 1 /13</li>
-<li><strong>P(anything else)</strong> = 0</li>
-</ul>
-<h1>Evaluating Language Models</h1>
-<p>One question, then, is: <strong>which of your robots performs better?</strong> Remember that “two cheeseburgers” and “cheeseburgers two” sound equally valid to an uninformed alien!</p>
-<p>So how should you evaluate your two robots to see which is the better language model to use?</p>
-<h2>Human Evaluation</h2>
-<p>One approach is a <strong>human evaluation approach</strong>. Because your robots are trying to imitate human language, why not ask humans how good their imitations are? So you stand outside Shake Shack, and every time a customer approaches, you ask your robot to generate an output and the customer to evaluate it. If the customer thinks it’s a good, human-like response, they’ll assign it a score of +1; otherwise, they’ll score it 0.</p>
-<p>For example:</p>
-<ul>
-<li>At the approach of the first customer: Robot A and Robot B both say “two cheeseburgers”. The customer thinks this is a very human response, so scores both of these as 1 (human-like). <strong>A: 1.0, B: 1.0.</strong></li>
-<li>With the second customer: Robot A says “fries” (score: 1), while Robot B says “cheeseburgers two” (score: 0). <strong>A: 1.0, B: 0.0.</strong></li>
-<li>With the third customer: Robot A says “fries” (score: 1), while Robot B says “daily the special” (score: 0). <strong>A: 1.0, B: 0.‍0.</strong></li>
-</ul>
-<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b4552146ed445c61dceba_Frame%20233.png"><img alt="One way to measure the quality of a language model is by asking human judges." src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b4552146ed445c61dceba_Frame%20233.png"></a></p>
-<p>Thus, Robot A would have an average score of (1.0 + 1.0 + 1.0) / 3 = 1.0, while Robot B would have an average score of (1.0 + 0.0 + 0.0) / 3 = 0.333. When evaluated by humans, Robot A is superior!</p>
-<h2>Task-Specific Evaluation</h2>
-<p>Another approach would be to evaluate the outputs against a <strong>downstream, real-world task</strong>. In our alien situation, your goal is to get food from Shake Shack, so you could measure whether or not your robots help you achieve that goal.</p>
-<p>For example:</p>
-<ul>
-<li>Robot A goes up to the counter. When the cashier asks “What would you like to order today?”, it outputs “two cheeseburgers”. The cashier understands and gives him two cheeseburgers. Success! <strong>A: 1.0.</strong></li>
-<li>Robot A goes up to the counter again. This time, it says “fries”. The cashier understands and gives him a fresh bag of fries. Success again! <strong>A: 1.0.</strong></li>
-<li>Next, Robot B goes up to the counter and says “cheeseburgers two”. The cashier doesn’t understand, so gives him nothing. Failure! <strong>B: 0.0.</strong></li>
-<li>Robot B tries again with “the daily special”. The cashier understands this time, so gives him the Tuesday Taco. Success! <strong>B: 1.0.</strong>
-‍</li>
-</ul>
-<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b46e5a9fbcb5ac4030fa3_Frame%20235.png"><img alt="In this task-based evaluation, the better language model leads to actual food." src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b46e5a9fbcb5ac4030fa3_Frame%20235.png"></a></p>
-<p>So under this evaluation method, Robot A scores (1.0 + 1.0) / 2 = 1.0, while Robot B scores (0.0 + 1.0) / 2 = 0.5. Again, we find that Robot A’s language model is superior.</p>
-<h2>Intrinsic Evaluation and Perplexity</h2>
-<p>Human evaluations and task-based evaluations are often the most robust way to measure your robots’ performance. But sometimes you want a faster and dirtier way of comparing language models; maybe you don’t have the means to get humans to score your robots’ output, and you can’t risk blowing your cover as an alien with a bad response at Shake Shack.</p>
-<p>This is where <strong>intrinsic evaluations</strong> come into play. One type of intrinsic evaluation works by measuring how <strong><a href="https://en.wikipedia.org/wiki/Perplexity">perplexed</a></strong> your robots are when they encounter responses by Shake Shack customers.</p>
-<p>For example, imagine that as part of their training, Robot A and Robot B hear only a single sentence: “two cheeseburgers and a coke”. The next day, they hear someone say “a coke and two cheeseburgers”. Robot B isn’t surprised at all to hear this response — after all, it ignores the order of words, and so it thinks that “two cheeseburgers and a coke” and “a coke and two cheeseburgers” are equivalent. However, Robot A is very perplexed since to it, “two cheeseburgers and a coke” and “a coke and two cheeseburgers” are as different as “two cheeseburgers” and “cheeseburgers two”.</p>
-<p><a href="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b476244917a614eb05bf5_CleanShot%202021-11-09%20at%2020.15.08%402x.png"><img alt="The better language model is less perplexed." src="https://global-uploads.webflow.com/610770ea9c21ff57ccb6a6a9/618b476244917a614eb05bf5_CleanShot%202021-11-09%20at%2020.15.08%402x.png"></a></p>
-<p>Lower perplexity means a better language model, so in this example, Robot B finally beats Robot A!</p>
-<p>This scenario also shows why language model evaluation is difficult: which language model appears better depends highly on your evaluation methods and your goals.</p>
-<h1>Summary</h1>
-<p>In summary, this post provided an overview of a couple key concepts surrounding language models:</p>
-<ul>
-<li>First, we defined a <strong>language model</strong> as an algorithm that scores how “human” a sentence is. (More formally, a language model maps pieces of texts to probabilities.)</li>
-<li>We described a way to <em>train</em> language models: by observing language and turning these observations into probabilities.</li>
-<li>We discussed a couple approaches to evaluating the quality of language models: <strong>human evaluation</strong> (did the robot responses sound natural to a human?), <strong>downstream tasks</strong> (did the robot responses lead to actual food?), and <strong>intrinsic evaluations</strong> (how perplexed were the robots by the human utterances?).</li>
-</ul>
-<p>In future posts, we’ll dive into the mathematics and science behind these concepts. If you enjoyed this post, follow us on Twitter at <a href="https://twitter.com/@HelloSurgeAI">@HelloSurgeAI</a>! And if you need a high-quality data labeling platform and workforce, used by top AI companies and research labs around the world, reach out to us at <a href="https://www.surgehq.ai">Surge AI</a>.</p>
-                    </article>
-                </div>
-            </aside><!-- /#featured -->
-            
-        
-        
-
-    
-            <aside id="featured">
-                <div class="body">
-                    <article>
                         <h1 class="entry-title"><a href="./2020/11/30/surge-ai-a-new-data-labeling-platform-and-workforce-for-nlp/">Surge AI: A New Data Labeling Platform and Workforce for NLP</a></h1>
 <div class="post-info">
 
@@ -4548,6 +4277,434 @@ Now we can use the following formulas to find P₁ and P₂:</p>
   </div>  
 
                     </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2011/09/07/information-transmission-in-a-social-network-dissecting-the-spread-of-a-quora-post/">Information Transmission in a Social Network: Dissecting the Spread of a Quora Post</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><p><strong>tl;dr</strong> See <a href="http://www.youtube.com/watch?v=cZ4Ntg4jQHw">this movie visualization</a> for a case study on how a post propagates through Quora.</p>
+
+  <p>How does information spread through a network? Much of Quora&#8217;s appeal, after all, lies in its social graph &#8211; and when you&#8217;ve got a network of users, all broadcasting their activities to their neighbors, information can cascade in multiple ways. How do these social designs affect which users see what?</p>
+
+  <p>Think, for example, of what happens when your kid learns a new slang word at school. He doesn&#8217;t confine his use of the word to McKinley Elementary&#8217;s particular boundaries, between the times of 9-3pm &#8211; he introduces it to his friends from other schools at soccer practice as well. A couple months later, he even says it at home for the first time; you like the word so much, you then start using it at work. Eventually, Justin Bieber uses the word in a song, at which point the word&#8217;s popularity really starts to explode.</p>
+
+  <p>So how does information propagate through a social network? What types of people does an answer on Quora reach, and how does it reach them? (Do users discover new answers individually, or are hubs of connectors more key?) How does the activity of a post on Quora rise and fall? (Submissions on other sites have limited lifetimes, fading into obscurity soon after an initial spike; how does that change when users are connected and every upvote can revive a post for someone else&#8217;s eyes?)</p>
+
+  <p>(I looked at Quora since I had some data from there already available, but I hope the lessons should be fairly applicable in general, to other social networks like Facebook, Twitter, and LinkedIn as well.)</p>
+
+  <p>To give an initial answer to some of these questions, I dug into one of my more popular posts, on <a href="http://www.quora.com/Random-Forests/How-do-random-forests-work-in-laymans-terms">a layman&#8217;s introduction to random forests</a>.</p>
+
+  <h1>Users, Topics</h1>
+
+  <p>Before looking deeper into the voting dynamics of the post, let&#8217;s first get some background on what kinds of users the answer reached.</p>
+
+  <p>Here&#8217;s a graph of the topics that question upvoters follow. (Each node is a topic, and every time upvoter X follows both topics A and B, I add an edge between A and B.)</p>
+
+  <p><a href="http://i.imgur.com/SYaWo7V.png"><img src="http://i.imgur.com/SYaWo7V.png" alt="Upvoters' Topics - Unlabeled" /></a></p>
+
+  <p><a href="http://i.imgur.com/A4Z1KF7.png"><img src="http://i.imgur.com/A4Z1KF7.png" alt="Upvoters' Topics - Labeled" /></a></p>
+
+  <p>We can see from the graph that upvoters tend to be interested in three kinds of topics:</p>
+
+  <ul>
+  <li><strong>Machine learning and other technical matters</strong> (the green cluster): Classification, Data Mining, Big Data, Information Retrieval, Analytics, Probability, Support Vector Machines, R, Data Science, &#8230;</li>
+  <li><strong>Startups/Silicon Valley</strong> (the red cluster): Facebook, Lean Startups, Investing, Seed Funding, Angel Investing, Technology Trends, Product Managment, Silicon Valley Mergers and Acquisitions, Asana, Social Games, Quora, Mark Zuckerberg, User Experience, Founders and Entrepreneurs, &#8230;</li>
+  <li><strong>General Intellectual Topics</strong> (the purple cluster): TED, Science, Book Recommendations, Philosophy, Politics, Self-Improvement, Travel, Life Hacks, &#8230;</li>
+  </ul>
+
+
+  <p>Also, here&#8217;s the network of the upvoters themselves (there&#8217;s an edge between users A and B if A follows B):</p>
+
+  <p><a href="http://i.imgur.com/JuqybXw.png"><img src="http://i.imgur.com/JuqybXw.png" alt="Upvote Network - Unlabeled" /></a></p>
+
+  <p><a href="http://i.imgur.com/0E2ekqO.png"><img src="http://i.imgur.com/0E2ekqO.png" alt="Upvote Network - Labeled" /></a></p>
+
+  <p>We can see three main clusters of users:</p>
+
+  <ul>
+  <li>A large group in <strong>green</strong> centered around a lot of power users and Quora employees.</li>
+  <li>A machine learning group of folks in <strong>orange</strong> centered around people like Oliver Grisel, Christian Langreiter, and Joseph Turian.</li>
+  <li>A group of people following me, in <strong>purple</strong>.</li>
+  <li>Plus some smaller clusters in blue and yellow. (There were also a bunch of isolated users, connected to no one, that I filtered out of the picture.)</li>
+  </ul>
+
+
+  <p>Digging into how these topic and user graphs are related:</p>
+
+  <ul>
+  <li>The orange cluster of users is more heavily into machine learning: 79% of users in that cluster follow more green topics (machine learning and technical topics) than red and purple topics (startups and general intellectual matters).</li>
+  <li>The green cluster of users is reversed: 77% of users follow more of the red and purple clusters of topics (on startups and general intellectual matters) than machine learning and technical topics.</li>
+  </ul>
+
+
+  <p>More interestingly, though, we can ask: how do the connections between upvoters relate to the way the post spread?</p>
+
+  <h1>Social Voting Dynamics</h1>
+
+  <p>So let&#8217;s take a look. Here&#8217;s a visualization I made of upvotes on my answer across time (click <a href="http://www.youtube.com/watch?v=cZ4Ntg4jQHw">here</a> for a larger view).</p>
+
+  <iframe width="640" height="510" src="http://www.youtube.com/embed/cZ4Ntg4jQHw " frameborder="0" allowfullscreen></iframe>
+
+
+  <p></p>
+
+  <p>To represent the social dynamics of these upvotes, I drew an edge from user A to user B if user A transmitted the post to user B through an upvote. (Specifically, I drew an edge from Alice to Bob if Bob follows Alice and Bob&#8217;s upvote appeared within five days of Alice&#8217;s upvote; this is meant to simulate the idea that Alice was the key intermediary between my post and Bob.)</p>
+
+  <p>Also,</p>
+
+  <ul>
+  <li>Green nodes are users with at least one upvote edge.</li>
+  <li>Blue nodes are users who follow at least one of the topics the post is categorized under (i.e., users who probably discovered the answer by themselves).</li>
+  <li>Red nodes are users with no connections and who do not follow any of the post&#8217;s topics (i.e, users whose path to the post remain mysterious).</li>
+  <li>Users increase in size when they produce more connections.</li>
+  </ul>
+
+
+  <p>Here&#8217;s a play-by-play of the video:</p>
+
+  <ul>
+  <li>On Feb 14 (the day I wrote the answer), there&#8217;s a flurry of activity.</li>
+  <li>A couple of days later, Tracy Chou gives an upvote, leading to another spike in activity.</li>
+  <li>Then all&#8217;s quiet until&#8230; bam! Alex Kamil leads to a surge of upvotes, and his upvote finds Ludi Rehak, who starts a small surge of her own. They&#8217;re quickly followed by Christian Langreiter, who starts a small revolution among a bunch of machine learning folks a couple days later.</li>
+  <li>Then all is pretty calm again, until a couple months later when&#8230; bam! Aditya Sengupta brings in a smashing of his own followers, and his upvote makes its way to Marc Bodnick, who sets off a veritable storm of activity.</li>
+  </ul>
+
+
+  <p>(Already we can see some relationships between the graph of user connections and the way the post propagated. Many of the users from the orange cluster, for example, come from Alex Kamil and Christian Langreiter&#8217;s upvotes, and many of the users from the green cluster come from Aditya Sengupta and Marc Bodnick&#8217;s upvotes. What&#8217;s interesting, though, is, why didn&#8217;t the cluster of green users appear all at once, like the orange cluster did? People like Kah Seng Tay, Tracy Chou, Venkatesh Rao, and Chad Little upvoted the answer pretty early on, but it wasn&#8217;t until Aditya Sengupta&#8217;s upvote a couple months later that people like Marc Bodnick, Edmond Lau, and many of the other green users (who do indeed follow that first set of folks) discovered the answer. Did the post simply get lost in users&#8217; feeds the first time around? Was the post perhaps ignored until it received enough upvotes to be considered worth reading? Are some users&#8217; upvotes just trusted more than others&#8217;?)</p>
+
+  <p>For another view of the upvote dynamics, here&#8217;s a static visualization, where we can again easily see the clusters of activity:</p>
+
+  <p><a href="http://i.imgur.com/jmOacPR.png"><img src="http://i.imgur.com/jmOacPR.png" alt="Upvote Temporal Clusters" /></a></p>
+
+  <h1>Fin</h1>
+
+  <p>There are still many questions it would be interesting to look at; for example,</p>
+
+  <ul>
+  <li>What differentiates users who sparked spikes of activity from users who didn&#8217;t? I don&#8217;t believe it&#8217;s simply number of followers, as many well-connected upvoters did <em>not</em> lead to cascades of shares. Does authority matter?</li>
+  <li>How far can a post reach? Clearly, the post reached people more than one degree of separation away from me (where one degree of separation is a follower); what does the distribution of degrees look like? Is there any relationship between degree of separation and time of upvote?</li>
+  <li>What can we say about the people who started following me after reading my answer? Are they fewer degrees of separation away? Are they more interested in machine learning? Have they upvoted any of my answers before? (Perhaps there&#8217;s a certain &#8220;threshold&#8221; of interestingness people need to overflow before they&#8217;re considered acceptable followees.)</li>
+  </ul>
+
+
+  <p>But to summarize a bit what we&#8217;ve seen so far, here are some statistics on the role the social graph played in spreading the post:</p>
+
+  <ul>
+  <li>There are 5 clusters of activity after the initial post, sparked both by power users and less-connected folks. In an interesting cascade of information, some of these sparks led to further spikes in activity as well (as when Aditya Sengupta&#8217;s upvote found its way to Marc Bodnick, who set off even more activity).</li>
+  <li>35% of users made their way to my answer because of someone else&#8217;s upvote.</li>
+  <li>Through these connections, the post reached a fair variety of users: 32% of upvoters don&#8217;t even follow any of the post&#8217;s topics.</li>
+  <li>77% of upvotes came from users over two weeks <em>after</em> my answer appeared.</li>
+  <li>If we look only at the upvoters who follow at least one of the post&#8217;s topics, 33% didn&#8217;t see my answer until someone else showed it to them. In other words, a full one-third of people who presumably would have been interested in my post anyways only found it because of their social network.</li>
+  </ul>
+
+
+  <p>So it looks like the social graph played quite a large part in the post&#8217;s propagation, and I&#8217;ll end with a big shoutout to Stormy Shippy, who provided an awesome set of scripts I used to collect a lot of this data.</p>
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2011/08/22/introduction-to-latent-dirichlet-allocation/">Introduction to Latent Dirichlet Allocation</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info -->
+  <div class="entry-content"><h1>Introduction</h1>
+
+  <p>Suppose you have the following set of sentences:</p>
+
+  <ul>
+  <li>I like to eat broccoli and bananas.</li>
+  <li>I ate a banana and spinach smoothie for breakfast.</li>
+  <li>Chinchillas and kittens are cute.</li>
+  <li>My sister adopted a kitten yesterday.</li>
+  <li>Look at this cute hamster munching on a piece of broccoli.</li>
+  </ul>
+
+
+  <p>What is latent Dirichlet allocation? It&#8217;s a way of automatically discovering <strong>topics</strong> that these sentences contain. For example, given these sentences and asked for 2 topics, LDA might produce something like</p>
+
+  <ul>
+  <li><strong>Sentences 1 and 2</strong>: 100% Topic A</li>
+  <li><strong>Sentences 3 and 4</strong>: 100% Topic B</li>
+  <li><strong>Sentence 5</strong>: 60% Topic A, 40% Topic B</li>
+  <li><strong>Topic A</strong>: 30% broccoli, 15% bananas, 10% breakfast, 10% munching, &#8230; (at which point, you could interpret topic A to be about food)</li>
+  <li><strong>Topic B</strong>: 20% chinchillas, 20% kittens, 20% cute, 15% hamster, &#8230; (at which point, you could interpret topic B to be about cute animals)</li>
+  </ul>
+
+
+  <p>The question, of course, is: how does LDA perform this discovery?</p>
+
+  <h1>LDA Model</h1>
+
+  <p>In more detail, LDA represents documents as <strong>mixtures of topics</strong> that spit out words with certain probabilities. It assumes that documents are produced in the following fashion: when writing each document, you</p>
+
+  <ul>
+  <li>Decide on the number of words N the document will have (say, according to a Poisson distribution).</li>
+  <li>Choose a topic mixture for the document (according to a Dirichlet distribution over a fixed set of K topics). For example, assuming that we have the two food and cute animal topics above, you might choose the document to consist of 1/3 food and 2/3 cute animals.</li>
+  <li>Generate each word w_i in the document by:
+
+  <ul>
+  <li>First picking a topic (according to the multinomial distribution that you sampled above; for example, you might pick the food topic with 1/3 probability and the cute animals topic with 2/3 probability).</li>
+  <li>Using the topic to generate the word itself (according to the topic&#8217;s multinomial distribution). For example, if we selected the food topic, we might generate the word &#8220;broccoli&#8221; with 30% probability, &#8220;bananas&#8221; with 15% probability, and so on.</li>
+  </ul>
+  </li>
+  </ul>
+
+
+  <p>Assuming this generative model for a collection of documents, LDA then tries to backtrack from the documents to find a set of topics that are likely to have generated the collection.</p>
+
+  <h2>Example</h2>
+
+  <p>Let&#8217;s make an example. According to the above process, when generating some particular document D, you might</p>
+
+  <ul>
+  <li>Pick 5 to be the number of words in D.</li>
+  <li>Decide that D will be 1/2 about food and 1/2 about cute animals.</li>
+  <li>Pick the first word to come from the food topic, which then gives you the word &#8220;broccoli&#8221;.</li>
+  <li>Pick the second word to come from the cute animals topic, which gives you &#8220;panda&#8221;.</li>
+  <li>Pick the third word to come from the cute animals topic, giving you &#8220;adorable&#8221;.</li>
+  <li>Pick the fourth word to come from the food topic, giving you &#8220;cherries&#8221;.</li>
+  <li>Pick the fifth word to come from the food topic, giving you &#8220;eating&#8221;.</li>
+  </ul>
+
+
+  <p>So the document generated under the LDA model will be &#8220;broccoli panda adorable cherries eating&#8221; (note that LDA is a bag-of-words model).</p>
+
+  <h1>Learning</h1>
+
+  <p>So now suppose you have a set of documents. You&#8217;ve chosen some fixed number of K topics to discover, and want to use LDA to learn the topic representation of each document and the words associated to each topic. How do you do this? One way (known as collapsed Gibbs sampling) is the following:</p>
+
+  <ul>
+  <li>Go through each document, and randomly assign each word in the document to one of the K topics.</li>
+  <li>Notice that this random assignment already gives you both topic representations of all the documents and word distributions of all the topics (albeit not very good ones).</li>
+  <li>So to improve on them, for each document d&#8230;
+
+  <ul>
+  <li>Go through each word w in d&#8230;
+
+  <ul>
+  <li>And for each topic t, compute two things: 1) p(topic t | document d) = the proportion of words in document d that are currently assigned to topic t, and 2) p(word w | topic t) = the proportion of assignments to topic t over all documents that come from this word w. Reassign w a new topic, where we choose topic t with probability p(topic t | document d) * p(word w | topic t) (according to our generative model, this is essentially the probability that topic t generated word w, so it makes sense that we resample the current word&#8217;s topic with this probability). (Also, I&#8217;m glossing over a couple of things here, in particular the use of priors/pseudocounts in these probabilities.)</li>
+  <li>In other words, in this step, we&#8217;re assuming that all topic assignments except for the current word in question are correct, and then updating the assignment of the current word using our model of how documents are generated.</li>
+  </ul>
+  </li>
+  </ul>
+  </li>
+  <li>After repeating the previous step a large number of times, you&#8217;ll eventually reach a roughly steady state where your assignments are pretty good. So use these assignments to estimate the topic mixtures of each document (by counting the proportion of words assigned to each topic within that document) and the words associated to each topic (by counting the proportion of words assigned to each topic overall).</li>
+  </ul>
+
+
+  <h1>Layman&#8217;s Explanation</h1>
+
+  <p>In case the discussion above was a little eye-glazing, here&#8217;s another way to look at LDA in a different domain.</p>
+
+  <p>Suppose you&#8217;ve just moved to a new city. You&#8217;re a hipster and an anime fan, so you want to know where the other hipsters and anime geeks tend to hang out. Of course, as a hipster, you know you can&#8217;t just <em>ask</em>, so what do you do?</p>
+
+  <p>Here&#8217;s the scenario: you scope out a bunch of different establishments (<strong>documents</strong>) across town, making note of the people (<strong>words</strong>) hanging out in each of them (e.g., Alice hangs out at the mall and at the park, Bob hangs out at the movie theater and the park, and so on). Crucially, you don&#8217;t know the typical interest groups (<strong>topics</strong>) of each establishment, nor do you know the different interests of each person.</p>
+
+  <p>So you pick some number K of categories to learn (i.e., you want to learn the K most important kinds of categories people fall into), and start by making a guess as to why you see people where you do. For example, you initially guess that Alice is at the mall because people with interests in X like to hang out there; when you see her at the park, you guess it&#8217;s because her friends with interests in Y like to hang out there; when you see Bob at the movie theater, you randomly guess it&#8217;s because the Z people in this city really like to watch movies; and so on.</p>
+
+  <p>Of course, your random guesses are very likely to be incorrect (they&#8217;re random guesses, after all!), so you want to improve on them. One way of doing so is to:</p>
+
+  <ul>
+  <li>Pick a place and a person (e.g., Alice at the mall).</li>
+  <li>Why is Alice likely to be at the mall? Probably because other people at the mall with the same interests sent her a message telling her to come.</li>
+  <li>In other words, the more people with interests in X there are at the mall and the stronger Alice is associated with interest X (at all the other places she goes to), the more likely it is that Alice is at the mall because of interest X.</li>
+  <li>So make a new guess as to why Alice is at the mall, choosing an interest with some probability according to how likely you think it is.</li>
+  </ul>
+
+
+  <p>Go through each place and person over and over again. Your guesses keep getting better and better (after all, if you notice that lots of geeks hang out at the bookstore, and you suspect that Alice is pretty geeky herself, then it&#8217;s a good bet that Alice is at the bookstore because her geek friends told her to go there; and now that you have a better idea of why Alice is probably at the bookstore, you can use this knowledge in turn to improve your guesses as to why everyone else is where they are), and eventually you can stop updating. Then take a snapshot (or multiple snapshots) of your guesses, and use it to get all the information you want:</p>
+
+  <ul>
+  <li>For each category, you can count the people assigned to that category to figure out what people have this particular interest. By looking at the people themselves, you can interpret the category as well (e.g., if category X contains lots of tall people wearing jerseys and carrying around basketballs, you might interpret X as the &#8220;basketball players&#8221; group).</li>
+  <li>For each place P and interest category C, you can compute the proportions of people at P because of C (under the current set of assignments), and these give you a representation of P. For example, you might learn that the people who hang out at Barnes &amp; Noble consist of 10% hipsters, 50% anime fans, 10% jocks, and 30% college students.</li>
+  </ul>
+
+
+  <h1>Real-World Example</h1>
+
+  <p>Finally, I applied LDA to a set of Sarah Palin&#8217;s emails a little while ago (see <a href="http://blog.echen.me/2011/06/27/topic-modeling-the-sarah-palin-emails/">here</a> for the blog post, or <a href="http://sarah-palin.heroku.com/">here</a> for an app that allows you to browse through the emails by the LDA-learned categories), so let&#8217;s give a brief recap. Here are some of the topics that the algorithm learned:</p>
+
+  <ul>
+  <li><strong>Trig/Family/Inspiration</strong>: family, web, mail, god, son, from, congratulations, children, life, child, down, trig, baby, birth, love, you, syndrome, very, special, bless, old, husband, years, thank, best, &#8230;</li>
+  <li><strong>Wildlife/BP Corrosion</strong>: game, fish, moose, wildlife, hunting, bears, polar, bear, subsistence, management, area, board, hunt, wolves, control, department, year, use, wolf, habitat, hunters, caribou, program, denby, fishing, &#8230;</li>
+  <li><strong>Energy/Fuel/Oil/Mining:</strong> energy, fuel, costs, oil, alaskans, prices, cost, nome, now, high, being, home, public, power, mine, crisis, price, resource, need, community, fairbanks, rebate, use, mining, villages, &#8230;</li>
+  <li><strong>Gas</strong>: gas, oil, pipeline, agia, project, natural, north, producers, companies, tax, company, energy, development, slope, production, resources, line, gasline, transcanada, said, billion, plan, administration, million, industry, &#8230;</li>
+  <li><strong>Education/Waste</strong>: school, waste, education, students, schools, million, read, email, market, policy, student, year, high, news, states, program, first, report, business, management, bulletin, information, reports, 2008, quarter, &#8230;</li>
+  <li><strong>Presidential Campaign/Elections</strong>: mail, web, from, thank, you, box, mccain, sarah, very, good, great, john, hope, president, sincerely, wasilla, work, keep, make, add, family, republican, support, doing, p.o, &#8230;</li>
+  </ul>
+
+
+  <p>Here&#8217;s an example of an email which fell 99% into the Trig/Family/Inspiration category (particularly representative words are highlighted in blue):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/palin-browser/trig-email.png"><img src="http://dl.dropbox.com/u/10506/blog/palin-browser/trig-email.png" alt="Trig Email" /></a></p>
+
+  <p>And here&#8217;s an excerpt from an email which fell 10% into the Presidential Campaign/Election category (in red) and 90% into the Wildlife/BP Corrosion category (in green):</p>
+
+  <p><a href="http://dl.dropbox.com/u/10506/blog/palin-browser/wildlife-presidency-email.png"><img src="http://dl.dropbox.com/u/10506/blog/palin-browser/wildlife-presidency-email.png" alt="Wildlife-Presidency Email" /></a></p>
+  </div>  
+
+                    </article>
+                </div>
+            </aside><!-- /#featured -->
+            
+        
+        
+
+    
+            <aside id="featured">
+                <div class="body">
+                    <article>
+                        <h1 class="entry-title"><a href="./2011/07/18/introduction-to-restricted-boltzmann-machines/">Introduction to Restricted Boltzmann Machines</a></h1>
+<div class="post-info">
+
+</div><!-- /.post-info --><p>Suppose you ask a bunch of users to rate a set of movies on a 0-100 scale. In classical factor analysis, you could then try to explain each movie and user in terms of a set of latent <strong>factors</strong>. For example, movies like Star Wars and Lord of the Rings might have strong associations with a latent science fiction and fantasy factor, and users who like Wall-E and Toy Story might have strong associations with a latent Pixar factor.</p>
+<p>Restricted Boltzmann Machines essentially perform a <em>binary</em> version of factor analysis. (This is one way of thinking about RBMs; there are, of course, others, and lots of different ways to use RBMs, but I’ll adopt this approach for this post.) Instead of users rating a set of movies on a continuous scale, they simply tell you whether they like a movie or not, and the RBM will try to discover latent factors that can explain the activation of these movie choices.</p>
+<p>More technically, a Restricted Boltzmann Machine is a <strong>stochastic neural network</strong> (neural network meaning we have neuron-like units whose binary activations depend on the neighbors they’re connected to; stochastic meaning these activations have a probabilistic element) consisting of:</p>
+<ul>
+<li>One layer of <strong>visible units</strong> (users’ movie preferences whose states we know and set);</li>
+<li>One layer of <strong>hidden units</strong> (the latent factors we try to learn); and</li>
+<li>A bias unit (whose state is always on, and is a way of adjusting for the different inherent popularities of each movie).</li>
+</ul>
+<p>Furthermore, each visible unit is connected to all the hidden units (this connection is undirected, so each hidden unit is also connected to all the visible units), and the bias unit is connected to all the visible units and all the hidden units. To make learning easier, we restrict the network so that no visible unit is connected to any other visible unit and no hidden unit is connected to any other hidden unit.</p>
+<p>For example, suppose we have a set of six movies (Harry Potter, Avatar, LOTR 3, Gladiator, Titanic, and Glitter) and we ask users to tell us which ones they want to watch. If we want to learn two latent units underlying movie preferences – for example, two natural groups in our set of six movies appear to be SF/fantasy (containing Harry Potter, Avatar, and LOTR 3) and Oscar winners (containing LOTR 3, Gladiator, and Titanic), so we might hope that our latent units will correspond to these categories – then our RBM would look like the following:</p>
+<p><img alt="RBM Example" src="http://i.imgur.com/sadnLks.png"></p>
+<p>(Note the resemblance to a factor analysis graphical model.)</p>
+<h1>State Activation</h1>
+<p>Restricted Boltzmann Machines, and neural networks in general, work by updating the states of some neurons given the states of others, so let’s talk about how the states of individual units change. Assuming we know the connection weights in our RBM (we’ll explain how to learn these below), to update the state of unit <span class="math">\(i\)</span>:</p>
+<ul>
+<li>Compute the <strong>activation energy</strong> <span class="math">\(a_i = \sum_j w_{ij} x_j\)</span> of unit <span class="math">\(i\)</span>, where the sum runs over all units <span class="math">\(j\)</span> that unit <span class="math">\(i\)</span> is connected to, <span class="math">\(w_{ij}\)</span> is the weight of the connection between <span class="math">\(i\)</span> and <span class="math">\(j\)</span>, and <span class="math">\(x_j\)</span> is the 0 or 1 state of unit <span class="math">\(j\)</span>. In other words, all of unit <span class="math">\(i\)</span>’s neighbors send it a message, and we compute the sum of all these messages.</li>
+<li>Let <span class="math">\(p_i = \sigma(a_i)\)</span>, where <span class="math">\(\sigma(x) = 1/(1 + exp(-x))\)</span> is the logistic function. Note that <span class="math">\(p_i\)</span> is close to 1 for large positive activation energies, and <span class="math">\(p_i\)</span> is close to 0 for negative activation energies.</li>
+<li>We then turn unit <span class="math">\(i\)</span> on with probability <span class="math">\(p_i\)</span>, and turn it off with probability <span class="math">\(1 - p_i\)</span>.</li>
+<li>(In layman’s terms, units that are positively connected to each other try to get each other to share the same state (i.e., be both on or off), while units that are negatively connected to each other are enemies that prefer to be in different states.)</li>
+</ul>
+<p>For example, let’s suppose our two hidden units really do correspond to SF/fantasy and Oscar winners.</p>
+<ul>
+<li>If Alice has told us her six binary preferences on our set of movies, we could then ask our RBM which of the hidden units her preferences activate (i.e., ask the RBM to explain her preferences in terms of latent factors). So the six movies send messages to the hidden units, telling them to update themselves. (Note that even if Alice has declared she wants to watch Harry Potter, Avatar, and LOTR 3, this doesn’t guarantee that the SF/fantasy hidden unit will turn on, but only that it will turn on with high probability. This makes a bit of sense: in the real world, Alice wanting to watch all three of those movies makes us highly suspect she likes SF/fantasy in general, but there’s a small chance she wants to watch them for other reasons. Thus, the RBM allows us to generate models of people in the messy, real world.)</li>
+<li>Conversely, if we know that one person likes SF/fantasy (so that the SF/fantasy unit is on), we can then ask the RBM which of the movie units that hidden unit turns on (i.e., ask the RBM to generate a set of movie recommendations). So the hidden units send messages to the movie units, telling them to update their states. (Again, note that the SF/fantasy unit being on doesn’t guarantee that we’ll always recommend all three of Harry Potter, Avatar, and LOTR 3 because, hey, not everyone who likes science fiction liked Avatar.)</li>
+</ul>
+<h1>Learning Weights</h1>
+<p>So how do we learn the connection weights in our network? Suppose we have a bunch of training examples, where each training example is a binary vector with six elements corresponding to a user’s movie preferences. Then for each epoch, do the following:</p>
+<ul>
+<li>Take a training example (a set of six movie preferences). Set the states of the visible units to these preferences.</li>
+<li>Next, update the states of the hidden units using the logistic activation rule described above: for the <span class="math">\(j\)</span>th hidden unit, compute its activation energy <span class="math">\(a_j = \sum_i w_{ij} x_i\)</span>, and set <span class="math">\(x_j\)</span> to 1 with probability <span class="math">\(\sigma(a_j)\)</span> and to 0 with probability <span class="math">\(1 - \sigma(a_j)\)</span>. Then for each edge <span class="math">\(e_{ij}\)</span>, compute <span class="math">\(Positive(e_{ij}) = x_i * x_j\)</span> (i.e., for each pair of units, measure whether they’re both on).</li>
+<li>Now <strong>reconstruct</strong> the visible units in a similar manner: for each visible unit, compute its activation energy <span class="math">\(a_i\)</span>, and update its state. (Note that this reconstruction may not match the original preferences.) Then update the hidden units again, and compute <span class="math">\(Negative(e_{ij}) = x_i * x_j\)</span> for each edge.</li>
+<li>Update the weight of each edge <span class="math">\(e_{ij}\)</span> by setting <span class="math">\(w_{ij} = w_{ij} + L * (Positive(e_{ij}) - Negative(e_{ij}))\)</span>, where <span class="math">\(L\)</span> is a learning rate.</li>
+<li>Repeat over all training examples.</li>
+</ul>
+<p>Continue until the network converges (i.e., the error between the training examples and their reconstructions falls below some threshold) or we reach some maximum number of epochs.</p>
+<p>Why does this update rule make sense? Note that</p>
+<ul>
+<li>In the first phase, <span class="math">\(Positive(e_{ij})\)</span> measures the association between the <span class="math">\(i\)</span>th and <span class="math">\(j\)</span>th unit that we want the network to learn from our training examples;</li>
+<li>In the “reconstruction” phase, where the RBM generates the states of visible units based on its hypotheses about the hidden units alone, <span class="math">\(Negative(e_{ij})\)</span> measures the association that the network itself generates (or “daydreams” about) when no units are fixed to training data.</li>
+</ul>
+<p>So by adding <span class="math">\(Positive(e_{ij}) - Negative(e_{ij})\)</span> to each edge weight, we’re helping the network’s daydreams better match the reality of our training examples.</p>
+<p>(You may hear this update rule called <strong>contrastive divergence</strong>, which is basically a fancy term for “approximate gradient descent”.)</p>
+<h1>Examples</h1>
+<p>I wrote a <a href="https://github.com/echen/restricted-boltzmann-machines">simple RBM implementation</a> in Python (the code is heavily commented, so take a look if you’re still a little fuzzy on how everything works), so let’s use it to walk through some examples.</p>
+<p>First, I trained the RBM using some fake data.</p>
+<ul>
+<li>Alice: (Harry Potter = 1, Avatar = 1, LOTR 3 = 1, Gladiator = 0, Titanic = 0, Glitter = 0). Big SF/fantasy fan.</li>
+<li>Bob: (Harry Potter = 1, Avatar = 0, LOTR 3 = 1, Gladiator = 0, Titanic = 0, Glitter = 0). SF/fantasy fan, but doesn’t like Avatar.</li>
+<li>Carol: (Harry Potter = 1, Avatar = 1, LOTR 3 = 1, Gladiator = 0, Titanic = 0, Glitter = 0). Big SF/fantasy fan.</li>
+<li>David: (Harry Potter = 0, Avatar = 0, LOTR 3 = 1, Gladiator = 1, Titanic = 1, Glitter = 0). Big Oscar winners fan.</li>
+<li>Eric: (Harry Potter = 0, Avatar = 0, LOTR 3 = 1, Gladiator = 1, Titanic = 1, Glitter = 0). Oscar winners fan, except for Titanic.</li>
+<li>Fred: (Harry Potter = 0, Avatar = 0, LOTR 3 = 1, Gladiator = 1, Titanic = 1, Glitter = 0). Big Oscar winners fan.</li>
+</ul>
+<p>The network learned the following weights:</p>
+<p><img alt="Weights" src="http://i.imgur.com/mbsjJmX.png"></p>
+<p>Note that the first hidden unit seems to correspond to the Oscar winners, and the second hidden unit seems to correspond to the SF/fantasy movies, just as we were hoping.</p>
+<p>What happens if we give the RBM a new user, George, who has (Harry Potter = 0, Avatar = 0, LOTR 3 = 0, Gladiator = 1, Titanic = 1, Glitter = 0) as his preferences? It turns the Oscar winners unit on (but not the SF/fantasy unit), correctly guessing that George probably likes movies that are Oscar winners.</p>
+<p>What happens if we activate only the SF/fantasy unit, and run the RBM a bunch of different times? In my trials, it turned on Harry Potter, Avatar, and LOTR 3 three times; it turned on Avatar and LOTR 3, but not Harry Potter, once; and it turned on Harry Potter and LOTR 3, but not Avatar, twice. Note that, based on our training examples, these generated preferences do indeed match what we might expect real SF/fantasy fans want to watch.</p>
+<h1>Modifications</h1>
+<p>I tried to keep the connection-learning algorithm I described above pretty simple, so here are some modifications that often appear in practice:</p>
+<ul>
+<li>Above, <span class="math">\(Negative(e_{ij})\)</span> was determined by taking the product of the <span class="math">\(i\)</span>th and <span class="math">\(j\)</span>th units after reconstructing the visible units once and then updating the hidden units again. We could also take the product after some larger number of reconstructions (i.e., repeat updating the visible units, then the hidden units, then the visible units again, and so on); this is slower, but describes the network’s daydreams more accurately.</li>
+<li>Instead of using <span class="math">\(Positive(e_{ij})=x_i * x_j\)</span>, where <span class="math">\(x_i\)</span> and <span class="math">\(x_j\)</span> are binary 0 or 1 states, we could also let <span class="math">\(x_i\)</span> and/or <span class="math">\(x_j\)</span> be activation probabilities. Similarly for <span class="math">\(Negative(e_{ij})\)</span>.</li>
+<li>We could penalize larger edge weights, in order to get a sparser or more regularized model.</li>
+<li>When updating edge weights, we could use a momentum factor: we would add to each edge a weighted sum of the current step as described above (i.e., <span class="math">\(L * (Positive(e_{ij}) - Negative(e_{ij})\)</span>) and the step previously taken.</li>
+<li>Instead of using only one training example in each epoch, we could use batches of examples in each epoch, and only update the network’s weights after passing through all the examples in the batch. This can speed up the learning by taking advantage of fast matrix-multiplication algorithms.</li>
+</ul>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML';
+
+    var configscript = document.createElement('script');
+    configscript.type = 'text/x-mathjax-config';
+    configscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'none' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        availableFonts: ['STIX', 'TeX']," +
+        "        preferredFont: 'STIX'," +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(configscript);
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+                    </article>
  
 <div class="paginator">
     <div class="navButton">Page 1 / 2</div>
@@ -4597,9 +4754,6 @@ Now we can use the following formulas to find P₁ and P₂:</p>
               <h3>Recent Posts</h3>
                 <a style="font-size: 0.9em" href="./2022/02/12/how-could-facebook-align-its-ml-systems-to-human-values-a-data-driven-approach/">How Could Facebook Align its ML Systems to Human Values? A Data-Driven Approach  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2022/02/11/a-visual-tool-for-exploring-word-embeddings/">A Visual Tool for Exploring Word Embeddings  </a><br /><br />
-                <a style="font-size: 0.9em" href="./2021/12/23/a-laymans-introduction-to-perplexity-in-nlp/">A Layman's Introduction to Perplexity in NLP  </a><br /><br />
-                <a style="font-size: 0.9em" href="./2021/12/23/an-introduction-to-inter-annotator-agreement-and-cohens-kappa-statistic/">An Introduction to Inter-Annotator Agreement and Cohen's Kappa Statistic  </a><br /><br />
-                <a style="font-size: 0.9em" href="./2021/11/21/a-visual-laymans-introduction-to-language-models-in-nlp/">A Visual, Layman's Introduction to Language Models in NLP  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2020/11/30/surge-ai-a-new-data-labeling-platform-and-workforce-for-nlp/">Surge AI: A New Data Labeling Platform and Workforce for NLP  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2017/05/30/exploring-lstms/">Exploring LSTMs  </a><br /><br />
                 <a style="font-size: 0.9em" href="./2014/10/07/moving-beyond-ctr-better-recommendations-through-human-evaluation/">Moving Beyond CTR: Better Recommendations Through Human Evaluation  </a><br /><br />
